@@ -1,0 +1,21 @@
+[package]
+name = "proj"
+version = "0.1.0"
+edition = "2024"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+# These fields configure default behavior for uploads with `cargo v5`.
+[package.metadata.v5]
+upload-strategy = "differential"
+slot = 1
+icon = "cool-x"
+compress = true
+
+[dependencies]
+autons = "0.1.0"
+cobs = { version = "0.4.0", default-features = false, features = ["alloc"] }
+evian = { git = "https://github.com/vexide/evian.git", version = "0.3.0-rc.1" }
+shrewnit = "0.2.0"
+vexide = "0.7.0"
+vexide-motorgroup = "2.1.0"

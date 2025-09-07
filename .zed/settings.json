@@ -1,0 +1,17 @@
+{
+    "lsp": {
+        "rust-analyzer": {
+            "initialization_options": {
+                "cargo": {
+                    "target": "./armv7a-vex-v5.json",
+                    "allTargets": false
+                },
+                "check": {
+                    "command": "clippy",
+                    "features": "all",
+                    "targets": "./armv7a-vex-v5.json"
+                }
+            }
+        }
+    }
+}

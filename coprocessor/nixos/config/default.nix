@@ -2,6 +2,8 @@
     imports = [
         ./otos
 
+        ./filesystems.nix
+        ./gadget.nix
         ./hardware.nix
         ./locale.nix
         ./networking.nix

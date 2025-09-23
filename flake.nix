@@ -33,8 +33,12 @@
         }:
         {
             nixosConfigurations.rpi = nixos-raspberrypi.lib.nixosSystem {
-                specialArgs = { inherit inputs; };
-                modules = [ ./pi/nixos ];
+                specialArgs = {
+                    piNumber = 1;
+                    inherit inputs self;
+                    inherit (inputs) nixos-raspberrypi;
+                };
+                modules = [ ./coprocessor/nixos ];
             };
         }
         // flake-utils.lib.eachDefaultSystem (
@@ -49,6 +53,14 @@
                 # Setup formatter
                 treefmtCfg = lib.modules.importApply ./treefmt.nix { inherit rust'; };
                 treefmt = treefmt-nix.lib.evalModule pkgs treefmtCfg;
+                # Build extra python packages
+                mkPythonPackages = ps: rec {
+                    qwiic-i2c = pkgs.callPackage ./coprocessor/nixos/config/otos/packages/qwiic-i2c.nix { python3Packages = ps; };
+                    qwiic-otos = pkgs.callPackage ./coprocessor/nixos/config/otos/packages/qwiic-otos.nix {
+                        inherit qwiic-i2c;
+                        python3Packages = ps;
+                    };
+                };
             in
             {
                 # Provide a development environment with rust, cargo-v5, and the formatter
@@ -57,10 +69,35 @@
                         rust'
                         cargo-v5.packages.${system}.cargo-v5-full
                         self.formatter.${system}
-                    ];
+                    ]
+                    ++ (with pkgs; [
+                        (python313.withPackages (
+                            pythonPackages: with pythonPackages; [
+                                cobs
+                                crc
+                            ]
+                        ))
+                        evcxr
+                    ]);
                 };
 
                 formatter = treefmt.config.build.wrapper;
+
+                packages.pythonWithLibs = pkgs.python313.withPackages (
+                    ps:
+                    (with ps; [
+                        cobs # For packet delimited serial
+                        pyserial # For serial communication
+                        crc # For message checksums
+                        smbus2 # For i2c communication
+                        rpi-gpio # For controlling GPIO pins
+                    ])
+                    ++ (with (mkPythonPackages ps); [
+                        # Add both of the vendor-specific i2c/otos libs
+                        qwiic-i2c
+                        qwiic-otos
+                    ])
+                );
             }
         );
 

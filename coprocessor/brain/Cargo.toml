@@ -1,0 +1,8 @@
+[package]
+name = "coprocessor"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+cobs = { version = "0.4.0", default-features = false, features = ["alloc"] }
+crc = "3.3.0"

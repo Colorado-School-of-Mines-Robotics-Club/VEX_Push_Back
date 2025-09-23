@@ -60,6 +60,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "coprocessor"
+version = "0.1.0"
+dependencies = [
+ "cobs",
+ "crc",
+]
+
+[[package]]
+name = "crc"
+version = "3.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9710d3b3739c2e349eb44fe848ad0b7c8cb1e42bd87ee49371df2f7acaf3e675"
+dependencies = [
+ "crc-catalog",
+]
+
+[[package]]
+name = "crc-catalog"
+version = "2.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "19d374276b40fb8bbdee95aef7c7fa6b5316ec764510eb64b8dd0e2ed0d7e7f5"
+
+[[package]]
 name = "deranged"
 version = "0.3.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -205,6 +228,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1261fe7e33c73b354eab43b1273a57c8f967d0391e80353e51f764ac02cf6775"
 
 [[package]]
+name = "ordgr-push-back"
+version = "0.1.0"
+dependencies = [
+ "autons",
+ "cobs",
+ "evian",
+ "shrewnit",
+ "vexide",
+ "vexide-motorgroup",
+]
+
+[[package]]
 name = "paste"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -243,18 +278,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5e719e8df665df0d1c8fbfd238015744736151d4445ec0836b8e628aae103b77"
 dependencies = [
  "unicode-ident",
-]
-
-[[package]]
-name = "proj"
-version = "0.1.0"
-dependencies = [
- "autons",
- "cobs",
- "evian",
- "shrewnit",
- "vexide",
- "vexide-motorgroup",
 ]
 
 [[package]]

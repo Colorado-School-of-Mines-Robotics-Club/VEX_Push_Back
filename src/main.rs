@@ -7,8 +7,11 @@ extern crate alloc;
 mod compete;
 // mod display;
 mod robot;
+mod tracking;
 
-use vexide::prelude::*;
+use core::time::Duration;
+
+use vexide::{io::stdout, prelude::*};
 
 use crate::robot::Robot;
 

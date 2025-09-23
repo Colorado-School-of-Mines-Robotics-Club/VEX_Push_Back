@@ -1,9 +1,20 @@
-use core::{cell::{RefCell, RefMut}, time::Duration};
+use core::{
+    cell::{RefCell, RefMut},
+    time::Duration,
+};
 
 use alloc::{sync::Arc, vec};
-use evian::{drivetrain::model::Differential, prelude::Drivetrain};
+use evian::{
+    control::loops::{AngularPid, Pid},
+    drivetrain::model::Differential,
+    prelude::{Drivetrain, Tolerances},
+};
 // use autons::prelude::SelectCompeteExt as _;
-use vexide::{prelude::{CompeteExt as _, Controller, Direction, Gearset, Motor, Peripherals, SerialPort}, task::{self, spawn}, time::sleep};
+use vexide::{
+    prelude::{CompeteExt as _, Controller, Direction, Gearset, Motor, Peripherals, SerialPort},
+    task,
+    time::sleep,
+};
 use vexide_motorgroup::MotorGroup;
 
 // use crate::display::{RobotDisplay, RobotDisplaySelector};
@@ -17,6 +28,21 @@ pub struct Robot {
 }
 
 impl Robot {
+    pub const WHEEL_DIAMETER: f64 = 3.25;
+
+    // TODO: tune
+    pub const LINEAR_PID: Pid = Pid::new(0.0, 0.0, 0.0, None);
+    pub const ANGULAR_PID: AngularPid = AngularPid::new(0.0, 0.0, 0.0, None);
+
+    pub const LINEAR_TOLERANCES: Tolerances = Tolerances::new()
+        .error(0.5)
+        .velocity(0.1)
+        .duration(Duration::from_millis(15));
+    pub const ANGULAR_TOLERANCES: Tolerances = Tolerances::new()
+        .error(f64::to_radians(8.0))
+        .velocity(0.05)
+        .duration(Duration::from_millis(15));
+
     pub async fn new(peripherals: Peripherals) -> Self {
         Self {
             pi: Some(SerialPort::open(

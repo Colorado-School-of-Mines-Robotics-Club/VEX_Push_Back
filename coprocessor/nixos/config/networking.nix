@@ -1,15 +1,20 @@
-{
-    config,
-    pkgs,
-    lib,
-    piNumber,
-    ...
-}:
+{ piNumber, ... }:
 {
     networking = {
-        hostName = "mines-rpi0-${builtins.toString piNumber}";
+        hostName = "ordgr-rpi0-${builtins.toString piNumber}";
 
-        firewall.enable = false; # TODO Maybe?
+        firewall = {
+            enable = true;
+            allowedTCPPorts = [
+                # SSH
+                22
+            ];
+            allowedUDPPorts = [
+                # mDNS
+                5353
+            ];
+        };
+        nftables.enable = true;
 
         # Configure wifi
         wireless = {
@@ -50,34 +55,6 @@
                 IPv6AcceptRA = "yes";
 
                 IgnoreCarrierLoss = "3s";
-            };
-        };
-    };
-
-    # Enable tailscale for easy connection on any network
-    services.tailscale = {
-        enable = true;
-        useRoutingFeatures = "both";
-        openFirewall = true;
-
-        authKeyFile = "${config.sops.secrets."tailscale/preauth_key".path}";
-
-        extraUpFlags = [
-            "--reset"
-            "--ssh"
-            "--advertise-tags=tag:rpi"
-            "--login-server=https://ts.myriation.xyz"
-            "--operator=pi"
-        ];
-    };
-    services.networkd-dispatcher = {
-        enable = true;
-        rules = {
-            "50-tailscale-optimizations" = {
-                onState = [ "routable" ];
-                script = ''
-                    ${lib.getExe pkgs.ethtool} -K "$IFACE" rx-udp-gro-forwarding on rx-gro-list off
-                '';
             };
         };
     };

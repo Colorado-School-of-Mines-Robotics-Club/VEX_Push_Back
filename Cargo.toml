@@ -1,11 +1,11 @@
 [package]
-name = "proj"
+name = "ordgr-push-back"
 version = "0.1.0"
 edition = "2024"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[workspace]
+members = [".", "coprocessor/brain"]
 
-# These fields configure default behavior for uploads with `cargo v5`.
 [package.metadata.v5]
 upload-strategy = "differential"
 slot = 1

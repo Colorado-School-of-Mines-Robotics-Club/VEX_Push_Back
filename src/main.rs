@@ -14,7 +14,7 @@ use crate::robot::Robot;
 
 #[vexide::main]
 async fn main(peripherals: Peripherals) {
-    let robot = Robot::new(peripherals);
+    let robot = Robot::new(peripherals).await;
 
     robot.start().await;
 }

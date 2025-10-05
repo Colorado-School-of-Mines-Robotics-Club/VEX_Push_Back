@@ -9,9 +9,7 @@ mod compete;
 mod robot;
 mod tracking;
 
-use core::time::Duration;
-
-use vexide::{io::stdout, prelude::*};
+use vexide::prelude::*;
 
 use crate::robot::Robot;
 

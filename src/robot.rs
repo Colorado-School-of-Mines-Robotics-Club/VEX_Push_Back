@@ -1,9 +1,6 @@
-use core::{
-    cell::{RefCell, RefMut},
-    time::Duration,
-};
+use core::time::Duration;
 
-use alloc::{sync::Arc, vec};
+use alloc::vec;
 use evian::{
     control::loops::{AngularPid, Pid},
     drivetrain::model::Differential,
@@ -45,9 +42,7 @@ impl Robot {
 
     pub async fn new(peripherals: Peripherals) -> Self {
         Self {
-            pi: Some(SerialPort::open(
-                peripherals.port_20,921600
-            ).await),
+            pi: Some(SerialPort::open(peripherals.port_20, 921600).await),
             // display: Arc::new(RobotDisplay::new(peripherals.display))
             controller: peripherals.primary_controller,
             drivetrain: Drivetrain::new(
@@ -74,10 +69,11 @@ impl Robot {
         let mut pi = self.pi.take().unwrap();
         task::spawn(async move {
             loop {
-            let _ = pi.write_byte(4);
-            sleep(Duration::from_millis(10)).await;
+                let _ = pi.write_byte(4);
+                sleep(Duration::from_millis(10)).await;
             }
-        }).detach();
+        })
+        .detach();
 
         self.compete().await
         // self.compete(RobotDisplaySelector::new(self.display.clone())).await

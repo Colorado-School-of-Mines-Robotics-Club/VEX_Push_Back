@@ -1,10 +1,7 @@
 use core::time::Duration;
 
 // use autons::prelude::SelectCompete;
-use evian::{
-    motion::Basic,
-    prelude::{Arcade, Tank},
-};
+use evian::{motion::Basic, prelude::Arcade};
 use vexide::prelude::*;
 
 use crate::robot::Robot;

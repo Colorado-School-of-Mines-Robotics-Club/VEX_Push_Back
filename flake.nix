@@ -55,7 +55,9 @@
                 treefmt = treefmt-nix.lib.evalModule pkgs treefmtCfg;
                 # Build extra python packages
                 mkPythonPackages = ps: rec {
-                    qwiic-i2c = pkgs.callPackage ./coprocessor/nixos/config/otos/packages/qwiic-i2c.nix { python3Packages = ps; };
+                    qwiic-i2c = pkgs.callPackage ./coprocessor/nixos/config/otos/packages/qwiic-i2c.nix {
+                        python3Packages = ps;
+                    };
                     qwiic-otos = pkgs.callPackage ./coprocessor/nixos/config/otos/packages/qwiic-otos.nix {
                         inherit qwiic-i2c;
                         python3Packages = ps;

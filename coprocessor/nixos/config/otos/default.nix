@@ -1,8 +1,6 @@
 { pkgs, self, ... }:
 {
-    environment.systemPackages = [
-        self.packages.${pkgs.system}.pythonWithLibs
-    ];
+    environment.systemPackages = [ self.packages.${pkgs.system}.pythonWithLibs ];
 
     # systemd.services.otos-sensor = {
     #     description = "otos sensor";

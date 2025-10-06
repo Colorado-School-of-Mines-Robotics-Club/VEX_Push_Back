@@ -8,12 +8,7 @@ use evian::{
     prelude::{Drivetrain, Tolerances},
 };
 // use autons::prelude::SelectCompeteExt as _;
-use vexide::{
-    io::{Read, Write as _, println, stdout},
-    prelude::{CompeteExt as _, Controller, Direction, Gearset, Motor, Peripherals, SerialPort},
-    task,
-    time::sleep,
-};
+use vexide::prelude::{CompeteExt as _, Controller, Direction, Gearset, Motor, Peripherals};
 use vexide_motorgroup::MotorGroup;
 
 // use crate::display::{RobotDisplay, RobotDisplaySelector};

@@ -4,7 +4,7 @@ use shrewnit::{AngularVelocity, LinearVelocity};
 
 use crate::requests::{CoprocessorRequest, parse_i16_triple};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Default)]
 pub struct OtosVelocity {
     pub x: LinearVelocity<f64>,
     pub y: LinearVelocity<f64>,
@@ -15,6 +15,7 @@ pub struct GetVelocityRequest;
 
 impl CoprocessorRequest for GetVelocityRequest {
     const RESPONSE_SIZE: usize = size_of::<i16>() * 3;
+
     type Response = OtosVelocity;
 
     fn serialize_request(&self) -> Bytes {

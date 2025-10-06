@@ -58,7 +58,7 @@ impl Robot {
                 Motor::new(peripherals.port_3, Gearset::Blue, Direction::Forward),
                 Motor::new(peripherals.port_8, Gearset::Blue, Direction::Reverse),
             ]),
-            coprocessor: CoprocessorSmartPort::new(peripherals.port_20).await
+            coprocessor: CoprocessorSmartPort::new(peripherals.port_20).await,
         }
     }
 

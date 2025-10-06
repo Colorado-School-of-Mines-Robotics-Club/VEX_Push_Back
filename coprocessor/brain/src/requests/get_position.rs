@@ -4,7 +4,7 @@ use shrewnit::{Angle, Length};
 
 use crate::requests::{CoprocessorRequest, parse_i16_triple};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Default)]
 pub struct OtosPosition {
     pub x: Length<f64>,
     pub y: Length<f64>,
@@ -15,6 +15,7 @@ pub struct GetPositionRequest;
 
 impl CoprocessorRequest for GetPositionRequest {
     const RESPONSE_SIZE: usize = size_of::<i16>() * 3;
+
     type Response = OtosPosition;
 
     fn serialize_request(&self) -> Bytes {

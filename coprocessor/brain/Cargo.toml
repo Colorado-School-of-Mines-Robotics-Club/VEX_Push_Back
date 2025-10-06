@@ -7,5 +7,5 @@ edition = "2024"
 bytes = { version = "1.10.1", default-features = false }
 cobs = { version = "0.4.0", default-features = false, features = ["alloc"] }
 nom = { version = "8.0.0", default-features = false, features = ["alloc"] }
-shrewnit = "0.2.1"
+shrewnit = { workspace = true }
 vexide = { workspace = true }

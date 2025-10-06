@@ -6,7 +6,7 @@
     - Device: `32:98:33:00:00:00`
     - Host:   `32:98:33:00:00:01`
 - IP addresses (link-local)
-    - IPv4: `169.254.25.0`\*
+    - IPv4: `169.254.25.0`
     - IPv6: `fe80::3098:33ff:fe00:0`
 
 ## Parts (per bot)

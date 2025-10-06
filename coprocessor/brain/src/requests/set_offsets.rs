@@ -15,6 +15,7 @@ pub struct SetOffsetsRequest {
 
 impl CoprocessorRequest for SetOffsetsRequest {
     const RESPONSE_SIZE: usize = size_of::<u8>();
+
     type Response = ();
 
     fn serialize_request(&self) -> Bytes {

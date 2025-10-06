@@ -7,6 +7,7 @@ pub struct PingRequest;
 
 impl CoprocessorRequest for PingRequest {
     const RESPONSE_SIZE: usize = size_of::<u8>();
+
     type Response = ();
 
     fn serialize_request(&self) -> Bytes {

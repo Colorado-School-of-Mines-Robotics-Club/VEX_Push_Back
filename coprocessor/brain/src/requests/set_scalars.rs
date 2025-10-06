@@ -25,6 +25,7 @@ pub struct SetScalarsRequest {
 
 impl CoprocessorRequest for SetScalarsRequest {
     const RESPONSE_SIZE: usize = size_of::<u8>();
+
     type Response = ();
 
     fn serialize_request(&self) -> Bytes {

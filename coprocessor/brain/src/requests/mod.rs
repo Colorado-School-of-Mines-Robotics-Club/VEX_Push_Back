@@ -5,6 +5,8 @@ mod ping;
 mod set_offsets;
 mod set_scalars;
 
+use core::time::Duration;
+
 pub use calibrate::*;
 pub use get_position::*;
 pub use get_velocity::*;
@@ -17,6 +19,8 @@ use nom::{IResult, Parser};
 
 pub trait CoprocessorRequest {
     const RESPONSE_SIZE: usize;
+    const TIMEOUT: Duration = Duration::from_millis(100);
+
     type Response;
 
     fn serialize_request(&self) -> Bytes;

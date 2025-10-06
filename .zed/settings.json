@@ -3,14 +3,15 @@
         "rust-analyzer": {
             "initialization_options": {
                 "cargo": {
-                    "target": "./armv7a-vex-v5.json",
+                    // "target": "./armv7a-vex-v5.json",
                     "allTargets": false
                 },
                 "check": {
                     "command": "clippy",
                     "features": "all",
-                    "targets": "./armv7a-vex-v5.json"
-                }
+                    // "targets": "./armv7a-vex-v5.json"
+                },
+                "linkedProjects": ["./Cargo.toml", "./display/simulator/Cargo.toml"]
             }
         }
     }

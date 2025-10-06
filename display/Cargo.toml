@@ -1,0 +1,17 @@
+[package]
+name = "display"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+embedded-graphics = "0.8.1"
+embedded-text = "0.7.2"
+u8g2-fonts = { version = "0.7.2", features = ["embedded_graphics_textstyle"] }
+vexide = { workspace = true, optional = true }
+vexide-embedded-graphics = { workspace = true, optional = true }
+autons = { workspace = true, optional = true }
+
+[features]
+default = ["vexide"]
+vexide = ["dep:vexide", "dep:vexide-embedded-graphics", "dep:autons"]
+std = []

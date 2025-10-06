@@ -3,27 +3,42 @@ use core::time::Duration;
 use alloc::sync::Arc;
 use bytes::{BufMut, BytesMut};
 use vexide::{
-    io::{self, Write},
+    io::{self, Write, println},
     prelude::{SerialPort, SmartPort},
-    sync::Mutex,
+    sync::{Mutex, RwLock, RwLockReadGuard},
     task::{self, Task},
     time::{Instant, sleep},
 };
 
-use crate::requests::{CoprocessorRequest, PingRequest};
+use crate::requests::{
+    CoprocessorRequest, GetPositionRequest, GetVelocityRequest, OtosPosition, OtosVelocity,
+};
+
+#[derive(Default)]
+pub struct CoprocessorData {
+    position: OtosPosition,
+    velocity: OtosVelocity,
+}
 
 pub struct CoprocessorSmartPort {
     port: Arc<Mutex<SerialPort>>,
+    latest_data: Arc<RwLock<CoprocessorData>>,
     _task: Task<!>,
 }
 
 impl CoprocessorSmartPort {
     pub async fn new(port: SmartPort) -> Self {
         let port = Arc::new(Mutex::new(SerialPort::open(port, 921600).await));
+        let latest_data = Arc::new(RwLock::new(CoprocessorData::default()));
         Self {
-            _task: task::spawn(Self::background_task(port.clone())),
+            _task: task::spawn(Self::background_task(port.clone(), latest_data.clone())),
+            latest_data,
             port,
         }
+    }
+
+    pub async fn get_data(&self) -> RwLockReadGuard<'_, CoprocessorData> {
+        self.latest_data.read().await
     }
 
     pub async fn send_request<R: CoprocessorRequest>(
@@ -41,12 +56,12 @@ impl CoprocessorSmartPort {
 
         port.write_all(&request.serialize_request())?;
 
-        let time = Instant::now();
+        let timeout = Instant::now() + R::TIMEOUT;
         let mut buf =
             BytesMut::with_capacity(const { cobs::max_encoding_length(R::RESPONSE_SIZE) + 1 });
 
         loop {
-            if Instant::now() > time {
+            if Instant::now() > timeout {
                 return Err(io::Error::new(
                     io::ErrorKind::TimedOut,
                     "waiting for full response timed out",
@@ -86,11 +101,26 @@ impl CoprocessorSmartPort {
         })
     }
 
-    async fn background_task(port: Arc<Mutex<SerialPort>>) -> ! {
+    async fn background_task(
+        port: Arc<Mutex<SerialPort>>,
+        latest_data: Arc<RwLock<CoprocessorData>>,
+    ) -> ! {
         loop {
-            let _ = Self::send_request_with_port(port.clone(), PingRequest).await;
+            match Self::send_request_with_port(port.clone(), GetPositionRequest).await {
+                Ok(position) => {
+                    latest_data.write().await.position = position;
+                }
+                Err(e) => println!("Error reading position from coprocessor: {e:?}"),
+            };
 
-            sleep(Duration::from_millis(100)).await
+            match Self::send_request_with_port(port.clone(), GetVelocityRequest).await {
+                Ok(velocity) => {
+                    latest_data.write().await.velocity = velocity;
+                }
+                Err(e) => println!("Error reading velocity from coprocessor: {e:?}"),
+            };
+
+            sleep(Duration::from_millis(5)).await
         }
     }
 }

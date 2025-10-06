@@ -4,10 +4,14 @@ version = "0.1.0"
 edition = "2024"
 
 [workspace]
-members = [".", "coprocessor/brain"]
+members = [".", "coprocessor/brain", "display"]
 
 [workspace.dependencies]
 vexide = "0.7.0"
+vexide-embedded-graphics = { git = "https://github.com/vexide/vexide-embedded-graphics.git", rev = "014559a70eea8f077a41bbef59885e4641709cee" }
+shrewnit = { git = "https://github.com/Gavin-Niederman/shrewnit.git", rev = "73617f18d1faf79ffed097d1fc7ef0e1ae8663de" }
+evian = { git = "https://github.com/vexide/evian.git", version = "0.3.0-rc.1" }
+autons = "0.1.0"
 
 [package.metadata.v5]
 upload-strategy = "differential"
@@ -16,10 +20,9 @@ icon = "cool-x"
 compress = true
 
 [dependencies]
-autons = "0.1.0"
 cobs = { version = "0.4.0", default-features = false, features = ["alloc"] }
-evian = { git = "https://github.com/vexide/evian.git", version = "0.3.0-rc.1" }
-shrewnit = "0.2.1"
+evian = { workspace = true }
+shrewnit = { workspace = true }
 vexide = { workspace = true }
 vexide-motorgroup = "2.1.0"
 coprocessor = { path = "./coprocessor/brain" }

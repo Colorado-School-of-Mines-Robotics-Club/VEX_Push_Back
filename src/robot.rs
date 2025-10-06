@@ -1,6 +1,7 @@
 use core::time::Duration;
 
 use alloc::vec;
+use coprocessor::vexide::CoprocessorSmartPort;
 use evian::{
     control::loops::{AngularPid, Pid},
     drivetrain::model::Differential,
@@ -8,6 +9,7 @@ use evian::{
 };
 // use autons::prelude::SelectCompeteExt as _;
 use vexide::{
+    io::{Read, Write as _, println, stdout},
     prelude::{CompeteExt as _, Controller, Direction, Gearset, Motor, Peripherals, SerialPort},
     task,
     time::sleep,
@@ -18,7 +20,7 @@ use vexide_motorgroup::MotorGroup;
 
 pub struct Robot {
     // display: Arc<RobotDisplay>
-    pub pi: Option<SerialPort>,
+    pub coprocessor: CoprocessorSmartPort,
     pub controller: Controller,
     pub drivetrain: Drivetrain<Differential, ()>,
     pub intake: MotorGroup,
@@ -42,7 +44,6 @@ impl Robot {
 
     pub async fn new(peripherals: Peripherals) -> Self {
         Self {
-            pi: Some(SerialPort::open(peripherals.port_20, 921600).await),
             // display: Arc::new(RobotDisplay::new(peripherals.display))
             controller: peripherals.primary_controller,
             drivetrain: Drivetrain::new(
@@ -62,19 +63,11 @@ impl Robot {
                 Motor::new(peripherals.port_3, Gearset::Blue, Direction::Forward),
                 Motor::new(peripherals.port_8, Gearset::Blue, Direction::Reverse),
             ]),
+            coprocessor: CoprocessorSmartPort::new(peripherals.port_20).await
         }
     }
 
-    pub async fn start(mut self) -> ! {
-        let mut pi = self.pi.take().unwrap();
-        task::spawn(async move {
-            loop {
-                let _ = pi.write_byte(4);
-                sleep(Duration::from_millis(10)).await;
-            }
-        })
-        .detach();
-
+    pub async fn start(self) -> ! {
         self.compete().await
         // self.compete(RobotDisplaySelector::new(self.display.clone())).await
     }

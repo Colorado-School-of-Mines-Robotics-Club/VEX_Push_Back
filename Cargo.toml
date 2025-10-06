@@ -6,6 +6,9 @@ edition = "2024"
 [workspace]
 members = [".", "coprocessor/brain"]
 
+[workspace.dependencies]
+vexide = "0.7.0"
+
 [package.metadata.v5]
 upload-strategy = "differential"
 slot = 1
@@ -16,6 +19,7 @@ compress = true
 autons = "0.1.0"
 cobs = { version = "0.4.0", default-features = false, features = ["alloc"] }
 evian = { git = "https://github.com/vexide/evian.git", version = "0.3.0-rc.1" }
-shrewnit = "0.2.0"
-vexide = "0.7.0"
+shrewnit = "0.2.1"
+vexide = { workspace = true }
 vexide-motorgroup = "2.1.0"
+coprocessor = { path = "./coprocessor/brain" }

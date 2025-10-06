@@ -4,5 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+bytes = { version = "1.10.1", default-features = false }
 cobs = { version = "0.4.0", default-features = false, features = ["alloc"] }
-crc = "3.3.0"
+nom = { version = "8.0.0", default-features = false, features = ["alloc"] }
+shrewnit = "0.2.1"
+vexide = { workspace = true }

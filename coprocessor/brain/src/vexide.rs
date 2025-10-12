@@ -54,7 +54,9 @@ impl CoprocessorSmartPort {
     ) -> Result<R::Response, io::Error> {
         let mut port = port.lock().await;
 
-        port.write_all(&request.serialize_request())?;
+        let encoded = cobs::encode_vec(&request.serialize_request());
+        port.write_all(&encoded)?;
+        port.write(&[0x00])?;
 
         let timeout = Instant::now() + R::TIMEOUT;
         let mut buf =

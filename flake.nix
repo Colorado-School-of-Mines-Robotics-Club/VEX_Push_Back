@@ -32,13 +32,17 @@
             ...
         }:
         {
-            nixosConfigurations.rpi = nixos-raspberrypi.lib.nixosSystem {
-                specialArgs = {
-                    piNumber = 1;
-                    inherit inputs self;
-                    inherit (inputs) nixos-raspberrypi;
+            nixosConfigurations = let
+                mkPi = piNumber: nixos-raspberrypi.lib.nixosSystem {
+                    specialArgs = {
+                        inherit inputs self piNumber;
+                        inherit (inputs) nixos-raspberrypi;
+                    };
+                    modules = [ ./coprocessor/nixos ];
                 };
-                modules = [ ./coprocessor/nixos ];
+            in {
+                rpi1 = mkPi 1;
+                rpi2 = mkPi 2;
             };
         }
         // flake-utils.lib.eachDefaultSystem (

@@ -20,7 +20,7 @@ impl Compete for Robot {
             let _ = self
                 .drivetrain
                 .model
-                .drive_arcade(state.left_stick.y(), state.left_stick.x());
+                .drive_arcade(state.left_stick.y(), state.left_stick.x() * 0.5);
 
             // Intake control
             let _ = self.intake.set_voltage(

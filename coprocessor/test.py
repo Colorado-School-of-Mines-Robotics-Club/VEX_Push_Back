@@ -73,8 +73,12 @@ class SmartPortSerial:
         self.serial.write(b'\0')
         GPIO.output(GPIO_RS485_ENABALE_PINS, GPIO_RS485_RX_STATE)
 
-    def read_byte(self) -> int:
-        return self.serial.read()[0]
+    def read_byte(self) -> int | None:
+        out = self.serial.read()
+        if len(out) > 0:
+            return out[0]
+        else:
+            return None
 
 
 # https://github.com/sparkfun/SparkFun_Optical_Tracking_Odometry_Sensor/blob/main/Firmware/OTOS_Register_Map.pdf
@@ -122,6 +126,8 @@ with (
                     smart_port.send(b'a')
 
                     print("alive")
+        elif next_byte == None:
+            continue
         elif len(buffer) < 2048:
             buffer.append(next_byte)
         else:

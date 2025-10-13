@@ -71,6 +71,7 @@ class SmartPortSerial:
         GPIO.output(GPIO_RS485_ENABALE_PINS, GPIO_RS485_TX_STATE)
         self.serial.write(cobs.encode(data))
         self.serial.write(b'\0')
+        self.serial.flush()
         GPIO.output(GPIO_RS485_ENABALE_PINS, GPIO_RS485_RX_STATE)
 
     def read_byte(self) -> int | None:
@@ -95,21 +96,30 @@ with (
 
     while True:
         next_byte = smart_port.read_byte()
-        if next_byte == b'\0':
+        #if next_byte != None:
+        #    print(next_byte, chr(next_byte))
+
+        if next_byte == 0:
             try:
                 decoded = cobs.decode(bytes(buffer))
             except:
+                print("Invalid COBS!")
                 continue
             finally:
                 buffer = []
+
+            if len(decoded) <= 0:
+                continue
 
             comand = decoded[0]
 
             match chr(decoded[0]):
                 case 'p':
+                    print("Sent position")
                     smart_port.send(otos.get_position())
 
                 case 'v': # Get velocity
+                    print("Set velocity")
                     smart_port.send(otos.get_velocity())
 
                 case 'c': # Calibrate
@@ -118,9 +128,11 @@ with (
 
                 case 'o': # Set offsets
                     otos.set_offset(decoded[1:7])
+                    smart_port.send(b'd')
 
                 case 's': # Set scalars
                     otos.set_scalar(decoded[1:3])
+                    smart_port.send(b'd')
 
                 case 'a': # Ping
                     smart_port.send(b'a')

@@ -1,20 +1,21 @@
-{ pkgs, self, ... }:
-{
-    environment.systemPackages = [ self.packages.${pkgs.system}.pythonWithLibs ];
+{ pkgs, lib, self, ... }:
+let
+    python3 = self.packages.${pkgs.system}.pythonWithLibs;
+in {
+    environment.systemPackages = [ python3 ];
 
-    # systemd.services.otos-sensor = {
-    #     description = "otos sensor";
-    #     wantedBy = [ "multi-user.target" ];
+    systemd.services.copro = {
+        wantedBy = [ "multi-user.target" ];
 
-    #     environment = {
-    #         PYTHONUNBUFFERED = "true"; # Fix python stdout/stderr with syslog
-    #     };
+        environment = {
+            PYTHONUNBUFFERED = "true"; # Fix python stdout/stderr with journald
+        };
 
-    #     serviceConfig = {
-    #         User = "root";
-    #         Group = "root";
+        serviceConfig = {
+            User = "root";
+            Group = "root";
 
-    #         ExecStart = "${lib.getExe self.packages.${system}.otos-script}";
-    #     };
-    # };
+            ExecStart = "${lib.getExe python3} /home/pi/copro.py";
+        };
+    };
 }

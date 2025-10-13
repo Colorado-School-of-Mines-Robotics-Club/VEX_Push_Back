@@ -12,6 +12,7 @@ vexide-embedded-graphics = { git = "https://github.com/vexide/vexide-embedded-gr
 shrewnit = { git = "https://github.com/Gavin-Niederman/shrewnit.git", rev = "73617f18d1faf79ffed097d1fc7ef0e1ae8663de" }
 evian = { git = "https://github.com/vexide/evian.git", version = "0.3.0-rc.1" }
 autons = "0.1.0"
+atomic = { version = "0.6.1" }
 
 [package.metadata.v5]
 upload-strategy = "differential"
@@ -26,3 +27,5 @@ shrewnit = { workspace = true }
 vexide = { workspace = true }
 vexide-motorgroup = "2.1.0"
 coprocessor = { path = "./coprocessor/brain" }
+atomic = { workspace = true }
+display = { path = "./display" }

@@ -1,7 +1,9 @@
 use core::time::Duration;
 
+use coprocessor::requests::CalibrateRequest;
 // use autons::prelude::SelectCompete;
-use evian::{motion::Basic, prelude::Arcade};
+use evian::{math::Angle, motion::Basic, prelude::Arcade};
+use shrewnit::{Degrees, Radians};
 use vexide::prelude::*;
 
 use crate::robot::Robot;
@@ -12,7 +14,8 @@ impl Compete for Robot {
 
         loop {
             let Ok(state) = self.controller.state() else {
-                println!("Warning: controller not connected");
+                // println!("Warning: controller not connected");
+                sleep(Duration::from_millis(10)).await;
                 continue;
             };
 
@@ -31,6 +34,14 @@ impl Compete for Robot {
                 },
             );
 
+            // Calibrate OTOS button
+            if state.button_x.is_now_pressed() {
+                match self.coprocessor.send_request(CalibrateRequest).await {
+                    Ok(_) => println!("Calibrated!"),
+                    Err(e) => println!("Unable to calibrate: {e:?}"),
+                };
+            }
+
             sleep(Duration::from_millis(10)).await;
         }
     }
@@ -38,7 +49,7 @@ impl Compete for Robot {
     async fn autonomous(&mut self) {
         println!("Auton!");
 
-        let basic = Basic {
+        let mut basic = Basic {
             linear_controller: Robot::LINEAR_PID,
             angular_controller: Robot::ANGULAR_PID,
             linear_tolerances: Robot::LINEAR_TOLERANCES,
@@ -46,7 +57,10 @@ impl Compete for Robot {
             timeout: None,
         };
 
-        // basic.drive_distance(&mut self.drivetrain, 12.0);
+        // basic.drive_distance(&mut self.drivetrain, -12.0).await;
+
+        let current_angle = self.coprocessor.latest_data().position.load(atomic::Ordering::Relaxed).heading;
+        basic.turn_to_heading(&mut self.drivetrain, Angle::from_radians((current_angle - 45.0 * Degrees).to::<Radians>())).await;
     }
 
     async fn disabled(&mut self) {

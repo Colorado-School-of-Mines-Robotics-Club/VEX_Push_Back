@@ -1,6 +1,6 @@
-use core::pin::Pin;
+use core::{pin::Pin, sync::atomic::{AtomicUsize, Ordering}};
 
-use alloc::boxed::Box;
+use alloc::{boxed::Box, string::String, vec::Vec};
 use embedded_graphics::{
     Drawable,
     pixelcolor::Rgb888,
@@ -36,15 +36,14 @@ fn calculate_luminance<C: RgbColor>(color: C) -> f64 {
 
 pub type RouteFn<R> = for<'s> fn(&'s mut R) -> Pin<Box<dyn Future<Output = ()> + 's>>;
 
-#[derive(Clone, Copy)]
-pub struct AutonRoute<'a, R> {
-    pub text: &'a str,
+pub struct AutonRoute<R> {
+    pub text: String,
     pub color: Rgb888,
     pub callback: RouteFn<R>,
 }
 
-impl<'a, R> AutonRoute<'a, R> {
-    pub fn new(text: &'a str, color: Rgb888, callback: RouteFn<R>) -> Self {
+impl<R> AutonRoute<R> {
+    pub fn new(text: String, color: Rgb888, callback: RouteFn<R>) -> Self {
         Self {
             text,
             color,
@@ -53,46 +52,47 @@ impl<'a, R> AutonRoute<'a, R> {
     }
 }
 
-pub struct AutonSelector<'a, const ROWS: u32, const COLS: u32, A, R>
-where
-    A: Iterator<Item = AutonRoute<'a, R>> + ExactSizeIterator + Clone,
+pub struct AutonSelector<const ROWS: u32, const COLS: u32, R>
 {
-    pub(crate) routes: A,
-    pub(crate) selected: usize,
+    pub(crate) routes: Vec<AutonRoute<R>>,
+    pub(crate) selected: AtomicUsize,
     character_style: U8g2TextStyle<Rgb888>,
 }
 
-impl<'a, const ROWS: u32, const COLS: u32, A, R> AutonSelector<'a, { ROWS }, { COLS }, A, R>
-where
-    A: Iterator<Item = AutonRoute<'a, R>> + ExactSizeIterator + Clone,
+impl<const ROWS: u32, const COLS: u32, R> AutonSelector<{ ROWS }, { COLS }, R>
 {
-    pub fn new(autons: impl IntoIterator<IntoIter = A>) -> Self {
+    pub fn new(autons: impl IntoIterator<Item = AutonRoute<R>>) -> Self {
         Self::new_with_font(autons, u8g2_font_Pixellari_tr)
     }
 
-    pub fn new_with_font<F: Font>(autons: impl IntoIterator<IntoIter = A>, font: F) -> Self {
+    pub fn new_with_font<F: Font>(autons: impl IntoIterator<Item = AutonRoute<R>>, font: F) -> Self {
         Self {
-            routes: autons.into_iter(),
+            routes: autons.into_iter().collect(),
             character_style: U8g2TextStyle::new(font, Rgb888::default()),
-            selected: 0,
+            selected: Default::default(),
+        }
+    }
+
+    pub async fn start_auton(&self, robot: &mut R) {
+        if let Some(route) = self.routes.get(self.selected.load(Ordering::Relaxed)) {
+            (route.callback)(robot).await
         }
     }
 }
 
-impl<'a, const ROWS: u32, const COLS: u32, A, T, R> RobotDisplayScreen<T>
-    for AutonSelector<'a, { ROWS }, { COLS }, A, R>
+impl<const ROWS: u32, const COLS: u32, T, R> RobotDisplayScreen<T>
+    for AutonSelector<{ ROWS }, { COLS }, R>
 where
     T: DrawTarget<Color = Rgb888>,
-    A: Iterator<Item = AutonRoute<'a, R>> + ExactSizeIterator + Clone,
 {
     fn draw(
-        &mut self,
+        &self,
         target: &mut T,
         touch_status: crate::RobotDisplayTouchStatus,
     ) -> Result<(), T::Error> {
         let size = target.bounding_box().size;
         let thin_stroke = PrimitiveStyle::with_stroke(Rgb888::WHITE, 1);
-
+        let mut character_style = self.character_style.clone();
         let cell_size = size.component_div(Size::new(COLS, ROWS));
 
         target.clear(Rgb888::BLACK)?;
@@ -110,12 +110,13 @@ where
             );
             let selected = (index.0 + index.1 * (COLS as i32)) as usize;
             if selected < self.routes.len() {
-                self.selected = selected;
+                self.selected.store(selected, Ordering::Relaxed);
             }
         }
 
         // Draw each auton
-        for (i, auton) in self.routes.clone().enumerate() {
+        let selected = self.selected.load(Ordering::Relaxed);
+        for (i, auton) in self.routes.iter().enumerate() {
             let i = i as u32;
 
             let row = i / (COLS);
@@ -128,7 +129,7 @@ where
             let cell_bounds = Rectangle::with_corners(top_left, top_left + cell_size);
 
             // If selected, highlight background
-            self.character_style.text_color = if (i as usize) == self.selected {
+            character_style.text_color = if (i as usize) == selected {
                 cell_bounds.draw_styled(&PrimitiveStyle::with_fill(auton.color), target)?;
 
                 if calculate_luminance(auton.color) > f64::sqrt(0.0525) {
@@ -142,9 +143,9 @@ where
 
             // Draw text
             TextBox::with_textbox_style(
-                auton.text,
+                &auton.text,
                 cell_bounds.offset(-3),
-                self.character_style.clone(),
+                character_style.clone(),
                 TextBoxStyleBuilder::new()
                     .alignment(HorizontalAlignment::Center)
                     .vertical_alignment(VerticalAlignment::Middle)

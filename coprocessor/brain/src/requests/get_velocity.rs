@@ -4,12 +4,14 @@ use shrewnit::{AngularVelocity, LinearVelocity};
 
 use crate::requests::{CoprocessorRequest, parse_i16_triple};
 
-#[derive(Debug, PartialEq, Default)]
+#[derive(Debug, PartialEq, Default, Clone, Copy)]
 pub struct OtosVelocity {
     pub x: LinearVelocity<f64>,
     pub y: LinearVelocity<f64>,
     pub heading: AngularVelocity<f64>,
 }
+
+unsafe impl bytemuck::NoUninit for OtosVelocity {}
 
 pub struct GetVelocityRequest;
 

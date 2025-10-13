@@ -1,14 +1,5 @@
 # Coprocessor setup
 
-## Magic numbers
-
-- Ethernet gadget MAC addresses
-    - Device: `32:98:33:00:00:00`
-    - Host:   `32:98:33:00:00:01`
-- IP addresses (link-local)
-    - IPv4: `169.254.25.0`
-    - IPv6: `fe80::3098:33ff:fe00:0`
-
 ## Parts (per bot)
 
 - https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/
@@ -37,51 +28,48 @@ After the response has been fully sent, reciever mode should be enabled again.
 ## Communication protocol
 
 - 921600 baud UART
-- Half-duplex, arbitrated by the host
-- Vex brain as host, Pi as device
+- Half-duplex
+    - All communication is request -> response, with the brain requesting
 - Consistent Overhead Byte Stuffing (COBS) for packet framing
-- CRC with the following parameters
-  | Parameter | Value |
-  | - | - |
-  | Width | 16 |
-  | Polynomial | `0xa2eb` (CRC-16F/4.2) |
-  | Initial value | `0xffff` |
-  | Reverse input | No |
-  | Reverse output | No |
-  | XOR output | `0xffff` |
-  | Check | `0x624e` |
-  | Residue | `0xddfc` |
+- Where possible, data is forwarded from sensors with no procesing on the pi
 
-### Packet format
+## Code
 
-The format for both request and response packets is as follows (all COBS-encoded):
+## Vex Brain
 
-```
-[1 byte ID] [1 byte packet type] [type-specific payload] [2 byte CRC]
-```
+The code that runs on the brain is written as a rust crate to be depended on by
+the main robot code. It takes a given smart port as a UART serial interface and
+uses that for communication. This side of the code does the majority of the
+processing, including convering raw data from the sensor to reasonable units, as
+the brain is more suited for real-time processing.
 
-A response to a request must have the same 1 byte ID as the request.
+## Pi (OS)
 
-### Payloads
+The pi uses NixOS to make it easy to automate initial Pi setup and ensure
+reproducibility. To create an SD image for use on the pi, use the command `nix
+build '.#nixosConfigurations.rpi<N>.config.system.build.sdImage' -L`, where
+`<N>` is replaced with the numeric identifier for the Pi (this may require
+remote builders or binfmt). Then, after the image is constructed, write the
+resulting image file to an SD card, and insert it into a Pi. The Pi should then
+boot properly and have everything configured out of the box. In order for the
+actual coproccessor communication script to run, it must first be uploaded over
+SSH (the left Micro USB port is configured as an ethernet gadget, and will allow
+link-local communication and mDNS usage) to `/home/pi/copro.py`. The systemd
+service `copro.service` will automatically run this file at boot, and can be
+managed manually over SSH.
 
-| Request type    | Request payload | Request Meaning | Response payload | Response meaning        |
-| --------------- | --------------- | --------------- | ---------------- | ----------------------- |
-| `0x01`          | None            | Calibrate OTOS  | `0xff`           | Successfully calibrated |
-| `0x02`          | None            | Request OTOS    | OtosPosition     | Data on the current position from OTOS |
+## Pi (communication)
 
-### Structs
+The code that actually does communication with the brain is written as a python
+script that uses a linux serial inferface to communicate with the brain, and i2c
+to interact with sensors. Minimal processing should be done on any data being
+handled by this script, as python is not designed for speed and the script is
+not the only code running on the pi.
 
-All structs are little-endian
+<!--
+TODO: https://documentation.ubuntu.com/real-time/latest/how-to/isolate-workload-cpusets/
+Give all normal slices 3/4 of the cores, and make a new slice for the script with it's own core
 
-#### OtosPosition
-
-Values are returned as a signed 16-bit integer representing a portion within some range.
-
-```c
-    // Range: [-10m, 10m]
-    int16_t x;
-    // Range: [-10m, 10m]
-    int16_t y;
-    // Range: [-180deg, 180deg]
-    int16_t h;
-```
+This would allow providing an isolated core for the python program to run on,
+ensuring script execution is never delayed due to shared CPU use.
+-->

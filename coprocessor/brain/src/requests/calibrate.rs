@@ -9,7 +9,7 @@ pub struct CalibrateRequest;
 
 impl CoprocessorRequest for CalibrateRequest {
     const RESPONSE_SIZE: usize = size_of::<u8>();
-    const TIMEOUT: Duration = Duration::from_millis(1500);
+    const TIMEOUT: Duration = Duration::from_millis(2000);
 
     type Response = ();
 

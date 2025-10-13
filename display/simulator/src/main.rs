@@ -10,30 +10,37 @@ use embedded_graphics_simulator::{
     sdl2::{Keycode, MouseButton},
 };
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let target = SimulatorDisplay::<Rgb888>::new(Size::new(480, 240));
+    let mut robot = ();
     let mut display = RobotDisplay::new(target);
 
     let autons = [
         AutonRoute {
-            text: "Red rush",
+            text: "Red rush".to_string(),
             color: Rgb888::RED,
+            callback: |_robot| Box::pin(async move { println!("Red rush") })
         },
         AutonRoute {
-            text: "Red chill",
+            text: "Red chill".to_string(),
             color: Rgb888::CSS_DARK_RED,
+            callback: |_robot| Box::pin(async move { println!("Red chill") })
         },
         AutonRoute {
-            text: "Blue rush",
+            text: "Blue rush".to_string(),
             color: Rgb888::BLUE,
+            callback: |_robot| Box::pin(async move { println!("Blue rush") })
         },
         AutonRoute {
-            text: "Blue chill",
+            text: "Blue chill".to_string(),
             color: Rgb888::CSS_DARK_BLUE,
+            callback: |_robot| Box::pin(async move { println!("Blue chill") })
         },
         AutonRoute {
-            text: "This is a very long one, does it fit? I think it does! That is so very cool",
+            text: "This is a very long one, does it fit? I think it does! That is so very cool".to_string(),
             color: Rgb888::CSS_ORANGE,
+            callback: |_robot| Box::pin(async move { println!("This is a very long one, does it fit? I think it does! That is so very cool") })
         },
     ];
 
@@ -43,7 +50,7 @@ fn main() {
     window.set_max_fps(60);
     window.update(display.target());
 
-    let mut auton_selector = AutonSelector::<3, 2, _, ()>::new(autons);
+    let mut auton_selector = AutonSelector::<3, 2, _>::new(autons);
 
     'outer: loop {
         // Handle events
@@ -51,18 +58,18 @@ fn main() {
         let mut touch_state = None;
         let prev_touch_state = display.touch_status();
         for event in window.events() {
-            touch_state = match event {
+            match event {
                 SimulatorEvent::MouseButtonUp {
                     mouse_btn: MouseButton::Left,
                     point,
-                } => Some(RobotDisplayTouchStatus {
+                } => touch_state = Some(RobotDisplayTouchStatus {
                     point,
                     state: RobotDisplayTouchState::Released,
                 }),
                 SimulatorEvent::MouseButtonDown {
                     mouse_btn: MouseButton::Left,
                     point,
-                } => Some(RobotDisplayTouchStatus {
+                } => touch_state = Some(RobotDisplayTouchStatus {
                     point,
                     state: RobotDisplayTouchState::Pressed,
                 }),
@@ -72,16 +79,19 @@ fn main() {
                         RobotDisplayTouchState::Pressed | RobotDisplayTouchState::Held
                     ) =>
                 {
-                    Some(RobotDisplayTouchStatus {
+                    touch_state = Some(RobotDisplayTouchStatus {
                         point,
                         state: prev_touch_state.state,
-                    })
+                    });
                 }
                 SimulatorEvent::KeyDown {
-                    keycode: Keycode::Q | Keycode::ESCAPE,
+                    keycode,
+                    repeat: false,
                     ..
-                } => {
-                    break 'outer;
+                } => match keycode {
+                    Keycode::Q | Keycode::ESCAPE => break 'outer,
+                    Keycode::R => auton_selector.start_auton(&mut robot).await,
+                    _ => ()
                 }
                 SimulatorEvent::Quit => break 'outer,
                 _ => continue,

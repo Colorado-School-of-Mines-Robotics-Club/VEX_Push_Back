@@ -5,7 +5,6 @@
 extern crate alloc;
 
 mod compete;
-// mod display;
 mod robot;
 mod tracking;
 

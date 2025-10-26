@@ -57,15 +57,6 @@ impl Compete for Robot {
             timeout: None,
         };
 
-        // basic.drive_distance(&mut self.drivetrain, -12.0).await;
-
-        // loop {
-        //     let current_angle = self.drivetrain.tracking.heading();
-
-        //     dbg!(current_angle.as_degrees());
-        //     sleep(Duration::from_millis(500)).await
-        // }
-
         dbg!(self.drivetrain.tracking.heading());
 
         basic.turn_to_heading(

@@ -43,26 +43,28 @@ impl Robot {
     pub async fn new(peripherals: Peripherals) -> Self {
         Self::setup_display(peripherals.display);
 
-        let coprocessor = CoprocessorSmartPort::new(peripherals.port_20).await;
+        let coprocessor = CoprocessorSmartPort::new(peripherals.port_16).await;
         Self {
             // display: Arc::new(RobotDisplay::new(peripherals.display))
             controller: peripherals.primary_controller,
             drivetrain: Drivetrain::new(
                 Differential::new(
                     [
-                        Motor::new(peripherals.port_2, Gearset::Green, Direction::Forward),
-                        Motor::new(peripherals.port_10, Gearset::Green, Direction::Forward),
+                        Motor::new(peripherals.port_11, Gearset::Green, Direction::Reverse),
+                        Motor::new(peripherals.port_12, Gearset::Green, Direction::Forward),
+                        Motor::new(peripherals.port_13, Gearset::Green, Direction::Reverse),
+                        Motor::new(peripherals.port_14, Gearset::Green, Direction::Forward),
                     ],
                     [
-                        Motor::new(peripherals.port_1, Gearset::Green, Direction::Reverse),
-                        Motor::new(peripherals.port_9, Gearset::Green, Direction::Reverse),
+                        Motor::new(peripherals.port_17, Gearset::Green, Direction::Forward),
+                        Motor::new(peripherals.port_18, Gearset::Green, Direction::Reverse),
+                         Motor::new(peripherals.port_19, Gearset::Green, Direction::Forward),
+                        Motor::new(peripherals.port_20, Gearset::Green, Direction::Reverse),
                     ],
                 ),
                 CoproTracking(coprocessor.latest_data()),
             ),
             intake: MotorGroup::new(vec![
-                Motor::new(peripherals.port_3, Gearset::Blue, Direction::Forward),
-                Motor::new(peripherals.port_8, Gearset::Blue, Direction::Reverse),
             ]),
             coprocessor,
         }

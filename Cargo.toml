@@ -5,6 +5,7 @@ edition = "2024"
 
 [workspace]
 members = [".", "coprocessor/brain", "display"]
+exclude = ["display/simulator"]
 
 [workspace.dependencies]
 vexide = "0.7.0"

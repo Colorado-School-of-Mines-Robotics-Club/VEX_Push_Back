@@ -78,6 +78,26 @@ impl<const ROWS: u32, const COLS: u32, R> AutonSelector<{ ROWS }, { COLS }, R>
             (route.callback)(robot).await
         }
     }
+
+    pub fn select_next(&self) {
+        self.selected.fetch_add(1, Ordering::Relaxed);
+        _ = self.selected.compare_exchange(
+            self.routes.len(),
+            self.routes.len() - 1,
+            Ordering::Relaxed,
+            Ordering::Relaxed
+        ); // Handle overflow
+    }
+
+    pub fn select_prev(&self) {
+        self.selected.fetch_sub(1, Ordering::Relaxed);
+        _ = self.selected.compare_exchange(
+            usize::MAX,
+            0,
+            Ordering::Relaxed,
+            Ordering::Relaxed
+        ); // Handle overflow
+    }
 }
 
 impl<const ROWS: u32, const COLS: u32, T, R> RobotDisplayScreen<T>

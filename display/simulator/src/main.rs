@@ -91,6 +91,8 @@ async fn main() {
                 } => match keycode {
                     Keycode::Q | Keycode::ESCAPE => break 'outer,
                     Keycode::R => auton_selector.start_auton(&mut robot).await,
+                    Keycode::RIGHT => auton_selector.select_next(),
+                    Keycode::LEFT => auton_selector.select_prev(),
                     _ => ()
                 }
                 SimulatorEvent::Quit => break 'outer,

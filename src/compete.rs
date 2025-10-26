@@ -2,7 +2,7 @@ use core::time::Duration;
 
 use coprocessor::requests::CalibrateRequest;
 // use autons::prelude::SelectCompete;
-use evian::{math::Angle, motion::Basic, prelude::Arcade};
+use evian::{math::Angle, motion::Basic, prelude::{Arcade, TracksHeading}};
 use shrewnit::{Degrees, Radians};
 use vexide::prelude::*;
 
@@ -60,7 +60,11 @@ impl Compete for Robot {
         // basic.drive_distance(&mut self.drivetrain, -12.0).await;
 
         let current_angle = self.coprocessor.latest_data().position.load(atomic::Ordering::Relaxed).heading;
-        basic.turn_to_heading(&mut self.drivetrain, Angle::from_radians((current_angle - 45.0 * Degrees).to::<Radians>())).await;
+
+        basic.turn_to_heading(
+            &mut self.drivetrain,
+            Angle::from_radians((current_angle - 45.0 * Degrees).to::<Radians>())
+        ).await;
     }
 
     async fn disabled(&mut self) {

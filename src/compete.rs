@@ -59,11 +59,18 @@ impl Compete for Robot {
 
         // basic.drive_distance(&mut self.drivetrain, -12.0).await;
 
-        let current_angle = self.coprocessor.latest_data().position.load(atomic::Ordering::Relaxed).heading;
+        // loop {
+        //     let current_angle = self.drivetrain.tracking.heading();
+
+        //     dbg!(current_angle.as_degrees());
+        //     sleep(Duration::from_millis(500)).await
+        // }
+
+        dbg!(self.drivetrain.tracking.heading());
 
         basic.turn_to_heading(
             &mut self.drivetrain,
-            Angle::from_radians((current_angle - 45.0 * Degrees).to::<Radians>())
+            Angle::from_radians(0.0)
         ).await;
     }
 

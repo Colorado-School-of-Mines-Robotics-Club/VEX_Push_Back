@@ -28,7 +28,7 @@ impl Robot {
     // Partially tuned for the dev bot
     // P = 0.09 causes oscillaion
     pub const LINEAR_PID: Pid = Pid::new(0.08, 0.0, 0.0, None);
-    pub const ANGULAR_PID: AngularPid = AngularPid::new(0.00, 0.00, 0.00, None);
+    pub const ANGULAR_PID: AngularPid = AngularPid::new(0.57, 0.00, 0.00, None);
 
     // TODO: verify these tolerances, these are completely untested
     pub const LINEAR_TOLERANCES: Tolerances = Tolerances::new()
@@ -36,7 +36,7 @@ impl Robot {
         .velocity(0.1)
         .duration(Duration::from_millis(15));
     pub const ANGULAR_TOLERANCES: Tolerances = Tolerances::new()
-        .error(f64::to_radians(8.0))
+        .error(f64::to_radians(1.0))
         .velocity(0.05)
         .duration(Duration::from_millis(15));
 

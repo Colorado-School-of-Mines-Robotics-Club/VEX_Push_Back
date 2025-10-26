@@ -3,7 +3,7 @@ use core::{f64::consts::PI, ops::Deref, sync::atomic::Ordering};
 use alloc::sync::Arc;
 use coprocessor::vexide::CoprocessorData;
 use evian::{math::{Angle, Vec2}, prelude::{TracksForwardTravel, TracksHeading, TracksPosition, TracksVelocity}, tracking::Tracking};
-use shrewnit::{FeetPerSecond, Inches, Radians, RadiansPerSecond};
+use shrewnit::{Degrees, FeetPerSecond, Inches, Radians, RadiansPerSecond};
 use vexide::float::Float;
 
 /// A struct that, given a reference to updated coprocessor data,
@@ -31,7 +31,12 @@ impl TracksForwardTravel for CoproTracking {
 impl TracksHeading for CoproTracking {
     fn heading(&self) -> evian::prelude::Angle {
         let data = self.position.load(Ordering::Relaxed);
-        let radians = data.heading.to::<Radians>(); // +- pi
+
+        // +- pi
+        //     0 = +y
+        // -pi/2 = +x
+        //  pi/2 = -x
+        let radians = (data.heading - 45.0 * Degrees).to::<Radians>();
 
         Angle::from_radians(if radians.is_sign_positive() {
             radians

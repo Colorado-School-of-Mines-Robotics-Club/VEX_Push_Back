@@ -1,4 +1,7 @@
-use core::{pin::Pin, sync::atomic::{AtomicUsize, Ordering}};
+use core::{
+    pin::Pin,
+    sync::atomic::{AtomicUsize, Ordering},
+};
 
 use alloc::{boxed::Box, string::String, vec::Vec};
 use embedded_graphics::{
@@ -47,25 +50,26 @@ impl<R> AutonRoute<R> {
         Self {
             text,
             color,
-            callback
+            callback,
         }
     }
 }
 
-pub struct AutonSelector<const ROWS: u32, const COLS: u32, R>
-{
+pub struct AutonSelector<const ROWS: u32, const COLS: u32, R> {
     pub(crate) routes: Vec<AutonRoute<R>>,
     pub(crate) selected: AtomicUsize,
     character_style: U8g2TextStyle<Rgb888>,
 }
 
-impl<const ROWS: u32, const COLS: u32, R> AutonSelector<{ ROWS }, { COLS }, R>
-{
+impl<const ROWS: u32, const COLS: u32, R> AutonSelector<{ ROWS }, { COLS }, R> {
     pub fn new(autons: impl IntoIterator<Item = AutonRoute<R>>) -> Self {
         Self::new_with_font(autons, u8g2_font_Pixellari_tr)
     }
 
-    pub fn new_with_font<F: Font>(autons: impl IntoIterator<Item = AutonRoute<R>>, font: F) -> Self {
+    pub fn new_with_font<F: Font>(
+        autons: impl IntoIterator<Item = AutonRoute<R>>,
+        font: F,
+    ) -> Self {
         Self {
             routes: autons.into_iter().collect(),
             character_style: U8g2TextStyle::new(font, Rgb888::default()),
@@ -85,18 +89,15 @@ impl<const ROWS: u32, const COLS: u32, R> AutonSelector<{ ROWS }, { COLS }, R>
             self.routes.len(),
             self.routes.len() - 1,
             Ordering::Relaxed,
-            Ordering::Relaxed
+            Ordering::Relaxed,
         ); // Handle overflow
     }
 
     pub fn select_prev(&self) {
         self.selected.fetch_sub(1, Ordering::Relaxed);
-        _ = self.selected.compare_exchange(
-            usize::MAX,
-            0,
-            Ordering::Relaxed,
-            Ordering::Relaxed
-        ); // Handle overflow
+        _ = self
+            .selected
+            .compare_exchange(usize::MAX, 0, Ordering::Relaxed, Ordering::Relaxed); // Handle overflow
     }
 }
 

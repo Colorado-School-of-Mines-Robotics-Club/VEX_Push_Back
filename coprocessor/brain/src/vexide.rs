@@ -1,4 +1,8 @@
-use core::{ops::{Add, Deref}, sync::atomic::Ordering, time::Duration};
+use core::{
+    ops::{Add, Deref},
+    sync::atomic::Ordering,
+    time::Duration,
+};
 
 use alloc::sync::Arc;
 use atomic::Atomic;
@@ -6,7 +10,12 @@ use bytemuck::NoUninit;
 use bytes::{BufMut, BytesMut};
 use shrewnit::{Length, Radians};
 use vexide::{
-    float::Float, io::{self, Write}, prelude::{SerialPort, SmartPort}, sync::Mutex, task::{self, Task}, time::{sleep, Instant}
+    float::Float,
+    io::{self, Write},
+    prelude::{SerialPort, SmartPort},
+    sync::Mutex,
+    task::{self, Task},
+    time::{Instant, sleep},
 };
 
 use crate::requests::{
@@ -129,36 +138,35 @@ impl CoprocessorSmartPort {
         })
     }
 
-    async fn background_task(
-        port: Arc<Mutex<SerialPort>>,
-        latest_data: Arc<CoprocessorData>,
-    ) -> ! {
+    async fn background_task(port: Arc<Mutex<SerialPort>>, latest_data: Arc<CoprocessorData>) -> ! {
         loop {
             match Self::send_request_with_port(port.clone(), GetPositionRequest).await {
                 Ok(position) => {
                     let old_position = latest_data.position.swap(position, Ordering::Relaxed);
 
-                    _ = latest_data.forward_travel.fetch_update(Ordering::Relaxed, Ordering::Relaxed, |forward_travel| {
-                        let diff = (
-                            position.x - old_position.x,
-                            position.y - old_position.y
-                        );
+                    _ = latest_data.forward_travel.fetch_update(
+                        Ordering::Relaxed,
+                        Ordering::Relaxed,
+                        |forward_travel| {
+                            let diff = (position.x - old_position.x, position.y - old_position.y);
 
-                        // Calculate the direction in which we moved, and the total distance that we moved
-                        let movement_angle = f64::atan2(diff.1.canonical(), diff.0.canonical()) * Radians;
-                        let distance = Length::from_canonical((
-                            diff.0.canonical().powi(2)
-                            + diff.1.canonical().powi(2)
-                        ).sqrt());
+                            // Calculate the direction in which we moved, and the total distance that we moved
+                            let movement_angle =
+                                f64::atan2(diff.1.canonical(), diff.0.canonical()) * Radians;
+                            let distance = Length::from_canonical(
+                                (diff.0.canonical().powi(2) + diff.1.canonical().powi(2)).sqrt(),
+                            );
 
-                        // Use the angle of movement and the heading to find how much we moved in the direction
-                        // of our current heading (the travel, ignoring any non-"forward" movement)
-                        //
-                        // TODO: average old and new heading for the heading aspect? is that helpful?
-                        let forward_travel_delta = distance * f64::cos((movement_angle - position.heading).to::<Radians>());
+                            // Use the angle of movement and the heading to find how much we moved in the direction
+                            // of our current heading (the travel, ignoring any non-"forward" movement)
+                            //
+                            // TODO: average old and new heading for the heading aspect? is that helpful?
+                            let forward_travel_delta = distance
+                                * f64::cos((movement_angle - position.heading).to::<Radians>());
 
-                        Some(forward_travel + forward_travel_delta)
-                    });
+                            Some(forward_travel + forward_travel_delta)
+                        },
+                    );
                 }
                 Err(_e) => (), // TODO: error state indication?
             };

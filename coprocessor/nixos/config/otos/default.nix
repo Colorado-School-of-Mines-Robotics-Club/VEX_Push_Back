@@ -1,7 +1,13 @@
-{ pkgs, lib, self, ... }:
+{
+    pkgs,
+    lib,
+    self,
+    ...
+}:
 let
     python3 = self.packages.${pkgs.system}.pythonWithLibs;
-in {
+in
+{
     environment.systemPackages = [ python3 ];
 
     systemd.services.copro = {

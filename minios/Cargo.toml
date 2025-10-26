@@ -1,0 +1,16 @@
+[package]
+name = "minios"
+version = "0.1.0"
+edition = "2024"
+
+[package.metadata.v5]
+upload-strategy = "differential"
+slot = 6
+icon = "cool-x"
+compress = true
+
+[dependencies]
+vexide = { workspace = true }
+bytes = { workspace = true }
+noline = { version = "0.5.1", features = ["alloc"] }
+embedded-io-async = { version = "0.6.1", features = ["alloc"] }

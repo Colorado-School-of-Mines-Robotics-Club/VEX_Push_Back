@@ -20,27 +20,34 @@ async fn main() {
         AutonRoute {
             text: "Red rush".to_string(),
             color: Rgb888::RED,
-            callback: |_robot| Box::pin(async move { println!("Red rush") })
+            callback: |_robot| Box::pin(async move { println!("Red rush") }),
         },
         AutonRoute {
             text: "Red chill".to_string(),
             color: Rgb888::CSS_DARK_RED,
-            callback: |_robot| Box::pin(async move { println!("Red chill") })
+            callback: |_robot| Box::pin(async move { println!("Red chill") }),
         },
         AutonRoute {
             text: "Blue rush".to_string(),
             color: Rgb888::BLUE,
-            callback: |_robot| Box::pin(async move { println!("Blue rush") })
+            callback: |_robot| Box::pin(async move { println!("Blue rush") }),
         },
         AutonRoute {
             text: "Blue chill".to_string(),
             color: Rgb888::CSS_DARK_BLUE,
-            callback: |_robot| Box::pin(async move { println!("Blue chill") })
+            callback: |_robot| Box::pin(async move { println!("Blue chill") }),
         },
         AutonRoute {
-            text: "This is a very long one, does it fit? I think it does! That is so very cool".to_string(),
+            text: "This is a very long one, does it fit? I think it does! That is so very cool"
+                .to_string(),
             color: Rgb888::CSS_ORANGE,
-            callback: |_robot| Box::pin(async move { println!("This is a very long one, does it fit? I think it does! That is so very cool") })
+            callback: |_robot| {
+                Box::pin(async move {
+                    println!(
+                        "This is a very long one, does it fit? I think it does! That is so very cool"
+                    )
+                })
+            },
         },
     ];
 
@@ -62,17 +69,21 @@ async fn main() {
                 SimulatorEvent::MouseButtonUp {
                     mouse_btn: MouseButton::Left,
                     point,
-                } => touch_state = Some(RobotDisplayTouchStatus {
-                    point,
-                    state: RobotDisplayTouchState::Released,
-                }),
+                } => {
+                    touch_state = Some(RobotDisplayTouchStatus {
+                        point,
+                        state: RobotDisplayTouchState::Released,
+                    })
+                }
                 SimulatorEvent::MouseButtonDown {
                     mouse_btn: MouseButton::Left,
                     point,
-                } => touch_state = Some(RobotDisplayTouchStatus {
-                    point,
-                    state: RobotDisplayTouchState::Pressed,
-                }),
+                } => {
+                    touch_state = Some(RobotDisplayTouchStatus {
+                        point,
+                        state: RobotDisplayTouchState::Pressed,
+                    })
+                }
                 SimulatorEvent::MouseMove { point }
                     if matches!(
                         prev_touch_state.state,
@@ -93,8 +104,8 @@ async fn main() {
                     Keycode::R => auton_selector.start_auton(&mut robot).await,
                     Keycode::RIGHT => auton_selector.select_next(),
                     Keycode::LEFT => auton_selector.select_prev(),
-                    _ => ()
-                }
+                    _ => (),
+                },
                 SimulatorEvent::Quit => break 'outer,
                 _ => continue,
             };

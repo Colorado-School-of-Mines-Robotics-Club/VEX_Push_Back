@@ -2,7 +2,11 @@ use core::{f64::consts::PI, ops::Deref, sync::atomic::Ordering};
 
 use alloc::sync::Arc;
 use coprocessor::vexide::CoprocessorData;
-use evian::{math::{Angle, Vec2}, prelude::{TracksForwardTravel, TracksHeading, TracksPosition, TracksVelocity}, tracking::Tracking};
+use evian::{
+    math::{Angle, Vec2},
+    prelude::{TracksForwardTravel, TracksHeading, TracksPosition, TracksVelocity},
+    tracking::Tracking,
+};
 use shrewnit::{Degrees, FeetPerSecond, Inches, Radians, RadiansPerSecond};
 use vexide::float::Float;
 
@@ -49,10 +53,7 @@ impl TracksHeading for CoproTracking {
 impl TracksPosition for CoproTracking {
     fn position(&self) -> evian::prelude::Vec2<f64> {
         let data = self.position.load(Ordering::Relaxed);
-        Vec2::new(
-            data.x.to::<Inches>(),
-            data.y.to::<Inches>()
-        )
+        Vec2::new(data.x.to::<Inches>(), data.y.to::<Inches>())
     }
 }
 
@@ -61,7 +62,7 @@ impl TracksVelocity for CoproTracking {
         let data = self.velocity.load(Ordering::Relaxed);
         let velocity = Vec2::new(
             data.x.to::<FeetPerSecond>() * 12.0,
-            data.y.to::<FeetPerSecond>() * 12.0
+            data.y.to::<FeetPerSecond>() * 12.0,
         );
         (velocity.x.powi(2) + velocity.y.powi(2)).sqrt()
     }

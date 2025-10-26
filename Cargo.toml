@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [workspace]
-members = [".", "coprocessor/brain", "display"]
+members = [".", "coprocessor/brain", "display", "minios"]
 exclude = ["display/simulator"]
 
 [workspace.dependencies]
@@ -14,6 +14,7 @@ shrewnit = { git = "https://github.com/Gavin-Niederman/shrewnit.git", rev = "736
 evian = { git = "https://github.com/vexide/evian.git", version = "0.3.0-rc.1" }
 autons = "0.1.0"
 atomic = { version = "0.6.1" }
+bytes = { version = "1.10.1", default-features = false }
 
 [package.metadata.v5]
 upload-strategy = "differential"

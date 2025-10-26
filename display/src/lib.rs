@@ -15,11 +15,7 @@ pub use u8g2_fonts::fonts::*;
 
 pub trait RobotDisplayScreen<T: DrawTarget<Color = Rgb888>> {
     /// Draws this screen using the provided target and touch status
-    fn draw(
-        &self,
-        target: &mut T,
-        touch_status: RobotDisplayTouchStatus,
-    ) -> Result<(), T::Error>;
+    fn draw(&self, target: &mut T, touch_status: RobotDisplayTouchStatus) -> Result<(), T::Error>;
 }
 
 #[derive(Default, Clone, Copy)]

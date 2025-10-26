@@ -10,7 +10,7 @@ I2C_SENSOR_ADDR = 0x17
 I2C_RESET_OFFSET = 0x07
 I2C_CALIBRATE_OFFSET = 0x06
 I2C_OFFSET_OFFSET = 0x10
-I2C_SCALER_OFFSET = 0x04
+I2C_SCALAR_OFFSET = 0x04
 I2C_POSITION_OFFSET = 0x20
 I2C_VELOCITY_OFFSET = 0x26
 I2C_ACCELERATION_OFFSET = 0x2C
@@ -45,7 +45,7 @@ class OtosSensor:
         self.bus.write_i2c_block_data(I2C_SENSOR_ADDR, I2C_OFFSET_OFFSET, block)
 
     def set_scalar(self,block):
-        self.bus.write_i2c_block_data(I2C_SENSOR_ADDR, I2C_SCALER_OFFSET, block)
+        self.bus.write_i2c_block_data(I2C_SENSOR_ADDR, I2C_SCALAR_OFFSET, block)
 
     def get_position(self) -> bytes:
         block = self.bus.read_i2c_block_data(I2C_SENSOR_ADDR, I2C_POSITION_OFFSET, 6)
@@ -53,7 +53,7 @@ class OtosSensor:
         return bytes(block)
 
     def get_velocity(self) -> bytes:
-        block = self.bus.read_i2c_block_data(I2C_SENSOR_ADDR, I2C_POSITION_OFFSET, 6)
+        block = self.bus.read_i2c_block_data(I2C_SENSOR_ADDR, I2C_VELOCITY_OFFSET, 6)
 
         return bytes(block)
 

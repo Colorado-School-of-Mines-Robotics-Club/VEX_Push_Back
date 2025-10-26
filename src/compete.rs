@@ -1,8 +1,9 @@
+
 use core::time::Duration;
 
 use coprocessor::requests::CalibrateRequest;
 // use autons::prelude::SelectCompete;
-use evian::{math::Angle, motion::Basic, prelude::{Arcade, TracksHeading}};
+use evian::{math::Angle, motion::{basic::{DriveDistanceAtHeadingFuture, TurnToPointFuture}, Basic}, prelude::{Arcade, TracksHeading}};
 use shrewnit::{Degrees, Radians};
 use vexide::prelude::*;
 
@@ -59,10 +60,20 @@ impl Compete for Robot {
 
         dbg!(self.drivetrain.tracking.heading());
 
-        basic.turn_to_heading(
-            &mut self.drivetrain,
-            Angle::from_radians(0.0)
-        ).await;
+        // The following coded is intended to make the robot drive forward, turn left, drive forward again, 
+        // grab a triball, drive backwards, turn left and drive forward.
+
+        basic.drive_distance(&mut self.drivetrain,10.0).await;
+        basic.turn_to_heading(&mut self.drivetrain, Angle::from_degrees(90.0)).await;
+        basic.drive_distance(&mut self.drivetrain,5.0).await;
+        self.intake.set_velocity(200);
+        sleep(Duration::from_secs(1));
+        self.intake.set_velocity(0);
+        basic.drive_distance(&mut self.drivetrain,5.0).await;
+        basic.turn_to_heading(&mut self.drivetrain, Angle::from_degrees(180.0)).await;
+            
+        
+
     }
 
     async fn disabled(&mut self) {

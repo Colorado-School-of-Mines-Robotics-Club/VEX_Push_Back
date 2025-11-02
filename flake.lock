@@ -28,15 +28,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1757536511,
-        "narHash": "sha256-UHDXuybOsPjZ3AiiQK2srDpDOLnyvS5Th5JBPglXPa8=",
+        "lastModified": 1761609766,
+        "narHash": "sha256-RyAnwKZd9R97xfrG8K6EYtfazrcORkJnDQsWZiZAlRI=",
         "owner": "vexide",
         "repo": "cargo-v5",
-        "rev": "bc599ebb2b66d4d81ea7a14b4b42879752485d4d",
+        "rev": "b89372dff634fa812bf034211fc29b50cd7d0f25",
         "type": "github"
       },
       "original": {
         "owner": "vexide",
+        "ref": "upstreamed-target",
         "repo": "cargo-v5",
         "type": "github"
       }
@@ -176,11 +177,11 @@
     },
     "nixpkgs_3": {
       "locked": {
-        "lastModified": 1761349956,
-        "narHash": "sha256-tH3wHnOJms+U4k/rK2Nn1RfBrhffX92jLP/2VndSn0w=",
+        "lastModified": 1761880412,
+        "narHash": "sha256-QoJjGd4NstnyOG4mm4KXF+weBzA2AH/7gn1Pmpfcb0A=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "02f2cb8e0feb4596d20cc52fda73ccee960e3538",
+        "rev": "a7fc11be66bdfb5cdde611ee5ce381c183da8386",
         "type": "github"
       },
       "original": {
@@ -207,11 +208,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1761446259,
-        "narHash": "sha256-JNNOtIIVIX+yBIsh1rq1Nxhc1LZq168vuQB5sqrZbCY=",
+        "lastModified": 1762051177,
+        "narHash": "sha256-pESNTx/m3WnrYx+OujBtDP5Bj0/mAyHa4MgEwzkgkLE=",
         "owner": "oxalica",
         "repo": "rust-overlay",
-        "rev": "95098bb4d55ebe167c082fc40705a73ef76b58e4",
+        "rev": "08c33e87c4829bbdd42b5af247cf7a19e126369f",
         "type": "github"
       },
       "original": {

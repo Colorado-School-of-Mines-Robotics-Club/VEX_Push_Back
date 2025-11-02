@@ -1,8 +1,4 @@
-#![no_main]
-#![no_std]
 #![feature(never_type, future_join)]
-
-extern crate alloc;
 
 mod autons;
 mod compete;

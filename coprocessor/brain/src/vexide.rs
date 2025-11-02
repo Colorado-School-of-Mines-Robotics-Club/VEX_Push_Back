@@ -3,19 +3,14 @@ use core::{
     sync::atomic::Ordering,
     time::Duration,
 };
+use std::{io::{self, Write as _}, sync::Arc, time::Instant};
 
-use alloc::sync::Arc;
 use atomic::Atomic;
 use bytemuck::NoUninit;
 use bytes::{BufMut, BytesMut};
 use shrewnit::{Length, Radians};
 use vexide::{
-    float::Float,
-    io::{self, Write},
-    prelude::{SerialPort, SmartPort},
-    sync::Mutex,
-    task::{self, Task},
-    time::{Instant, sleep},
+    prelude::SerialPort, smart::SmartPort, sync::Mutex, task::{self, Task}, time::sleep
 };
 
 use crate::requests::{
@@ -74,7 +69,7 @@ impl CoprocessorSmartPort {
     pub fn send_request<R: CoprocessorRequest + 'static>(
         &self,
         request: R,
-    ) -> impl Future<Output = Result<R::Response, io::Error>> + 'static {
+    ) -> impl Future<Output = io::Result<R::Response>> + 'static {
         Self::send_request_with_port(self.port.clone(), request)
     }
 
@@ -101,7 +96,7 @@ impl CoprocessorSmartPort {
 
             let encoded = cobs::encode_vec(&request.serialize_request());
             port.write_all(&encoded)?;
-            port.write(&[0x00])?;
+            port.write_all(&[0x00])?;
 
             let timeout = Instant::now() + R::TIMEOUT;
             let mut buf =

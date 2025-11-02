@@ -7,7 +7,7 @@
             inputs.nixpkgs.follows = "nixpkgs";
         };
         cargo-v5 = {
-            url = "github:vexide/cargo-v5";
+            url = "github:vexide/cargo-v5/upstreamed-target";
             inputs = {
                 nixpkgs.follows = "nixpkgs";
                 rust-overlay.follows = "rust-overlay";
@@ -77,7 +77,7 @@
                 devShells.default = pkgs.mkShell {
                     packages = [
                         rust'
-                        cargo-v5.packages.${system}.cargo-v5-full
+                        cargo-v5.packages.${system}.cargo-v5
                         self.formatter.${system}
                     ]
                     ++ (with pkgs; [

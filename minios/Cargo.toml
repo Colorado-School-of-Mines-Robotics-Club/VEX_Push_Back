@@ -12,5 +12,3 @@ compress = true
 [dependencies]
 vexide = { workspace = true }
 bytes = { workspace = true }
-noline = { version = "0.5.1", features = ["alloc"] }
-embedded-io-async = { version = "0.6.1", features = ["alloc"] }

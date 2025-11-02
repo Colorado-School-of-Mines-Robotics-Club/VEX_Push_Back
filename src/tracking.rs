@@ -1,6 +1,6 @@
 use core::{f64::consts::PI, ops::Deref, sync::atomic::Ordering};
+use std::sync::Arc;
 
-use alloc::sync::Arc;
 use coprocessor::vexide::CoprocessorData;
 use evian::{
     math::{Angle, Vec2},
@@ -8,7 +8,6 @@ use evian::{
     tracking::Tracking,
 };
 use shrewnit::{Degrees, FeetPerSecond, Inches, Radians, RadiansPerSecond};
-use vexide::float::Float;
 
 /// A struct that, given a reference to updated coprocessor data,
 /// implements standard methods for recieving odometry information.

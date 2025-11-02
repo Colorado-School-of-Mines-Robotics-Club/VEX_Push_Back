@@ -1,4 +1,5 @@
-use core::{future::join, sync::atomic::Ordering, time::Duration};
+#![allow(dead_code)]
+use core::time::Duration;
 
 use evian::{
     math::Angle,
@@ -6,7 +7,7 @@ use evian::{
     prelude::{TracksForwardTravel, TracksHeading, TracksPosition, TracksVelocity},
 };
 use shrewnit::{DegreesPerSecond, RadiansPerSecond};
-use vexide::{io::println, task, time::sleep};
+use vexide::time::sleep;
 
 use crate::robot::Robot;
 

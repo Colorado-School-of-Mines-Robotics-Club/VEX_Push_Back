@@ -8,7 +8,11 @@ use core::{fmt::Display, time::Duration};
 use bytes::{Buf, BytesMut};
 use embedded_io_async::{ErrorType, Read, Write};
 use noline::builder::EditorBuilder;
-use vexide::{io::{self, Read as _, Write as _}, prelude::*, sync::RwLock};
+use vexide::{
+    io::{self, Read as _, Write as _},
+    prelude::*,
+    sync::RwLock,
+};
 
 pub struct VexideIO;
 
@@ -21,9 +25,7 @@ impl Display for VexideIOError {
     }
 }
 
-impl core::error::Error for VexideIOError {
-
-}
+impl core::error::Error for VexideIOError {}
 
 impl embedded_io_async::Error for VexideIOError {
     fn kind(&self) -> embedded_io_async::ErrorKind {
@@ -57,13 +59,29 @@ impl ErrorType for VexideIO {
 
 impl Read for VexideIO {
     async fn read(&mut self, buf: &mut [u8]) -> Result<usize, Self::Error> {
-        io::stdin().lock().await.read(buf).map_err(VexideIOError)
+        let mut stdin = io::stdin().lock().await;
+        let mut read = 0;
+
+        while read == 0 {
+            read += stdin.read(&mut buf[read..]).map_err(VexideIOError)?;
+            sleep(Duration::from_millis(1)).await;
+        }
+
+        Ok(read)
     }
 }
 
 impl Write for VexideIO {
     async fn write(&mut self, buf: &[u8]) -> Result<usize, Self::Error> {
-        io::stdout().lock().await.write(buf).map_err(VexideIOError)
+        let mut lock = io::stdout().lock().await;
+        let mut written = 0;
+
+        while written == 0 {
+            written += lock.write(buf).map_err(VexideIOError)?;
+            sleep(Duration::from_millis(1)).await;
+        }
+
+        Ok(written)
     }
 
     async fn flush(&mut self) -> Result<(), Self::Error> {
@@ -82,7 +100,11 @@ async fn main(peripherals: Peripherals) {
         .await
         .unwrap();
 
-    while let Ok(line) = editor.readline(prompt, &mut io).await {
-        println!("Read: '{}'", line);
+    loop {
+        while let Ok(line) = dbg!(editor.readline(prompt, &mut io).await) {
+            println!("Read: '{}'", line);
+        }
+
+        sleep(Duration::from_millis(500)).await
     }
 }

@@ -71,11 +71,11 @@ impl CoprocessorSmartPort {
         self.latest_data.clone()
     }
 
-    pub async fn send_request<R: CoprocessorRequest>(
+    pub fn send_request<R: CoprocessorRequest + 'static>(
         &self,
         request: R,
-    ) -> Result<R::Response, io::Error> {
-        Self::send_request_with_port(self.port.clone(), request).await
+    ) -> impl Future<Output = Result<R::Response, io::Error>> + 'static {
+        Self::send_request_with_port(self.port.clone(), request)
     }
 
     async fn send_request_with_port<R: CoprocessorRequest>(
@@ -84,7 +84,20 @@ impl CoprocessorSmartPort {
     ) -> Result<R::Response, io::Error> {
         // Scope that takes out a lock on the port
         let mut buf = {
-            let mut port = port_lock.lock().await;
+            // The vexide mutex gets deadlocked for some reason when not using try_lock
+            // let mut port = port_lock.lock().await;
+            let mut port;
+            loop {
+                match port_lock.try_lock() {
+                    Some(lock) => {
+                        port = lock;
+                        break;
+                    }
+                    None => {
+                        sleep(Duration::from_millis(0)).await;
+                    }
+                }
+            }
 
             let encoded = cobs::encode_vec(&request.serialize_request());
             port.write_all(&encoded)?;

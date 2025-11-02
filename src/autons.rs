@@ -1,6 +1,10 @@
 use core::{future::join, sync::atomic::Ordering, time::Duration};
 
-use evian::{math::Angle, motion::Basic, prelude::{TracksForwardTravel, TracksHeading, TracksPosition, TracksVelocity}};
+use evian::{
+    math::Angle,
+    motion::Basic,
+    prelude::{TracksForwardTravel, TracksHeading, TracksPosition, TracksVelocity},
+};
 use shrewnit::{DegreesPerSecond, RadiansPerSecond};
 use vexide::{io::println, task, time::sleep};
 
@@ -9,7 +13,10 @@ use crate::robot::Robot;
 mod control {
     use core::time::Duration;
 
-    use evian::{control::loops::{AngularPid, Pid}, prelude::Tolerances};
+    use evian::{
+        control::loops::{AngularPid, Pid},
+        prelude::Tolerances,
+    };
 
     pub const PID: (Pid, AngularPid) = self::ABOT_PID;
 
@@ -25,11 +32,11 @@ mod control {
 
     pub const DEVBOT_PID: (Pid, AngularPid) = (
         Pid::new(0.08, 0.0, 0.0, None),
-        AngularPid::new(0.57, 0.00, 0.00, None)
+        AngularPid::new(0.57, 0.00, 0.00, None),
     );
     pub const ABOT_PID: (Pid, AngularPid) = (
         Pid::new(0.0315, 0.0026, 0.0, None),
-        AngularPid::new(0.0, 0.00, 0.00, None)
+        AngularPid::new(0.0, 0.00, 0.00, None),
     );
 }
 
@@ -40,7 +47,8 @@ pub async fn print_pose(robot: &mut Robot) {
             robot.drivetrain.tracking.heading().as_degrees(),
             robot.drivetrain.tracking.position().x,
             robot.drivetrain.tracking.position().y,
-            (robot.drivetrain.tracking.angular_velocity() * RadiansPerSecond).to::<DegreesPerSecond>(),
+            (robot.drivetrain.tracking.angular_velocity() * RadiansPerSecond)
+                .to::<DegreesPerSecond>(),
             robot.drivetrain.tracking.linear_velocity(),
         );
         sleep(Duration::from_millis(500)).await;

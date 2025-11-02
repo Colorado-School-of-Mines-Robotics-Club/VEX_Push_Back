@@ -24,23 +24,23 @@ pub struct Robot {
 
 impl Robot {
     pub async fn new(peripherals: Peripherals) -> Self {
-        let coprocessor = CoprocessorSmartPort::new(peripherals.port_16).await;
+        let coprocessor = CoprocessorSmartPort::new(peripherals.port_11).await;
         Self {
             display: RefCell::new(peripherals.display),
             controller: peripherals.primary_controller,
             drivetrain: Drivetrain::new(
                 Differential::new(
                     [
-                        Motor::new(peripherals.port_11, Gearset::Green, Direction::Reverse),
-                        Motor::new(peripherals.port_12, Gearset::Green, Direction::Forward),
-                        Motor::new(peripherals.port_13, Gearset::Green, Direction::Reverse),
-                        Motor::new(peripherals.port_14, Gearset::Green, Direction::Forward),
+                        Motor::new(peripherals.port_17, Gearset::Green, Direction::Forward),
+                        Motor::new(peripherals.port_18, Gearset::Green, Direction::Reverse),
+                        Motor::new(peripherals.port_19, Gearset::Green, Direction::Forward),
+                        Motor::new(peripherals.port_20, Gearset::Green, Direction::Reverse),
                     ],
                     [
-                        Motor::new(peripherals.port_17, Gearset::Green, Direction::Reverse),
-                        Motor::new(peripherals.port_18, Gearset::Green, Direction::Forward),
-                        Motor::new(peripherals.port_19, Gearset::Green, Direction::Reverse),
-                        Motor::new(peripherals.port_20, Gearset::Green, Direction::Forward),
+                        Motor::new(peripherals.port_7, Gearset::Green, Direction::Reverse),
+                        Motor::new(peripherals.port_8, Gearset::Green, Direction::Forward),
+                        Motor::new(peripherals.port_9, Gearset::Green, Direction::Reverse),
+                        Motor::new(peripherals.port_10, Gearset::Green, Direction::Forward),
                     ],
                 ),
                 CoproTracking(coprocessor.latest_data()),

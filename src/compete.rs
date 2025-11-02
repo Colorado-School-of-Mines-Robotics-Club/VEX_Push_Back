@@ -1,7 +1,11 @@
 use core::time::Duration;
 
-use coprocessor::requests::CalibrateRequest;
-use evian::{math::Angle, motion::Basic, prelude::{Arcade, Tank, TracksHeading, TracksPosition}};
+use coprocessor::{requests::CalibrateRequest, vexide::CoprocessorSmartPort};
+use evian::{
+    math::Angle,
+    motion::Basic,
+    prelude::{Arcade, Tank, TracksHeading, TracksPosition},
+};
 use vexide::prelude::*;
 
 use crate::robot::Robot;
@@ -21,8 +25,8 @@ impl Compete for Robot {
             let _ = self
                 .drivetrain
                 .model
-                .drive_tank(state.left_stick.y(), state.right_stick.y());
-                // .drive_arcade(state.left_stick.y(), state.left_stick.x() * 0.5);
+                // .drive_tank(state.left_stick.y(), state.right_stick.y());
+            .drive_arcade(state.left_stick.y(), state.left_stick.x() * 0.5);
 
             // Intake control
             // let _ = self.intake.set_voltage(
@@ -35,19 +39,16 @@ impl Compete for Robot {
 
             // Calibrate OTOS button
             if state.button_x.is_now_pressed() {
-                match self.coprocessor.send_request(CalibrateRequest).await {
-                    Ok(_) => println!("Calibrated!"),
-                    Err(e) => println!("Unable to calibrate: {e:?}"),
-                };
+                let request_future = self.coprocessor.send_request(CalibrateRequest);
+                vexide::task::spawn(async move {
+                    println!("Starting calibration...");
+                    match request_future.await {
+                        Ok(_) => println!("Calibrated!"),
+                        Err(e) => println!("Unable to calibrate: {e:?}"),
+                    }
+                })
+                .detach();
             }
-
-            // Draw pos/heading for debugging
-            // {
-            //     let display = self.display.borrow_mut();
-            //     let
-
-            //     display.draw_text(Text::new(, font, position), color, bg_color);
-            // }
 
             sleep(Duration::from_millis(10)).await;
         }

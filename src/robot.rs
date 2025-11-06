@@ -7,7 +7,7 @@ use evian::{
     prelude::{Drivetrain, Tolerances},
 };
 use vexide::prelude::{
-    CompeteExt as _, Controller, Direction, Display, Gearset, Motor, Peripherals
+    CompeteExt as _, Controller, Direction, Display, Gearset, Motor, Peripherals,
 };
 use vexide_motorgroup::MotorGroup;
 

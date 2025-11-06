@@ -1,16 +1,22 @@
-use core::{
+use std::{
+    io::{self, Write as _},
     ops::{Add, Deref},
+    sync::Arc,
     sync::atomic::Ordering,
     time::Duration,
+    time::Instant,
 };
-use std::{io::{self, Write as _}, sync::Arc, time::Instant};
 
 use atomic::Atomic;
 use bytemuck::NoUninit;
 use bytes::{BufMut, BytesMut};
 use shrewnit::{Length, Radians};
 use vexide::{
-    prelude::SerialPort, smart::SmartPort, sync::Mutex, task::{self, Task}, time::sleep
+    prelude::SerialPort,
+    smart::SmartPort,
+    sync::Mutex,
+    task::{self, Task},
+    time::sleep,
 };
 
 use crate::requests::{

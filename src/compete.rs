@@ -26,7 +26,7 @@ impl Compete for Robot {
                 .drivetrain
                 .model
                 // .drive_tank(state.left_stick.y(), state.right_stick.y());
-            .drive_arcade(state.left_stick.y(), state.left_stick.x() * 0.5);
+                .drive_arcade(state.left_stick.y(), state.left_stick.x() * 0.5);
 
             // Intake control
             // let _ = self.intake.set_voltage(

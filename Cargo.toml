@@ -16,6 +16,7 @@ evian = { git = "https://github.com/Colorado-School-of-Mines-Robotics-Club/evian
 # autons = "0.1.0"
 atomic = { version = "0.6.1" }
 bytes = { version = "1.10.1", default-features = false }
+triple_buffer = "8.1.1"
 
 [package.metadata.v5]
 upload-strategy = "differential"
@@ -30,5 +31,4 @@ shrewnit = { workspace = true }
 vexide = { workspace = true }
 vexide-motorgroup = "2.2.0-alpha.5"
 coprocessor = { path = "./coprocessor/brain" }
-atomic = { workspace = true }
 # display = { path = "./display" }

@@ -14,8 +14,6 @@ pub struct OtosPosition {
     pub heading: Angle<f64>,
 }
 
-unsafe impl bytemuck::NoUninit for OtosPosition {}
-
 pub struct GetPositionRequest;
 
 impl CoprocessorRequest for GetPositionRequest {

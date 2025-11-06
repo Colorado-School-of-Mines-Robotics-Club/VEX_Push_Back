@@ -11,8 +11,6 @@ pub struct OtosVelocity {
     pub heading: AngularVelocity<f64>,
 }
 
-unsafe impl bytemuck::NoUninit for OtosVelocity {}
-
 pub struct GetVelocityRequest;
 
 impl CoprocessorRequest for GetVelocityRequest {

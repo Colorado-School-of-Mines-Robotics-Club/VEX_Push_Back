@@ -1,11 +1,7 @@
 use core::time::Duration;
 
-use coprocessor::{requests::CalibrateRequest, vexide::CoprocessorSmartPort};
-use evian::{
-    math::Angle,
-    motion::Basic,
-    prelude::{Arcade, Tank, TracksHeading, TracksPosition},
-};
+use coprocessor::requests::CalibrateRequest;
+use evian::prelude::Arcade;
 use vexide::prelude::*;
 
 use crate::robot::Robot;

@@ -1,14 +1,10 @@
 use std::{
     io::{self, Write as _},
-    ops::{Add, Deref},
     sync::Arc,
-    sync::atomic::Ordering,
     time::Duration,
     time::Instant,
 };
 
-use atomic::Atomic;
-use bytemuck::NoUninit;
 use bytes::{BufMut, BytesMut};
 use shrewnit::{Length, Radians};
 use vexide::{
@@ -23,53 +19,55 @@ use crate::requests::{
     CoprocessorRequest, GetPositionRequest, GetVelocityRequest, OtosPosition, OtosVelocity,
 };
 
-#[derive(Default, Copy, Clone)]
-pub struct OtosForwardTravel(Length<f64>);
-unsafe impl NoUninit for OtosForwardTravel {}
+macro_rules! make_coprocessor_data {
+    ($(pub $name:ident: $type:ty),+) => {
+        pub struct CoprocessorData {
+            $(pub $name: ::triple_buffer::Output<$type>),+
+        }
 
-impl Deref for OtosForwardTravel {
-    type Target = Length<f64>;
+        pub struct CoprocessorDataSink {
+            $(pub $name: ::triple_buffer::Input<$type>),+
+        }
 
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
+        impl CoprocessorData {
+            pub fn new() -> (CoprocessorDataSink, Self) {
+                $(let $name = ::triple_buffer::TripleBuffer::new(&Default::default()).split();)+
+
+                (
+                    CoprocessorDataSink {
+                        $($name: $name.0),+
+                    },
+                    CoprocessorData {
+                        $($name: $name.1),+
+                    }
+                )
+            }
+        }
+    };
 }
 
-impl Add<Length<f64>> for OtosForwardTravel {
-    type Output = Self;
-
-    fn add(self, rhs: Length<f64>) -> Self::Output {
-        Self(self.0 + rhs)
-    }
-}
-
-#[derive(Default)]
-pub struct CoprocessorData {
-    pub forward_travel: Atomic<OtosForwardTravel>,
-    pub position: Atomic<OtosPosition>,
-    pub velocity: Atomic<OtosVelocity>,
-}
+make_coprocessor_data!(
+    pub forward_travel: Length<f64>,
+    pub position: OtosPosition,
+    pub velocity: OtosVelocity
+);
 
 pub struct CoprocessorSmartPort {
     port: Arc<Mutex<SerialPort>>,
-    latest_data: Arc<CoprocessorData>,
     _task: Task<!>,
 }
 
 impl CoprocessorSmartPort {
-    pub async fn new(port: SmartPort) -> Self {
+    pub async fn new(port: SmartPort) -> (Self, CoprocessorData) {
         let port = Arc::new(Mutex::new(SerialPort::open(port, 921600).await));
-        let latest_data = Arc::new(CoprocessorData::default());
-        Self {
-            _task: task::spawn(Self::background_task(port.clone(), latest_data.clone())),
+        let (latest_data_sink, latest_data) = CoprocessorData::new();
+        (
+            Self {
+                _task: task::spawn(Self::background_task(port.clone(), latest_data_sink)),
+                port,
+            },
             latest_data,
-            port,
-        }
-    }
-
-    /// Returns a reference that points to the latest data from the sensor
-    pub fn latest_data(&self) -> Arc<CoprocessorData> {
-        self.latest_data.clone()
+        )
     }
 
     pub fn send_request<R: CoprocessorRequest + 'static>(
@@ -86,19 +84,19 @@ impl CoprocessorSmartPort {
         // Scope that takes out a lock on the port
         let mut buf = {
             // The vexide mutex gets deadlocked for some reason when not using try_lock
-            // let mut port = port_lock.lock().await;
-            let mut port;
-            loop {
-                match port_lock.try_lock() {
-                    Some(lock) => {
-                        port = lock;
-                        break;
-                    }
-                    None => {
-                        sleep(Duration::from_millis(0)).await;
-                    }
-                }
-            }
+            let mut port = port_lock.lock().await;
+            // let mut port;
+            // loop {
+            //     match port_lock.try_lock() {
+            //         Some(lock) => {
+            //             port = lock;
+            //             break;
+            //         }
+            //         None => {
+            //             sleep(Duration::from_millis(0)).await;
+            //         }
+            //     }
+            // }
 
             let encoded = cobs::encode_vec(&request.serialize_request());
             port.write_all(&encoded)?;
@@ -152,42 +150,44 @@ impl CoprocessorSmartPort {
         })
     }
 
-    async fn background_task(port: Arc<Mutex<SerialPort>>, latest_data: Arc<CoprocessorData>) -> ! {
+    async fn background_task(
+        port: Arc<Mutex<SerialPort>>,
+        mut latest_data_sink: CoprocessorDataSink,
+    ) -> ! {
+        let mut last_position = OtosPosition::default();
+        let mut forward_travel = Length::default();
         loop {
+            println!("Sending position request...");
             match Self::send_request_with_port(port.clone(), GetPositionRequest).await {
                 Ok(position) => {
-                    let old_position = latest_data.position.swap(position, Ordering::Relaxed);
+                    // Update the position through the sink
+                    latest_data_sink.position.write(position);
 
-                    _ = latest_data.forward_travel.fetch_update(
-                        Ordering::Relaxed,
-                        Ordering::Relaxed,
-                        |forward_travel| {
-                            let diff = (position.x - old_position.x, position.y - old_position.y);
-
-                            // Calculate the direction in which we moved, and the total distance that we moved
-                            let movement_angle =
-                                f64::atan2(diff.1.canonical(), diff.0.canonical()) * Radians;
-                            let distance = Length::from_canonical(
-                                (diff.0.canonical().powi(2) + diff.1.canonical().powi(2)).sqrt(),
-                            );
-
-                            // Use the angle of movement and the heading to find how much we moved in the direction
-                            // of our current heading (the travel, ignoring any non-"forward" movement)
-                            //
-                            // TODO: average old and new heading for the heading aspect? is that helpful?
-                            let forward_travel_delta = distance
-                                * f64::cos((movement_angle - position.heading).to::<Radians>());
-
-                            Some(forward_travel + forward_travel_delta)
-                        },
+                    // Calculate the direction in which we moved, and the total distance that we moved
+                    let diff = (position.x - last_position.x, position.y - last_position.y);
+                    let movement_angle =
+                        f64::atan2(diff.1.canonical(), diff.0.canonical()) * Radians;
+                    let distance = Length::from_canonical(
+                        (diff.0.canonical().powi(2) + diff.1.canonical().powi(2)).sqrt(),
                     );
+
+                    // Use the angle of movement and the heading to find how much we moved in the direction
+                    // of our current heading (the travel, ignoring any non-"forward" movement)
+                    let forward_travel_delta =
+                        distance * f64::cos((movement_angle - position.heading).to::<Radians>());
+
+                    // Update state and update new forward travel through the sink
+                    last_position = position;
+                    forward_travel += forward_travel_delta;
+                    latest_data_sink.forward_travel.write(forward_travel);
                 }
                 Err(_e) => (), // TODO: error state indication?
             };
 
+            println!("Sending velocity request...");
             match Self::send_request_with_port(port.clone(), GetVelocityRequest).await {
                 Ok(velocity) => {
-                    latest_data.velocity.store(velocity, Ordering::Relaxed);
+                    latest_data_sink.velocity.write(velocity);
                 }
                 Err(_e) => (), // TODO: error state indication?
             };

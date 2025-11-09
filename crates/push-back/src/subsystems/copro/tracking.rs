@@ -1,7 +1,4 @@
-use std::{
-    cell::RefCell,
-    {f64::consts::PI, ops::Deref},
-};
+use std::{cell::RefCell, f64::consts::PI, ops::Deref, rc::Rc};
 
 use coprocessor::vexide::CoprocessorData;
 use evian::{
@@ -13,13 +10,7 @@ use shrewnit::{Degrees, FeetPerSecond, Inches, Radians, RadiansPerSecond};
 
 /// A struct that, given a reference to updated coprocessor data,
 /// implements standard methods for recieving odometry information.
-pub struct CoproTracking(pub RefCell<CoprocessorData>);
-
-impl CoproTracking {
-    pub fn new(data: CoprocessorData) -> Self {
-        Self(RefCell::new(data))
-    }
-}
+pub struct CoproTracking(pub Rc<RefCell<CoprocessorData>>);
 
 impl Deref for CoproTracking {
     type Target = RefCell<CoprocessorData>;

@@ -3,7 +3,6 @@
 mod autons;
 mod compete;
 mod robot;
-mod tracking;
 
 use vexide::prelude::*;
 

@@ -1,0 +1,46 @@
+use std::{cell::RefCell, rc::Rc};
+
+use coprocessor::{
+    requests::CalibrateRequest,
+    vexide::{CoprocessorData, CoprocessorSmartPort},
+};
+use vexide::{controller::ControllerState, smart::SmartPort};
+
+use crate::subsystems::ControllableSubsystem;
+
+pub mod tracking;
+
+pub struct CoproSubsystem {
+    port: CoprocessorSmartPort,
+    data: Rc<RefCell<CoprocessorData>>,
+}
+
+impl CoproSubsystem {
+    pub async fn new(port: SmartPort) -> Self {
+        let (port, data) = CoprocessorSmartPort::new(port).await;
+        Self {
+            port,
+            data: Rc::new(RefCell::new(data)),
+        }
+    }
+
+    pub fn data(&self) -> Rc<RefCell<CoprocessorData>> {
+        self.data.clone()
+    }
+}
+
+impl ControllableSubsystem for CoproSubsystem {
+    fn control(&mut self, controller: &ControllerState) {
+        if controller.button_y.is_now_pressed() {
+            let request_future = self.port.send_request(CalibrateRequest);
+            vexide::task::spawn(async move {
+                println!("Starting calibration...");
+                match request_future.await {
+                    Ok(_) => println!("Calibrated!"),
+                    Err(e) => println!("Unable to calibrate: {e:?}"),
+                }
+            })
+            .detach();
+        }
+    }
+}

@@ -1,11 +1,10 @@
-[package]
-name = "ordgr-push-back"
-version = "0.1.0"
-edition = "2024"
-
 [workspace]
-members = [".", "coprocessor/brain", "minios"]
-exclude = ["display/simulator"]
+resolver = "3"
+members = ["bots/*", "crates/*", "coprocessor/brain"]
+exclude = [
+    "crates/display-simulator", # Needs to run on different target
+    "crates/display" # Broken
+]
 
 [workspace.dependencies]
 vexide = { version = "0.8.0-alpha.2", features = ["full", "vex-sdk-jumptable"] }
@@ -17,18 +16,3 @@ evian = { git = "https://github.com/Colorado-School-of-Mines-Robotics-Club/evian
 atomic = { version = "0.6.1" }
 bytes = { version = "1.10.1", default-features = false }
 triple_buffer = "8.1.1"
-
-[package.metadata.v5]
-upload-strategy = "differential"
-slot = 1
-icon = "cool-x"
-compress = true
-
-[dependencies]
-cobs = { version = "0.4.0", default-features = false, features = ["alloc"] }
-evian = { workspace = true }
-shrewnit = { workspace = true }
-vexide = { workspace = true }
-vexide-motorgroup = "2.2.0-alpha.5"
-coprocessor = { path = "./coprocessor/brain" }
-# display = { path = "./display" }

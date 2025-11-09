@@ -3,7 +3,6 @@ use core::time::Duration;
 
 use evian::{
     math::Angle,
-    motion::Basic,
     prelude::{TracksForwardTravel, TracksHeading, TracksPosition, TracksVelocity},
 };
 use shrewnit::{DegreesPerSecond, RadiansPerSecond};
@@ -15,11 +14,19 @@ mod control {
     use core::time::Duration;
 
     use evian::{
-        control::loops::{AngularPid, Pid},
-        prelude::Tolerances,
+        control::loops::{AngularPid, Pid}, motion::Basic, prelude::Tolerances
     };
 
-    pub const PID: (Pid, AngularPid) = self::ABOT_PID;
+    pub const BASIC_CONTROL: Basic<Pid, AngularPid> = Basic {
+        linear_controller: LINEAR_PID,
+        angular_controller: ANGULAR_PID,
+        linear_tolerances: LINEAR_TOLERANCES,
+        angular_tolerances: ANGULAR_TOLERANCES,
+        timeout: None,
+    };
+
+    pub const LINEAR_PID: Pid = Pid::new(0.00, 0.00, 0.0, None);
+    pub const ANGULAR_PID: AngularPid = AngularPid::new(0.0, 0.00, 0.00, None);
 
     // TODO: actually check these
     pub const LINEAR_TOLERANCES: Tolerances = Tolerances::new()
@@ -30,15 +37,6 @@ mod control {
         .error(f64::to_radians(1.0))
         .velocity(0.05)
         .duration(Duration::from_millis(15));
-
-    pub const DEVBOT_PID: (Pid, AngularPid) = (
-        Pid::new(0.08, 0.0, 0.0, None),
-        AngularPid::new(0.57, 0.00, 0.00, None),
-    );
-    pub const ABOT_PID: (Pid, AngularPid) = (
-        Pid::new(0.0315, 0.0026, 0.0, None),
-        AngularPid::new(0.0, 0.00, 0.00, None),
-    );
 }
 
 pub async fn print_pose(robot: &mut Robot) {
@@ -57,13 +55,7 @@ pub async fn print_pose(robot: &mut Robot) {
 }
 
 pub async fn tune_pid(robot: &mut Robot) {
-    let mut basic = Basic {
-        linear_controller: control::PID.0,
-        angular_controller: control::PID.1,
-        linear_tolerances: control::LINEAR_TOLERANCES,
-        angular_tolerances: control::ANGULAR_TOLERANCES,
-        timeout: Some(Duration::from_secs(3)),
-    };
+    let mut basic = control::BASIC_CONTROL;
 
     let start = robot.drivetrain.tracking.forward_travel();
     println!("START: {:.2}", start);
@@ -75,13 +67,7 @@ pub async fn tune_pid(robot: &mut Robot) {
 }
 
 pub async fn auton_1(robot: &mut Robot) {
-    let mut basic = Basic {
-        linear_controller: control::PID.0,
-        angular_controller: control::PID.1,
-        linear_tolerances: control::LINEAR_TOLERANCES,
-        angular_tolerances: control::ANGULAR_TOLERANCES,
-        timeout: None,
-    };
+    let mut basic = control::BASIC_CONTROL;
 
     // The following coded is intended to make the robot drive forward, turn left, drive forward again,
     // grab a triball, drive backwards, turn left and drive forward.

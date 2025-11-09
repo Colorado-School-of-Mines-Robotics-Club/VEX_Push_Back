@@ -1,0 +1,18 @@
+[package]
+name = "bot-testing"
+version = "0.1.0"
+edition = "2024"
+
+[package.metadata.v5]
+upload-strategy = "differential"
+slot = 8
+icon = "cool-x"
+compress = true
+
+[dependencies]
+vexide = { workspace = true }
+evian = { workspace = true }
+shrewnit = { workspace = true }
+push-back = { path = "../../crates/push-back" }
+vex-sdk = "0.28.0"
+# display = { path = "./display" }

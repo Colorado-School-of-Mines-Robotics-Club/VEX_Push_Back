@@ -1,31 +1,30 @@
 #![feature(never_type, future_join)]
 
-use std::time::Duration;
+use std::{
+    fs::File,
+    io::Write,
+    time::{Duration, Instant},
+};
 
-use vexide::prelude::*;
+use push_back::subsystems::intake::IntakeState;
+use vexide::{controller::ControllerState, prelude::*};
+
+const FILE: &str = "record30.txt";
 
 #[vexide::main]
 async fn main(peripherals: Peripherals) {
-    let mut i = 0;
-    let mut a = 0;
-    let mut controller = peripherals.primary_controller;
-    let text = [
-        "Hello there!",
-        "Number 2",
-        "hehehehehehhehe",
-        "lol"
-    ];
-    loop {
-        if i % 10 == 0 {
-            _ = controller.screen.set_text(text[a], 1, 2).await;
-        }
-
-        if controller.state().unwrap().button_right.is_now_pressed() {
-            _ = controller.screen.clear_line(1).await;
-            a = (a + 1) % text.len();
-        }
-
-        i += 1;
-        sleep(Duration::from_millis(10)).await
-    }
+    println!("{}", IntakeState::INTAKE_WHEELS.bits());
+    println!("{}", IntakeState::INTAKE_WHEELS.reverse().bits());
+    // match std::fs::read(FILE) {
+    //     Ok(contents) => println!(
+    //         "File contents:\n{}\nEOF",
+    //         contents
+    //             .utf8_chunks()
+    //             .map(|e| e.valid().to_string() + &"�".repeat(e.invalid().len()))
+    //             .collect::<Vec<String>>()
+    //             .join("?")
+    //     ),
+    //     Err(e) => println!("Error opening file: {e:?}"),
+    // }
+    // std::process::exit(0);
 }

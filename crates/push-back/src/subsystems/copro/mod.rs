@@ -4,7 +4,10 @@ use coprocessor::{
     requests::CalibrateRequest,
     vexide::{CoprocessorData, CoprocessorSmartPort},
 };
-use vexide::{controller::ControllerState, smart::SmartPort};
+use vexide::{
+    controller::ControllerState,
+    smart::{SmartDeviceType, SmartPort},
+};
 
 use crate::subsystems::ControllableSubsystem;
 
@@ -17,6 +20,9 @@ pub struct CoproSubsystem {
 
 impl CoproSubsystem {
     pub async fn new(port: SmartPort) -> Self {
+        // Ensure the smart port is actually just a serial device and not a radio or something
+        assert_eq!(port.device_type(), Some(SmartDeviceType::GenericSerial));
+
         let (port, data) = CoprocessorSmartPort::new(port).await;
         Self {
             port,
@@ -30,7 +36,7 @@ impl CoproSubsystem {
 }
 
 impl ControllableSubsystem for CoproSubsystem {
-    fn control(&mut self, controller: &ControllerState) {
+    fn update(&mut self, controller: &ControllerState) {
         if controller.button_y.is_now_pressed() {
             let request_future = self.port.send_request(CalibrateRequest);
             vexide::task::spawn(async move {

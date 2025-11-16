@@ -1,6 +1,6 @@
 #![feature(never_type, future_join)]
 
-mod autons;
+// mod autons;
 mod compete;
 mod robot;
 

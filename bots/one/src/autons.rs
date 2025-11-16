@@ -14,7 +14,9 @@ mod control {
     use core::time::Duration;
 
     use evian::{
-        control::loops::{AngularPid, Pid}, motion::Basic, prelude::Tolerances
+        control::loops::{AngularPid, Pid},
+        motion::Basic,
+        prelude::Tolerances,
     };
 
     pub const BASIC_CONTROL: Basic<Pid, AngularPid> = Basic {

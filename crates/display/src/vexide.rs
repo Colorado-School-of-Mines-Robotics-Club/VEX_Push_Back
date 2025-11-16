@@ -9,11 +9,3 @@ impl RobotDisplay<DisplayDriver> {
         Self::new(DisplayDriver::new(display))
     }
 }
-
-impl<const ROWS: u32, const COLS: u32, R> autons::Selector<R>
-    for AutonSelector<{ ROWS }, { COLS }, R>
-{
-    async fn run(&self, robot: &mut R) {
-        self.start_auton(robot).await
-    }
-}

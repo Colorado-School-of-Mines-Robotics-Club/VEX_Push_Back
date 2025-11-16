@@ -11,11 +11,13 @@ impl Compete for Robot {
 
         let mut i: usize = 0;
         loop {
-            if let Ok(controller) = self.controller.state() {
+            if let Ok(mut controller) = self.controller.state() {
                 // Run subsystems
-                self.drivetrain.control(&controller);
-                self.coprocessor.control(&controller);
-                self.intake.control(&controller);
+                self.replay.control(&mut controller);
+                self.drivetrain.update(&controller);
+                // self.coprocessor.control(&controller);
+                self.intake.update(&controller);
+                self.trunk.update(&controller);
             } else if i.is_multiple_of(100) {
                 // Only print every second
                 println!("Warning: controller not connected");
@@ -28,6 +30,8 @@ impl Compete for Robot {
 
     async fn autonomous(&mut self) {
         println!("Auton!");
+
+        // self.replay.
 
         // crate::autons::print_pose(self).await;
         // crate::autons::auton_1(self).await;

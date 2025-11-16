@@ -7,12 +7,12 @@ exclude = [
 ]
 
 [workspace.dependencies]
-vexide = { version = "0.8.0-alpha.2", features = ["full", "vex-sdk-jumptable"] }
+vexide = { version = "0.8.0-alpha.2", features = ["full", "vex-sdk-jumptable", "vex-sdk-mock"] }
 # vexide-embedded-graphics = { git = "https://github.com/vexide/vexide-embedded-graphics.git", rev = "014559a70eea8f077a41bbef59885e4641709cee" }
 shrewnit = { git = "https://github.com/Gavin-Niederman/shrewnit.git", rev = "73617f18d1faf79ffed097d1fc7ef0e1ae8663de" }
 # evian = { git = "https://github.com/vexide/evian.git", rev = "adffb503edd7dc08a7fbffdf8a5bf9c402353294" }
 evian = { git = "https://github.com/Colorado-School-of-Mines-Robotics-Club/evian", rev = "d7461d935ccc19d143c202605854c76b5d11828d" }
-# autons = "0.1.0"
-atomic = { version = "0.6.1" }
 bytes = { version = "1.10.1", default-features = false }
+bytemuck = { version = "1.24.0", features = ["derive", "min_const_generics", "must_cast"] }
 triple_buffer = "8.1.1"
+nom = { version = "8.0.0", default-features = false, features = ["alloc"] }

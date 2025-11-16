@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 bytes = { workspace = true }
 cobs = { version = "0.4.0", default-features = false, features = ["alloc"] }
-nom = { version = "8.0.0", default-features = false, features = ["alloc"] }
+nom = { workspace = true }
 shrewnit = { workspace = true }
 vexide = { workspace = true }
 triple_buffer = { workspace = true }

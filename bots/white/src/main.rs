@@ -1,16 +1,11 @@
 #![feature(never_type, future_join)]
 
-// mod autons;
-mod compete;
-mod robot;
-
+use v1::robot::{Robot, V1Bot};
 use vexide::prelude::*;
-
-use crate::robot::Robot;
 
 #[vexide::main]
 async fn main(peripherals: Peripherals) {
-    let robot = Robot::new(peripherals).await;
+    let robot = Robot::new(peripherals, V1Bot::White).await;
 
     robot.start().await;
 }

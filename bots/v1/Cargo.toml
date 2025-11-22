@@ -1,13 +1,13 @@
 [package]
-name = "bot-one"
+name = "v1"
 version = "0.1.0"
 edition = "2024"
 
-[package.metadata.v5]
-upload-strategy = "differential"
-slot = 1
-icon = "pizza"
-compress = true
+# [package.metadata.v5]
+# upload-strategy = "differential"
+# slot = 1
+# icon = "pizza"
+# compress = true
 
 [dependencies]
 vexide = { workspace = true }

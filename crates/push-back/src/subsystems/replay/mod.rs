@@ -1,18 +1,19 @@
 mod structs;
 
 use std::{
-    fs::File,
-    io::{self, BufRead, BufReader, Write},
-    time::{Duration, Instant},
+    collections::HashMap, fs::File, io::{self, BufRead, BufReader, Write}, time::{Duration, Instant}
 };
 use structs::*;
 
-use vexide::controller::ControllerState;
+use vexide::{controller::ControllerState, time::sleep};
+
+use crate::subsystems::ControllableSubsystem;
 
 const MAGIC: &str = "REPLAY_MAGIC!";
 
 fn read_entry(file: &mut impl BufRead, buffer: &mut Vec<u8>) -> Option<RecordingEntry> {
-    if let Err(e) = file.read_until(b'\0', buffer) {
+    buffer.clear();
+    if let Err(e) = dbg!(file.read_until(b'\0', buffer)) {
         eprintln!("reading entry of recording should succeed: {e:?}");
         return None
     }
@@ -60,6 +61,7 @@ impl ReplaySubsystem {
         self.state = SubsystemState::Enabled {
             file,
             buffer: Vec::new(),
+            state_buffer: Vec::new(),
             start_time: Instant::now(),
             duration,
             previous_state: SerializedSubsystemStates::new(),
@@ -69,45 +71,45 @@ impl ReplaySubsystem {
         Ok(())
     }
 
-    pub fn start_replaying(&mut self, path: &str) -> io::Result<bool> {
-        let mut file = BufReader::new(File::options().read(true).open(path)?);
+    // pub fn start_replaying(&mut self, path: &str) -> io::Result<bool> {
+    //     let mut file = BufReader::new(File::options().read(true).open(path)?);
 
-        // Parse magic
-        let mut magic = String::new();
-        let Ok(_) = file
-            .read_line(&mut magic) else {
-                eprintln!("Should read magic line");
-                return Ok(false)
-            };
+    //     // Parse magic
+    //     let mut magic = String::new();
+    //     let Ok(_) = file
+    //         .read_line(&mut magic) else {
+    //             eprintln!("Should read magic line");
+    //             return Ok(false)
+    //         };
 
-        let Some((_, seconds)) = magic
-            .split_once(MAGIC) else {
-                eprintln!("Magic should split on '{}'", MAGIC);
-                return Ok(false)
-            };
-        let duration = Duration::from_secs(
-            seconds
-                .parse()
-                .expect("Magic duration parsing should succeed"),
-        );
+    //     let Some((_, seconds)) = magic
+    //         .split_once(MAGIC) else {
+    //             eprintln!("Magic should split on '{}'", MAGIC);
+    //             return Ok(false)
+    //         };
+    //     let duration = Duration::from_secs(
+    //         seconds
+    //             .parse()
+    //             .expect("Magic duration parsing should succeed"),
+    //     );
 
-        // Read first entry
-        let mut buffer = Vec::with_capacity(4096);
-        let next_entry = read_entry(&mut file, &mut buffer);
+    //     // Read first entry
+    //     let mut buffer = Vec::with_capacity(4096);
+    //     let next_entry = read_entry(&mut file, &mut buffer);
 
-        self.state = SubsystemState::Enabled {
-            file: file.into_inner(),
-            buffer,
-            start_time: Instant::now(),
-            duration,
-            previous_state: SerializedSubsystemStates::new(),
-            mode: ReplayMode::Replaying { next_entry },
-        };
+    //     self.state = SubsystemState::Enabled {
+    //         file: file.into_inner(),
+    //         buffer,
+    //         start_time: Instant::now(),
+    //         duration,
+    //         previous_state: SerializedSubsystemStates::new(),
+    //         mode: ReplayMode::Replaying { next_entry },
+    //     };
 
-        Ok(true)
-    }
+    //     Ok(true)
+    // }
 
-    pub fn control(&mut self, controller: &mut ControllerState) {
+    pub fn record(&mut self, controller: &ControllerState, states: &[(&'static str, &dyn ControllableSubsystem)]) {
         let current_state = &mut self.state;
         match current_state {
             SubsystemState::Disabled => {
@@ -115,16 +117,17 @@ impl ReplaySubsystem {
                 if controller.button_left.is_now_pressed() {
                     println!("Starting 30s recording!");
                     self.start_recording("record30.txt", Duration::from_secs(30))
-                        .expect("Starting relay should succeed");
+                        .expect("Starting replay recording should succeed");
                 } else if controller.button_right.is_now_pressed() {
                     println!("Starting 120s recording!");
                     self.start_recording("record120.txt", Duration::from_secs(120))
-                        .expect("Starting relay should succeed");
+                        .expect("Starting replay recording should succeed");
                 }
             }
             SubsystemState::Enabled {
                 file,
                 buffer,
+                state_buffer,
                 start_time,
                 duration,
                 previous_state,
@@ -138,64 +141,97 @@ impl ReplaySubsystem {
                         .expect("Reading replay file metadata should succeed");
                     println!("Ended recording!\nFile size: {} bytes", metadata.len());
                     *current_state = SubsystemState::Disabled;
-                }
-                // If replaying, control the bot
-                ReplayMode::Replaying {
-                    next_entry: next_entry_opt,
-                } => match next_entry_opt {
-                    Some(next_entry) => {
-                        let file = BufReader::new(file);
-                        let mut current_state = &*previous_state;
-
-                        let next_timestamp = Duration::from_micros(next_entry.micros_elapsed as u64);
-                        // Check if we have passed the time of the next entry, and should move to that state
-                        if start_time.elapsed() > next_timestamp {
-                            buffer.clear();
-
-                            next_entry_opt = Some(next_entry)
-                        }
-
-                        *controller = current_state.as_controller_state(previous_state);
-
-                        *previous_state = *current_state;
-                    }
-                    None => *controller = previous_state.as_controller_state(previous_state),
                 },
                 // If recording, write to file
                 ReplayMode::Recording => {
-                    let state: SerializedControllerState = (&*controller).into();
+                    state_buffer.clear();
+                    state_buffer.extend(
+                        states.iter()
+                            .filter_map(|(name, subsystem)| Some((name.to_string(), subsystem.state()?)))
+                    );
 
-                    if state != *previous_state {
+                    if *state_buffer != *previous_state {
                         // 2^32 - 1 microseconds is well over the 2min this code needs to deal with, so discard the rest
-                        let [low, high] = bytemuck::must_cast_slice::<_, u16>(&[start_time
+                        let micros_elapsed = start_time
                             .elapsed()
-                            .as_micros()])[0..2]
-                        else {
-                            const {
-                                // Ensure first two u16s are the correct ones
-                                assert!(cfg!(target_endian = "little"));
-                                // Ensure casting the microseconds result results in at least two u16s
-                                assert!(
-                                    size_of_val(&Duration::new(0, 0).as_micros())
-                                        >= 2 * size_of::<u16>()
-                                );
-                            }
-                            unreachable!()
-                        };
+                            .as_micros() as u32;
 
-                        file.write_all(bytemuck::must_cast_slice(&[RecordingEntry {
-                            micros_elapsed_high: high,
-                            micros_elapsed_low: low,
-                            controller_state: state,
-                        }]))
-                        .expect("Recording state should succeed");
-                        file.write_all(b"\n")
+                        buffer.clear();
+                        ciborium::into_writer(&RecordingEntry {
+                            subsystem_states: state_buffer.clone(),
+                            micros_elapsed
+                        }, &mut *buffer).expect("Serializing recording entry should succeed");
+                        let unencoded_len = buffer.len();
+
+                        buffer.reserve(cobs::max_encoding_length(unencoded_len));
+                        for _ in 0..(buffer.capacity() - buffer.len()) {
+                            buffer.push(0u8);
+                        }
+
+                        let (unencoded, encoded) = buffer.split_at_mut(unencoded_len);
+                        let encoded_len = cobs::encode(unencoded, encoded);
+
+                        file.write_all(&encoded[0..encoded_len])
+                            .expect("Recording state should succeed");
+                        file.write_all(b"\0")
                             .expect("Recording state delimeter should succeed");
 
-                        *previous_state = state;
+                        _ = std::mem::replace(previous_state, state_buffer.clone());
+                    }
+                },
+                _ => ()
+            },
+        }
+    }
+
+    pub async fn replay(&mut self, file: File, mut subsystems: HashMap<&'static str, &mut dyn ControllableSubsystem>) {
+        let mut reader = BufReader::new(file);
+        let mut buffer = Vec::new();
+
+        let mut magic = String::new();
+        if let Err(e) = reader.read_line(&mut magic) {
+            eprintln!("Reading magic line should succeed: {e:?}");
+            return
+        };
+        magic.pop(); // newline
+
+        let Some((_, secs)) = magic.split_once(MAGIC) else {
+            eprintln!("Splitting magic line should succeed: {magic}");
+            return
+        };
+        let Ok(secs) = secs.parse() else {
+            eprintln!("Parsing magic duration should succeed: {secs}, {}", secs.len());
+            return
+        };
+        let duration = Duration::from_secs(secs);
+
+        let mut next_entry = read_entry(&mut reader, &mut buffer);
+
+        let mut current_states = None;
+
+        let started_at = Instant::now();
+        loop {
+            let elapsed = started_at.elapsed();
+
+            if elapsed > duration {
+                println!("Auton finished");
+                break;
+            }
+
+            if next_entry.as_ref().is_some_and(|ne| elapsed > Duration::from_micros(ne.micros_elapsed as u64)) {
+                current_states = Some(next_entry.take().unwrap().subsystem_states);
+                next_entry = read_entry(&mut reader, &mut buffer);
+            }
+
+            if let Some(ref states) = current_states {
+                for (subsystem, state) in states {
+                    if let Some(subsystem) = subsystems.get_mut(subsystem.as_str()) {
+                        subsystem.direct(state);
                     }
                 }
-            },
+            }
+
+            sleep(Duration::from_millis(2)).await
         }
     }
 }

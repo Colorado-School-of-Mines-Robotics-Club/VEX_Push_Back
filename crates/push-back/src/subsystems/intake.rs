@@ -124,16 +124,19 @@ impl<M: AsMut<[Motor]>> IntakeSubsystem<M> {
             match (state.contains(flag), state.contains(flag.reverse())) {
                 (true, false) => {
                     for m in motors {
+                        m.set_current_limit(10.0)?;
                         m.set_voltage(m.max_voltage())?
                     }
                 }
                 (true, true) => {
                     for m in motors {
+                        m.set_current_limit(10.0)?;
                         m.set_voltage(-m.max_voltage())?
                     }
                 }
                 _ => {
                     for m in motors {
+                        m.set_current_limit(0.5)?;
                         m.brake(BrakeMode::Brake)?
                     }
                 }
@@ -145,6 +148,14 @@ impl<M: AsMut<[Motor]>> IntakeSubsystem<M> {
 }
 
 impl<M: AsMut<[Motor]>> ControllableSubsystem for IntakeSubsystem<M> {
+    fn direct(&mut self, state: &ciborium::Value) {
+        if let Ok(parsed) = state.deserialized() {
+            self.state = parsed;
+
+            _ = self.run(self.state);
+        }
+    }
+
     fn update(&mut self, controller: &ControllerState, _configuration: ControllerConfiguration) {
         self.state = if controller.button_b.is_pressed() {
             IntakeState::FULL | IntakeState::FULL_REV

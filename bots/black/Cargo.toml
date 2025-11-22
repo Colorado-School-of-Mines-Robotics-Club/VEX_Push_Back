@@ -1,0 +1,17 @@
+[package]
+name = "bot-black"
+version = "0.1.0"
+edition = "2024"
+
+[package.metadata.v5]
+upload-strategy = "differential"
+slot = 1
+icon = "pizza"
+compress = true
+
+[dependencies]
+vexide = { workspace = true }
+evian = { workspace = true }
+shrewnit = { workspace = true }
+v1 = { path = "../v1" }
+# display = { path = "./display" }

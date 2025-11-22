@@ -28,6 +28,8 @@ pub(super) enum SubsystemState {
         file: File,
         /// A buffer to be used for reading from files
         buffer: Vec<u8>,
+        /// A buffer to be used for storing subsystem states
+        state_buffer: Vec<(String, ciborium::Value)>,
         /// When the replay subsystem was enabled
         start_time: Instant,
         /// How long this replay session runs for

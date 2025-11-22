@@ -29,17 +29,17 @@ impl TrunkSubsystem {
     }
 
     pub fn set_state(&mut self, state: TrunkState) -> Result<(), PortError> {
-        dbg!(state);
+        // dbg!(state);
         match state {
             TrunkState::Down => {
                 self.lower_pneumatic.set_low()?;
                 self.upper_pneumatic.set_low()?;
             }
-            TrunkState::Lower => {
+            TrunkState::Upper => {
                 self.lower_pneumatic.set_high()?;
                 self.upper_pneumatic.set_high()?;
             }
-            TrunkState::Upper => {
+            TrunkState::Lower => {
                 self.lower_pneumatic.set_high()?;
                 self.upper_pneumatic.set_low()?;
             }
@@ -56,6 +56,12 @@ impl ControllableSubsystem for TrunkSubsystem {
             ciborium::Value::serialized(&self.state)
                 .expect("Serializing state enum should succeed"),
         )
+    }
+
+    fn direct(&mut self, state: &ciborium::Value) {
+        if let Ok(parsed) = state.deserialized() {
+            _ = self.set_state(parsed);
+        }
     }
 
     fn update(&mut self, controller: &ControllerState, configuration: ControllerConfiguration) {
@@ -82,9 +88,9 @@ impl ControllableSubsystem for TrunkSubsystem {
                 }
             },
             ControllerConfiguration::Connor => {
-                if controller.button_l1.is_now_pressed() {
+                if controller.button_l2.is_now_pressed() {
                     _ = self.set_state(TrunkState::Down);
-                } else if controller.button_l2.is_now_released() {
+                } else if controller.button_l1.is_now_released() {
                     let state = match self.state {
                         TrunkState::Down | TrunkState::Upper => TrunkState::Lower,
                         TrunkState::Lower => TrunkState::Upper,

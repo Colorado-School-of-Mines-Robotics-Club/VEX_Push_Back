@@ -10,14 +10,14 @@ use vexide::controller::ControllerState;
 
 use crate::subsystems::{ControllableSubsystem, ControllerConfiguration};
 
-const fn arcade(throttle: i8, steer: i8) -> (i8, i8) {
-    (throttle + steer, throttle - steer)
+fn arcade(throttle: f64, steer: f64) -> (f64, f64) {
+    desaturate([throttle + steer, throttle - steer], 1_f64).into()
 }
 
 pub struct DrivetrainSubsystem<M: Tank, T: Tracking> {
     pub drivetrain: Drivetrain<M, T>,
     /// The state of the drivetrain as (left, right), both should be desaturate before use
-    pub state: (i8, i8),
+    pub state: (f64, f64),
 }
 
 impl<M: Tank, T: Tracking> DrivetrainSubsystem<M, T> {
@@ -28,7 +28,9 @@ impl<M: Tank, T: Tracking> DrivetrainSubsystem<M, T> {
         }
     }
 
-    pub fn run(&mut self, left: f64, right: f64) -> Result<(), <M as DrivetrainModel>::Error> {
+    pub fn run(&mut self) -> Result<(), <M as DrivetrainModel>::Error> {
+        let [left, right] = desaturate(self.state.into(), 1_f64);
+
         self.drivetrain.model.drive_tank(left, right)
     }
 }
@@ -41,20 +43,27 @@ impl<M: Tank, T: Tracking> ControllableSubsystem for DrivetrainSubsystem<M, T> {
         )
     }
 
+    fn direct(&mut self, state: &ciborium::Value) {
+        if let Ok(parsed) = state.deserialized() {
+            self.state = parsed;
+
+            _ = self.run();
+        }
+    }
+
     fn update(&mut self, controller: &ControllerState, configuration: ControllerConfiguration) {
         self.state = match configuration {
             ControllerConfiguration::Noah => arcade( // Split arcade
-                controller.left_stick.y_raw(),
-                controller.right_stick.x_raw(),
+                controller.left_stick.y(),
+                controller.right_stick.x(),
             ),
             ControllerConfiguration::Connor => ( // Tank
-                controller.left_stick.y_raw(),
-                controller.right_stick.y_raw(),
+                controller.left_stick.y(),
+                controller.right_stick.y(),
             ),
         };
 
-        let [left, right] = desaturate([self.state.0 as f64 / 127.0, self.state.1 as f64 / 127.0], 1_f64);
-        _ = self.run(left, right);
+        _ = self.run();
     }
 }
 

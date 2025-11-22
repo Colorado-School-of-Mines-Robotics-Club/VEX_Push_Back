@@ -35,12 +35,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "bot-one"
+name = "bot-black"
 version = "0.1.0"
 dependencies = [
  "evian",
- "push-back",
  "shrewnit",
+ "v1",
  "vexide",
 ]
 
@@ -51,7 +51,17 @@ dependencies = [
  "evian",
  "push-back",
  "shrewnit",
- "vex-sdk 0.28.0",
+ "vex-sdk",
+ "vexide",
+]
+
+[[package]]
+name = "bot-white"
+version = "0.1.0"
+dependencies = [
+ "evian",
+ "shrewnit",
+ "v1",
  "vexide",
 ]
 
@@ -77,9 +87,9 @@ dependencies = [
 
 [[package]]
 name = "bytes"
-version = "1.10.1"
+version = "1.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d71b6127be86fdcfddb610f7182ac57211d4b18a3e9c82eb2d17662f2227ad6a"
+checksum = "b35204fbdc0b3f4446b89fc1ac2cf84a8a68971995d0bf2e925ec7cd960f9cb3"
 
 [[package]]
 name = "cfg-if"
@@ -203,7 +213,7 @@ dependencies = [
 [[package]]
 name = "evian"
 version = "0.3.0-rc.1"
-source = "git+https://github.com/Colorado-School-of-Mines-Robotics-Club/evian?rev=d7461d935ccc19d143c202605854c76b5d11828d#d7461d935ccc19d143c202605854c76b5d11828d"
+source = "git+https://github.com/Colorado-School-of-Mines-Robotics-Club/evian?rev=719b3b19d7c72733cf15e039dbe7a3d092b93f20#719b3b19d7c72733cf15e039dbe7a3d092b93f20"
 dependencies = [
  "evian-control",
  "evian-drivetrain",
@@ -215,7 +225,7 @@ dependencies = [
 [[package]]
 name = "evian-control"
 version = "0.0.1-rc.1"
-source = "git+https://github.com/Colorado-School-of-Mines-Robotics-Club/evian?rev=d7461d935ccc19d143c202605854c76b5d11828d#d7461d935ccc19d143c202605854c76b5d11828d"
+source = "git+https://github.com/Colorado-School-of-Mines-Robotics-Club/evian?rev=719b3b19d7c72733cf15e039dbe7a3d092b93f20#719b3b19d7c72733cf15e039dbe7a3d092b93f20"
 dependencies = [
  "evian-math",
  "vexide",
@@ -224,7 +234,7 @@ dependencies = [
 [[package]]
 name = "evian-drivetrain"
 version = "0.0.1-rc.1"
-source = "git+https://github.com/Colorado-School-of-Mines-Robotics-Club/evian?rev=d7461d935ccc19d143c202605854c76b5d11828d#d7461d935ccc19d143c202605854c76b5d11828d"
+source = "git+https://github.com/Colorado-School-of-Mines-Robotics-Club/evian?rev=719b3b19d7c72733cf15e039dbe7a3d092b93f20#719b3b19d7c72733cf15e039dbe7a3d092b93f20"
 dependencies = [
  "evian-math",
  "evian-tracking",
@@ -234,7 +244,7 @@ dependencies = [
 [[package]]
 name = "evian-math"
 version = "0.0.1-rc.1"
-source = "git+https://github.com/Colorado-School-of-Mines-Robotics-Club/evian?rev=d7461d935ccc19d143c202605854c76b5d11828d#d7461d935ccc19d143c202605854c76b5d11828d"
+source = "git+https://github.com/Colorado-School-of-Mines-Robotics-Club/evian?rev=719b3b19d7c72733cf15e039dbe7a3d092b93f20#719b3b19d7c72733cf15e039dbe7a3d092b93f20"
 dependencies = [
  "num-traits",
  "vexide",
@@ -243,7 +253,7 @@ dependencies = [
 [[package]]
 name = "evian-motion"
 version = "0.0.1-rc.1"
-source = "git+https://github.com/Colorado-School-of-Mines-Robotics-Club/evian?rev=d7461d935ccc19d143c202605854c76b5d11828d#d7461d935ccc19d143c202605854c76b5d11828d"
+source = "git+https://github.com/Colorado-School-of-Mines-Robotics-Club/evian?rev=719b3b19d7c72733cf15e039dbe7a3d092b93f20#719b3b19d7c72733cf15e039dbe7a3d092b93f20"
 dependencies = [
  "evian-control",
  "evian-drivetrain",
@@ -255,7 +265,7 @@ dependencies = [
 [[package]]
 name = "evian-tracking"
 version = "0.0.1-rc.1"
-source = "git+https://github.com/Colorado-School-of-Mines-Robotics-Club/evian?rev=d7461d935ccc19d143c202605854c76b5d11828d#d7461d935ccc19d143c202605854c76b5d11828d"
+source = "git+https://github.com/Colorado-School-of-Mines-Robotics-Club/evian?rev=719b3b19d7c72733cf15e039dbe7a3d092b93f20#719b3b19d7c72733cf15e039dbe7a3d092b93f20"
 dependencies = [
  "evian-math",
  "vexide",
@@ -266,6 +276,24 @@ name = "futures-core"
 version = "0.3.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "05f29059c0c2090612e8d742178b0580d2dc940c837851ad723096f87af6663e"
+
+[[package]]
+name = "futures-task"
+version = "0.3.31"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f90f7dce0722e95104fcb095585910c0977252f286e354b5e3bd38902cd99988"
+
+[[package]]
+name = "futures-util"
+version = "0.3.31"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9fa08315bb612088cc391249efdc3bc77536f16c91f6cf495e6fbe85b20a4a81"
+dependencies = [
+ "futures-core",
+ "futures-task",
+ "pin-project-lite",
+ "pin-utils",
+]
 
 [[package]]
 name = "half"
@@ -394,6 +422,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3b3cff922bd51709b605d9ead9aa71031d81447142d828eb4a6eba76fe619f9b"
 
 [[package]]
+name = "pin-utils"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
+
+[[package]]
 name = "powerfmt"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -425,9 +459,9 @@ dependencies = [
 
 [[package]]
 name = "quote"
-version = "1.0.41"
+version = "1.0.42"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce25767e7b499d1b604768e7cde645d14cc8584231ea6b295e9c9eb22c02e1d1"
+checksum = "a338cc41d27e6cc6dce6cefc13a0729dfbb81c262b1f519331575dd80ef3067f"
 dependencies = [
  "proc-macro2",
 ]
@@ -533,9 +567,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.108"
+version = "2.0.110"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da58917d35242480a05c2897064da0a80589a2a0476c9a3f2fdc83b53502e917"
+checksum = "a99801b5bd34ede4cf3fc688c5919368fea4e4814a4664359503e6015b280aea"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -618,6 +652,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9312f7c4f6ff9069b165498234ce8be658059c6728633667c526e27dc2cf1df5"
 
 [[package]]
+name = "v1"
+version = "0.1.0"
+dependencies = [
+ "evian",
+ "push-back",
+ "shrewnit",
+ "vexide",
+]
+
+[[package]]
 name = "vex-libunwind"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -635,41 +679,34 @@ checksum = "03d9beed7d21b083fd5bfdb1bebcafa539ba2584891e429f889dfa298cab858d"
 
 [[package]]
 name = "vex-sdk"
-version = "0.27.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "79e5fe15afde1305478b35e2cb717fff59f485428534cf49cfdbfa4723379bf6"
-
-[[package]]
-name = "vex-sdk"
 version = "0.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b95fb7c2b31cb4a3e80b86ea47fc2abf21f8065dfd7d603657c44fb56d21b22d"
 
 [[package]]
 name = "vex-sdk-jumptable"
-version = "0.0.2"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1c7ce1c05cba9a1c5f6814ba05b6948cf5bdbbfbd855b36085af64b98c490dcf"
+checksum = "c522b5bf978b1e816e9007b23f9d467edc14dd983133a8740069af6ce747236e"
 dependencies = [
- "vex-sdk 0.27.1",
+ "vex-sdk",
 ]
 
 [[package]]
 name = "vex-sdk-mock"
-version = "0.0.1"
+version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d55283baa551435a728ee5dd0bd592f99ae163fa66c952219a9ae80978b8764c"
+checksum = "8f5631508ce6f1e57d20d4ca59b6c2667a5d8b0e4c7a4d2b1cef7b3c1eb5ef99"
 dependencies = [
- "vex-sdk 0.27.1",
+ "vex-sdk",
 ]
 
 [[package]]
 name = "vexide"
-version = "0.8.0-alpha.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "098f95d027dbaa75a19db9fb36e7b80e2ec4cbf16a3a94f80e5d4ff588f1e6b9"
+version = "0.8.0"
+source = "git+https://github.com/vexide/vexide?rev=45112b58d3f2de6da4fcec78aa2bfd4e3132f4cc#45112b58d3f2de6da4fcec78aa2bfd4e3132f4cc"
 dependencies = [
- "vex-sdk 0.27.1",
+ "vex-sdk",
  "vexide-async",
  "vexide-core",
  "vexide-devices",
@@ -679,50 +716,48 @@ dependencies = [
 
 [[package]]
 name = "vexide-async"
-version = "0.2.0-alpha.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dfaa63e67bf9ddc89ccd9939d54f9eac7a86db53df9a7c38b83ab31f39925df2"
+version = "0.2.0"
+source = "git+https://github.com/vexide/vexide?rev=45112b58d3f2de6da4fcec78aa2bfd4e3132f4cc#45112b58d3f2de6da4fcec78aa2bfd4e3132f4cc"
 dependencies = [
  "async-lock",
  "async-task",
- "vex-sdk 0.27.1",
+ "futures-util",
+ "vex-sdk",
  "waker-fn",
 ]
 
 [[package]]
 name = "vexide-core"
-version = "0.8.0-alpha.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "21b33d7ccfbf19c82849fe87d1fa91641950daccc7e4c7181681f5d4fe2c4317"
+version = "0.8.0"
+source = "git+https://github.com/vexide/vexide?rev=45112b58d3f2de6da4fcec78aa2bfd4e3132f4cc#45112b58d3f2de6da4fcec78aa2bfd4e3132f4cc"
 dependencies = [
  "bitflags",
  "futures-core",
  "pin-project",
  "vex-libunwind",
- "vex-sdk 0.27.1",
+ "vex-sdk",
 ]
 
 [[package]]
 name = "vexide-devices"
-version = "0.8.0-alpha.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e64f6c970b3aa0ad1e583f1906b725c3aaf7dc45ab1aef5c8ff363416407cfa"
+version = "0.8.0"
+source = "git+https://github.com/vexide/vexide?rev=45112b58d3f2de6da4fcec78aa2bfd4e3132f4cc#45112b58d3f2de6da4fcec78aa2bfd4e3132f4cc"
 dependencies = [
  "bitflags",
+ "bytemuck",
  "libm",
  "mint",
  "rgb",
  "smart-leds-trait",
  "snafu",
- "vex-sdk 0.27.1",
+ "vex-sdk",
  "vexide-core",
 ]
 
 [[package]]
 name = "vexide-macro"
-version = "0.4.0-alpha.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "40830d8f5a22d62398f12fbc997fa2650f9e430ffb6ff501f27e4aa14e0c6d3a"
+version = "0.4.0"
+source = "git+https://github.com/vexide/vexide?rev=45112b58d3f2de6da4fcec78aa2bfd4e3132f4cc#45112b58d3f2de6da4fcec78aa2bfd4e3132f4cc"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -731,16 +766,15 @@ dependencies = [
 
 [[package]]
 name = "vexide-startup"
-version = "0.5.0-alpha.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d5ed35ab48ef0acfea49715a307ddb4d981183af3eae065046621bbd8a54f7f2"
+version = "0.5.0"
+source = "git+https://github.com/vexide/vexide?rev=45112b58d3f2de6da4fcec78aa2bfd4e3132f4cc#45112b58d3f2de6da4fcec78aa2bfd4e3132f4cc"
 dependencies = [
  "bitflags",
  "compile-time",
  "talc",
  "vex-libunwind",
  "vex-libunwind-sys",
- "vex-sdk 0.27.1",
+ "vex-sdk",
  "vex-sdk-jumptable",
  "vex-sdk-mock",
  "vexide-core",

@@ -9,7 +9,7 @@ use vexide::{
     smart::{SmartDeviceType, SmartPort},
 };
 
-use crate::subsystems::ControllableSubsystem;
+use crate::subsystems::{ControllableSubsystem, ControllerConfiguration};
 
 pub mod tracking;
 
@@ -36,7 +36,7 @@ impl CoproSubsystem {
 }
 
 impl ControllableSubsystem for CoproSubsystem {
-    fn update(&mut self, controller: &ControllerState) {
+    fn update(&mut self, controller: &ControllerState, _configuration: ControllerConfiguration) {
         if controller.button_y.is_now_pressed() {
             let request_future = self.port.send_request(CalibrateRequest);
             vexide::task::spawn(async move {

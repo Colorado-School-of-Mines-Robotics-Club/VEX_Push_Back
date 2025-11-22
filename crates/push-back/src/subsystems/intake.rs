@@ -6,7 +6,7 @@ use vexide::{
     smart::{PortError, motor::BrakeMode},
 };
 
-use crate::subsystems::ControllableSubsystem;
+use crate::subsystems::{ControllableSubsystem, ControllerConfiguration};
 
 pub struct IntakeMotors<M: AsMut<[Motor]>> {
     pub intake_wheels: M,
@@ -145,14 +145,15 @@ impl<M: AsMut<[Motor]>> IntakeSubsystem<M> {
 }
 
 impl<M: AsMut<[Motor]>> ControllableSubsystem for IntakeSubsystem<M> {
-    fn update(&mut self, controller: &ControllerState) {
-        self.state = match (
-            controller.button_r1.is_pressed(),
-            controller.button_r2.is_pressed(),
-        ) {
-            (true, false) => IntakeState::full_forward(),
-            (false, true) => IntakeState::full_reverse(),
-            _ => IntakeState::full_brake(),
+    fn update(&mut self, controller: &ControllerState, _configuration: ControllerConfiguration) {
+        self.state = if controller.button_b.is_pressed() {
+            IntakeState::FULL | IntakeState::FULL_REV
+        } else if controller.button_r2.is_pressed() {
+            IntakeState::FULL
+        } else if controller.button_r1.is_pressed() {
+            IntakeState::FULL - IntakeState::TRUNK
+        } else {
+            IntakeState::full_brake()
         };
 
         _ = self.run(self.state);

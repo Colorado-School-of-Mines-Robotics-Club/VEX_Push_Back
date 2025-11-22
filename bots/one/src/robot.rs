@@ -4,8 +4,8 @@ use push_back::subsystems::{
     // copro::{CoproSubsystem, tracking::CoproTracking},
     drivetrain::DrivetrainSubsystem,
     intake::{IntakeMotors, IntakeSubsystem},
-    replay::ReplaySubsystem,
-    trunk::TrunkSubsystem
+    // replay::ReplaySubsystem,
+    trunk::TrunkSubsystem, ControllerConfiguration
 };
 use vexide::{
     math::Direction,
@@ -18,28 +18,39 @@ pub struct Robot {
     // pub display: RefCell<Display>,
     // pub coprocessor: CoproSubsystem,
     pub controller: Controller,
+    pub configuration: ControllerConfiguration,
     pub drivetrain: DrivetrainSubsystem<Differential, /* CoproTracking */ ()>,
     pub intake: IntakeSubsystem<Vec<Motor>>,
     pub trunk: TrunkSubsystem,
-    pub replay: ReplaySubsystem,
+    // pub replay: ReplaySubsystem,
 }
 
 impl Robot {
     pub async fn new(peripherals: Peripherals) -> Self {
         // let coprocessor = CoproSubsystem::new(peripherals.port_15).await;
+        let mut controller = peripherals.primary_controller;
+        let configuration = ControllerConfiguration::Noah;
         let drivetrain = DrivetrainSubsystem::new(
             Differential::new(
                 [
-                    Motor::new(peripherals.port_1, Gearset::Blue, Direction::Reverse),
-                    Motor::new(peripherals.port_2, Gearset::Blue, Direction::Forward),
-                    Motor::new(peripherals.port_3, Gearset::Blue, Direction::Reverse),
+                    // Motor::new(peripherals.port_1, Gearset::Blue, Direction::Reverse),
+                    // Motor::new(peripherals.port_2, Gearset::Blue, Direction::Forward),
+                    // Motor::new(peripherals.port_3, Gearset::Blue, Direction::Reverse),
+                    // Motor::new(peripherals.port_4, Gearset::Blue, Direction::Forward),
+                    Motor::new(peripherals.port_1, Gearset::Blue, Direction::Reverse), // white bot
+                    Motor::new(peripherals.port_2, Gearset::Blue, Direction::Reverse),
+                    Motor::new(peripherals.port_3, Gearset::Blue, Direction::Forward),
                     Motor::new(peripherals.port_4, Gearset::Blue, Direction::Forward),
                 ],
                 [
-                    Motor::new(peripherals.port_7, Gearset::Blue, Direction::Reverse),
-                    Motor::new(peripherals.port_8, Gearset::Blue, Direction::Forward),
-                    Motor::new(peripherals.port_9, Gearset::Blue, Direction::Reverse),
-                    Motor::new(peripherals.port_10, Gearset::Blue, Direction::Forward),
+                    // Motor::new(peripherals.port_7, Gearset::Blue, Direction::Reverse),
+                    // Motor::new(peripherals.port_8, Gearset::Blue, Direction::Forward),
+                    // Motor::new(peripherals.port_9, Gearset::Blue, Direction::Reverse),
+                    // Motor::new(peripherals.port_10, Gearset::Blue, Direction::Forward),
+                    Motor::new(peripherals.port_7, Gearset::Blue, Direction::Forward), // white bot
+                    Motor::new(peripherals.port_8, Gearset::Blue, Direction::Reverse),
+                    Motor::new(peripherals.port_9, Gearset::Blue, Direction::Forward),
+                    Motor::new(peripherals.port_10, Gearset::Blue, Direction::Reverse),
                 ],
             ),
             // CoproTracking(coprocessor.data()),
@@ -79,17 +90,22 @@ impl Robot {
             ],
         );
         let trunk = TrunkSubsystem::new(
+            // AdiDigitalOut::new(peripherals.adi_h),
+            // AdiDigitalOut::new(peripherals.adi_g),
+            AdiDigitalOut::new(peripherals.adi_g), // white bot
             AdiDigitalOut::new(peripherals.adi_h),
-            AdiDigitalOut::new(peripherals.adi_g),
         );
-        let replay = ReplaySubsystem::new();
+        // let replay = ReplaySubsystem::new();
+
+        _ = controller.screen.set_text(configuration.as_str(), 1, 1).await;
 
         Self {
-            controller: peripherals.primary_controller,
+            controller,
+            configuration,
             drivetrain,
             intake,
             trunk,
-            replay
+            // replay
             // coprocessor,
         }
     }

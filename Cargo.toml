@@ -16,3 +16,4 @@ bytes = { version = "1.10.1", default-features = false }
 bytemuck = { version = "1.24.0", features = ["derive", "min_const_generics", "must_cast"] }
 triple_buffer = "8.1.1"
 nom = { version = "8.0.0", default-features = false, features = ["alloc"] }
+cobs = { version = "0.4.0", default-features = false, features = ["alloc"] }

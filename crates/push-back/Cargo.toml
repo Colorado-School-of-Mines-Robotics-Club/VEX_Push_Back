@@ -17,5 +17,6 @@ coprocessor = { path = "../../coprocessor/brain" }
 bitflags = { version = "2.10.0", features = ["bytemuck"] }
 bytemuck = { workspace = true }
 ciborium = "0.2.2"
+cobs = { workspace = true }
 serde = { version = "1.0.228", features = ["derive"] }
 # display = { path = "./display" }

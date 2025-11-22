@@ -1,9 +1,8 @@
 mod structs;
 
-use bytemuck::Zeroable as _;
 use std::{
     fs::File,
-    io::{self, BufRead, BufReader, ErrorKind, Read, Write},
+    io::{self, BufRead, BufReader, Write},
     time::{Duration, Instant},
 };
 use structs::*;
@@ -11,6 +10,31 @@ use structs::*;
 use vexide::controller::ControllerState;
 
 const MAGIC: &str = "REPLAY_MAGIC!";
+
+fn read_entry(file: &mut impl BufRead, buffer: &mut Vec<u8>) -> Option<RecordingEntry> {
+    if let Err(e) = file.read_until(b'\0', buffer) {
+        eprintln!("reading entry of recording should succeed: {e:?}");
+        return None
+    }
+
+    match cobs::decode_in_place(buffer) {
+        Ok(n) => buffer.truncate(n),
+        Err(e) => {
+            eprintln!("cobs decoding entry of recording should succeed: {e:?}");
+            return None
+        }
+    }
+
+    let parsed = match ciborium::from_reader(&buffer[..]) {
+        Ok(v) => v,
+        Err(e) => {
+            eprintln!("parsing entry of recording should succeed: {e:?}");
+            return None
+        }
+    };
+
+    Some(parsed)
+}
 
 #[derive(Default)]
 pub struct ReplaySubsystem {
@@ -35,26 +59,32 @@ impl ReplaySubsystem {
 
         self.state = SubsystemState::Enabled {
             file,
+            buffer: Vec::new(),
             start_time: Instant::now(),
             duration,
-            previous_state: SerializedControllerState::zeroed(),
+            previous_state: SerializedSubsystemStates::new(),
             mode: ReplayMode::Recording,
         };
 
         Ok(())
     }
 
-    pub fn start_replaying(&mut self, path: &str) -> io::Result<()> {
-        let mut file = File::options().read(true).open(path)?;
+    pub fn start_replaying(&mut self, path: &str) -> io::Result<bool> {
+        let mut file = BufReader::new(File::options().read(true).open(path)?);
 
         // Parse magic
         let mut magic = String::new();
-        BufReader::new(&mut file)
-            .read_line(&mut magic)
-            .expect("Reading magic line should succeed");
-        let (_, seconds) = magic
-            .split_once(MAGIC)
-            .unwrap_or_else(|| panic!("Magic should split on '{}'", MAGIC));
+        let Ok(_) = file
+            .read_line(&mut magic) else {
+                eprintln!("Should read magic line");
+                return Ok(false)
+            };
+
+        let Some((_, seconds)) = magic
+            .split_once(MAGIC) else {
+                eprintln!("Magic should split on '{}'", MAGIC);
+                return Ok(false)
+            };
         let duration = Duration::from_secs(
             seconds
                 .parse()
@@ -62,22 +92,19 @@ impl ReplaySubsystem {
         );
 
         // Read first entry
-        let mut entry = [0u8; size_of::<RecordingEntry>()];
-        let next_entry = match file.read_exact(&mut entry) {
-            Ok(_) => Some(bytemuck::must_cast(entry)),
-            Err(e) if e.kind() == ErrorKind::UnexpectedEof => None,
-            Err(e) => panic!("reading first entry of recording should succeed: {e:?}"),
-        };
+        let mut buffer = Vec::with_capacity(4096);
+        let next_entry = read_entry(&mut file, &mut buffer);
 
         self.state = SubsystemState::Enabled {
-            file,
+            file: file.into_inner(),
+            buffer,
             start_time: Instant::now(),
             duration,
-            previous_state: SerializedControllerState::zeroed(),
+            previous_state: SerializedSubsystemStates::new(),
             mode: ReplayMode::Replaying { next_entry },
         };
 
-        Ok(())
+        Ok(true)
     }
 
     pub fn control(&mut self, controller: &mut ControllerState) {
@@ -97,6 +124,7 @@ impl ReplaySubsystem {
             }
             SubsystemState::Enabled {
                 file,
+                buffer,
                 start_time,
                 duration,
                 previous_state,
@@ -116,30 +144,15 @@ impl ReplaySubsystem {
                     next_entry: next_entry_opt,
                 } => match next_entry_opt {
                     Some(next_entry) => {
-                        let next_entry = *next_entry; // copy to avoid mutable reference issues
+                        let file = BufReader::new(file);
                         let mut current_state = &*previous_state;
 
-                        let next_timestamp = bytemuck::must_cast::<_, u64>([
-                            next_entry.micros_elapsed_low,
-                            next_entry.micros_elapsed_high,
-                            0,
-                            0,
-                        ]);
+                        let next_timestamp = Duration::from_micros(next_entry.micros_elapsed as u64);
                         // Check if we have passed the time of the next entry, and should move to that state
-                        if start_time.elapsed() > Duration::from_micros(next_timestamp) {
-                            let mut buf = [0u8; size_of::<RecordingEntry>()];
-                            match file.read_exact(&mut buf) {
-                                Ok(_) => {
-                                    current_state = &next_entry.controller_state;
-                                    *next_entry_opt = Some(bytemuck::must_cast(buf));
-                                }
-                                Err(e) if e.kind() == ErrorKind::UnexpectedEof => {
-                                    *next_entry_opt = None
-                                }
-                                Err(e) => {
-                                    panic!("reading next entry of recording should succeed: {e:?}")
-                                }
-                            }
+                        if start_time.elapsed() > next_timestamp {
+                            buffer.clear();
+
+                            next_entry_opt = Some(next_entry)
                         }
 
                         *controller = current_state.as_controller_state(previous_state);

@@ -11,13 +11,18 @@ impl Compete for Robot {
 
         let mut i: usize = 0;
         loop {
-            if let Ok(mut controller) = self.controller.state() {
+            if let Ok(controller) = self.controller.state() {
+                if controller.button_right.is_now_pressed() {
+                    self.configuration = self.configuration.next();
+                    _ = self.controller.screen.set_text(self.configuration.as_str(), 1, 1).await
+                }
+
                 // Run subsystems
-                self.replay.control(&mut controller);
-                self.drivetrain.update(&controller);
-                // self.coprocessor.control(&controller);
-                self.intake.update(&controller);
-                self.trunk.update(&controller);
+                // self.replay.control(&mut controller);
+                self.drivetrain.update(&controller, self.configuration);
+                // self.coprocessor.control(&controller, self.configuration);
+                self.intake.update(&controller, self.configuration);
+                self.trunk.update(&controller, self.configuration);
             } else if i.is_multiple_of(100) {
                 // Only print every second
                 println!("Warning: controller not connected");

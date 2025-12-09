@@ -64,7 +64,7 @@ impl ControllableSubsystem for TrunkSubsystem {
         }
     }
 
-    fn update(&mut self, controller: &ControllerState, configuration: ControllerConfiguration) {
+    fn control(&mut self, controller: &ControllerState, configuration: ControllerConfiguration) {
         match configuration {
             ControllerConfiguration::Noah => {
                 let lower_btn = controller.button_l1.is_now_pressed();
@@ -86,7 +86,7 @@ impl ControllableSubsystem for TrunkSubsystem {
                         (false, false) => (),
                     },
                 }
-            },
+            }
             ControllerConfiguration::Connor => {
                 if controller.button_l2.is_now_pressed() {
                     _ = self.set_state(TrunkState::Down);
@@ -98,7 +98,7 @@ impl ControllableSubsystem for TrunkSubsystem {
 
                     _ = self.set_state(state);
                 };
-            },
+            }
         }
     }
 }

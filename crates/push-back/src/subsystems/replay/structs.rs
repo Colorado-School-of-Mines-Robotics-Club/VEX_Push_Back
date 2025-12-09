@@ -1,26 +1,25 @@
 use serde::{Deserialize, Serialize};
 use std::{
-    fs::File, io::{BufReader, BufWriter}, time::{Duration, Instant}
+    fs::File,
+    time::{Duration, Instant},
 };
 
-pub(super) type SerializedSubsystemStates = Vec<(String, ciborium::Value)>;
+pub type SerializedSubsystemStates = Vec<(String, ciborium::Value)>;
 
 #[derive(Debug, Serialize, Deserialize)]
-pub(super) struct RecordingEntry {
-    pub(super) subsystem_states: SerializedSubsystemStates,
-    pub(super) micros_elapsed: u32
+pub struct RecordingEntry {
+    pub subsystem_states: SerializedSubsystemStates,
+    pub micros_elapsed: u32,
 }
 
 #[derive(Debug)]
-pub(super) enum ReplayMode {
-    Replaying {
-        next_entry: Option<RecordingEntry>
-    },
+pub enum ReplayMode {
+    Replaying { next_entry: Option<RecordingEntry> },
     Recording,
 }
 
 #[derive(Debug, Default)]
-pub(super) enum SubsystemState {
+pub enum SubsystemState {
     #[default]
     Disabled,
     Enabled {

@@ -30,7 +30,7 @@ impl TracksForwardTravel for CoproTracking {
 }
 
 impl TracksHeading for CoproTracking {
-    fn heading(&self) -> evian::prelude::Angle {
+    fn heading(&self) -> vexide::math::Angle {
         let mut data = self.borrow_mut();
         let heading = data.position.read().heading;
 
@@ -49,7 +49,7 @@ impl TracksHeading for CoproTracking {
 }
 
 impl TracksPosition for CoproTracking {
-    fn position(&self) -> evian::prelude::Vec2<f64> {
+    fn position(&self) -> evian::math::Vec2<f64> {
         let mut data = self.borrow_mut();
         let pos = data.position.read();
         Vec2::new(pos.x.to::<Inches>(), pos.y.to::<Inches>())

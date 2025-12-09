@@ -1,8 +1,10 @@
 use evian::drivetrain::model::Differential;
 use push_back::subsystems::{
-    // ControllableSubsystem,
-    // copro::{CoproSubsystem, tracking::CoproTracking},
-    drivetrain::DrivetrainSubsystem, intake::{IntakeMotors, IntakeSubsystem}, replay::ReplaySubsystem, trunk::TrunkSubsystem, ControllerConfiguration
+    ControllerConfiguration,
+    drivetrain::DrivetrainSubsystem,
+    intake::{IntakeMotors, IntakeSensors, IntakeSubsystem},
+    replay::ReplaySubsystem,
+    trunk::TrunkSubsystem,
 };
 use vexide::{
     math::Direction,
@@ -17,14 +19,14 @@ pub struct Robot {
     pub controller: Controller,
     pub configuration: ControllerConfiguration,
     pub drivetrain: DrivetrainSubsystem<Differential, /* CoproTracking */ ()>,
-    pub intake: IntakeSubsystem<Vec<Motor>>,
+    pub intake: IntakeSubsystem,
     pub trunk: TrunkSubsystem,
     pub replay: ReplaySubsystem,
 }
 
 pub enum V1Bot {
     White,
-    Black
+    Black,
 }
 
 impl Robot {
@@ -33,7 +35,7 @@ impl Robot {
         let controller = peripherals.primary_controller;
         let configuration = match bot {
             V1Bot::White => ControllerConfiguration::Connor,
-            V1Bot::Black => ControllerConfiguration::Noah
+            V1Bot::Black => ControllerConfiguration::Noah,
         };
         let drivetrain = DrivetrainSubsystem::new(
             match bot {
@@ -75,13 +77,11 @@ impl Robot {
                     Motor::new_exp(peripherals.port_17, Direction::Reverse),
                     Motor::new_exp(peripherals.port_18, Direction::Forward),
                 ],
-                bottom_rollers: vec![
-                    Motor::new(
-                        peripherals.port_20,
-                        Gearset::Blue,
-                        Direction::Reverse,
-                    )
-                ],
+                bottom_rollers: vec![Motor::new(
+                    peripherals.port_20,
+                    Gearset::Blue,
+                    Direction::Reverse,
+                )],
                 elevator_intake_rollers: vec![Motor::new(
                     peripherals.port_6,
                     Gearset::Blue,
@@ -97,12 +97,12 @@ impl Robot {
                     Motor::new(peripherals.port_19, Gearset::Blue, Direction::Forward),
                 ],
             },
-            [
-                AdiDigitalIn::new(peripherals.adi_a),
-                AdiDigitalIn::new(peripherals.adi_b),
-                AdiDigitalIn::new(peripherals.adi_c),
-                AdiDigitalIn::new(peripherals.adi_d),
-            ],
+            IntakeSensors {
+                intake: AdiDigitalIn::new(peripherals.adi_f),
+                elevator: AdiDigitalIn::new(peripherals.adi_e),
+                trunk: AdiDigitalIn::new(peripherals.adi_d),
+                outtake: AdiDigitalIn::new(peripherals.adi_c),
+            },
         );
         let trunk = TrunkSubsystem::new(
             AdiDigitalOut::new(peripherals.adi_h),

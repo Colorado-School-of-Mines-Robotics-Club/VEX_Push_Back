@@ -7,13 +7,14 @@ exclude = [
 ]
 
 [workspace.dependencies]
-vexide = { git = "https://github.com/vexide/vexide", rev = "45112b58d3f2de6da4fcec78aa2bfd4e3132f4cc", features = ["full", "vex-sdk-jumptable", "vex-sdk-mock"] }
+vexide = { version = "0.8.0", features = ["full", "vex-sdk-jumptable", "vex-sdk-mock"] }
+vexide-motorgroup = { version = "https://github.com/Colorado-School-of-Mines-Robotics-Club", rev = "37f42e498d0ae610b4f4d0b2686bd580416321ed" }
 # vexide-embedded-graphics = { git = "https://github.com/vexide/vexide-embedded-graphics.git", rev = "014559a70eea8f077a41bbef59885e4641709cee" }
 shrewnit = { git = "https://github.com/Gavin-Niederman/shrewnit.git", rev = "73617f18d1faf79ffed097d1fc7ef0e1ae8663de" }
-# evian = { git = "https://github.com/vexide/evian.git", rev = "adffb503edd7dc08a7fbffdf8a5bf9c402353294" }
-evian = { git = "https://github.com/Colorado-School-of-Mines-Robotics-Club/evian", rev = "719b3b19d7c72733cf15e039dbe7a3d092b93f20" }
+evian = { git = "https://github.com/Colorado-School-of-Mines-Robotics-Club/evian", branch = "refactor/vexide-0.8.0" }
 bytes = { version = "1.10.1", default-features = false }
 bytemuck = { version = "1.24.0", features = ["derive", "min_const_generics", "must_cast"] }
 triple_buffer = "8.1.1"
 nom = { version = "8.0.0", default-features = false, features = ["alloc"] }
 cobs = { version = "0.4.0", default-features = false, features = ["alloc"] }
+ciborium = "0.2.2"

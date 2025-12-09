@@ -9,14 +9,14 @@ pub mod trunk;
 #[derive(Clone, Copy, Debug)]
 pub enum ControllerConfiguration {
     Noah,
-    Connor
+    Connor,
 }
 
 impl ControllerConfiguration {
     pub fn as_str(&self) -> &'static str {
         match self {
-            ControllerConfiguration::Noah =>   "Noah  ",
-            ControllerConfiguration::Connor => "Connor"
+            ControllerConfiguration::Noah => "Noah  ",
+            ControllerConfiguration::Connor => "Connor",
         }
     }
 
@@ -30,9 +30,9 @@ impl ControllerConfiguration {
 
 pub trait ControllableSubsystem {
     /// Update the subsystem based on controller input
-    fn update(&mut self, controller: &ControllerState, configuration: ControllerConfiguration);
-    /// Update the subsystem based on raw state
-    fn direct(&mut self, state: &ciborium::Value) { }
+    fn control(&mut self, controller: &ControllerState, configuration: ControllerConfiguration);
+    /// Update the subsystem based on raw serialized state
+    fn direct(&mut self, _state: &ciborium::Value) {}
     /// Get the current subsystem state (for recording or similar)
     fn state(&self) -> Option<ciborium::Value> {
         None

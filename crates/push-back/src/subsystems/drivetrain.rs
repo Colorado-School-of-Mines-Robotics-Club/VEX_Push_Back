@@ -51,15 +51,22 @@ impl<M: Tank, T: Tracking> ControllableSubsystem for DrivetrainSubsystem<M, T> {
         }
     }
 
-    fn update(&mut self, controller: &ControllerState, configuration: ControllerConfiguration) {
+    fn control(&mut self, controller: &ControllerState, configuration: ControllerConfiguration) {
+        let coefficient = if controller.button_down.is_pressed() {
+            0.5
+        } else {
+            1.0
+        };
         self.state = match configuration {
-            ControllerConfiguration::Noah => arcade( // Split arcade
-                controller.left_stick.y(),
-                controller.right_stick.x(),
+            ControllerConfiguration::Noah => arcade(
+                // Split arcade
+                coefficient * controller.left_stick.y(),
+                coefficient * controller.right_stick.x(),
             ),
-            ControllerConfiguration::Connor => ( // Tank
-                controller.left_stick.y(),
-                controller.right_stick.y(),
+            ControllerConfiguration::Connor => (
+                // Tank
+                coefficient * controller.left_stick.y(),
+                coefficient * controller.right_stick.y(),
             ),
         };
 

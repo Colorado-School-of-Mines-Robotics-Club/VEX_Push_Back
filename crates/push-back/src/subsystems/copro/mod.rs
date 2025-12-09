@@ -36,7 +36,9 @@ impl CoproSubsystem {
 }
 
 impl ControllableSubsystem for CoproSubsystem {
-    fn update(&mut self, controller: &ControllerState, _configuration: ControllerConfiguration) {
+    fn direct(&mut self, _state: &ciborium::Value) {}
+
+    fn control(&mut self, controller: &ControllerState, _configuration: ControllerConfiguration) {
         if controller.button_y.is_now_pressed() {
             let request_future = self.port.send_request(CalibrateRequest);
             vexide::task::spawn(async move {

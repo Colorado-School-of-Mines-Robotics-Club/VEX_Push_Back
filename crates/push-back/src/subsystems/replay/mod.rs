@@ -1,7 +1,10 @@
-mod structs;
+pub mod structs;
 
 use std::{
-    collections::HashMap, fs::File, io::{self, BufRead, BufReader, Write}, time::{Duration, Instant}
+    collections::HashMap,
+    fs::File,
+    io::{self, BufRead, BufReader, Write},
+    time::{Duration, Instant},
 };
 use structs::*;
 
@@ -13,24 +16,27 @@ const MAGIC: &str = "REPLAY_MAGIC!";
 
 fn read_entry(file: &mut impl BufRead, buffer: &mut Vec<u8>) -> Option<RecordingEntry> {
     buffer.clear();
-    if let Err(e) = dbg!(file.read_until(b'\0', buffer)) {
+    let read_len = file.read_until(b'\0', buffer);
+    if let Err(e) = read_len {
         eprintln!("reading entry of recording should succeed: {e:?}");
-        return None
+        return None;
+    } else if let Ok(0) = read_len {
+        return None;
     }
 
-    match cobs::decode_in_place(buffer) {
-        Ok(n) => buffer.truncate(n),
+    let n = match cobs::decode_in_place(buffer) {
+        Ok(n) => n,
         Err(e) => {
             eprintln!("cobs decoding entry of recording should succeed: {e:?}");
-            return None
+            return None;
         }
-    }
+    };
 
-    let parsed = match ciborium::from_reader(&buffer[..]) {
+    let parsed = match ciborium::from_reader(&buffer[0..n]) {
         Ok(v) => v,
         Err(e) => {
             eprintln!("parsing entry of recording should succeed: {e:?}");
-            return None
+            return None;
         }
     };
 
@@ -57,6 +63,7 @@ impl ReplaySubsystem {
         file.write_all(MAGIC.as_bytes())?;
         file.write_all(format!("{}", duration.as_secs()).as_bytes())?;
         file.write_all(b"\n")?;
+        file.flush()?;
 
         self.state = SubsystemState::Enabled {
             file,
@@ -71,68 +78,23 @@ impl ReplaySubsystem {
         Ok(())
     }
 
-    // pub fn start_replaying(&mut self, path: &str) -> io::Result<bool> {
-    //     let mut file = BufReader::new(File::options().read(true).open(path)?);
-
-    //     // Parse magic
-    //     let mut magic = String::new();
-    //     let Ok(_) = file
-    //         .read_line(&mut magic) else {
-    //             eprintln!("Should read magic line");
-    //             return Ok(false)
-    //         };
-
-    //     let Some((_, seconds)) = magic
-    //         .split_once(MAGIC) else {
-    //             eprintln!("Magic should split on '{}'", MAGIC);
-    //             return Ok(false)
-    //         };
-    //     let duration = Duration::from_secs(
-    //         seconds
-    //             .parse()
-    //             .expect("Magic duration parsing should succeed"),
-    //     );
-
-    //     // Read first entry
-    //     let mut buffer = Vec::with_capacity(4096);
-    //     let next_entry = read_entry(&mut file, &mut buffer);
-
-    //     self.state = SubsystemState::Enabled {
-    //         file: file.into_inner(),
-    //         buffer,
-    //         start_time: Instant::now(),
-    //         duration,
-    //         previous_state: SerializedSubsystemStates::new(),
-    //         mode: ReplayMode::Replaying { next_entry },
-    //     };
-
-    //     Ok(true)
-    // }
-
-    pub fn record(&mut self, controller: &ControllerState, states: &[(&'static str, &dyn ControllableSubsystem)]) {
+    pub fn record(
+        &mut self,
+        controller: &ControllerState,
+        states: &[(&'static str, &dyn ControllableSubsystem)],
+    ) {
         let current_state = &mut self.state;
-        match current_state {
-            SubsystemState::Disabled => {
-                // If disabled, watch for left (30s record) or right (2min record)
-                if controller.button_left.is_now_pressed() {
-                    println!("Starting 30s recording!");
-                    self.start_recording("record30.txt", Duration::from_secs(30))
-                        .expect("Starting replay recording should succeed");
-                } else if controller.button_right.is_now_pressed() {
-                    println!("Starting 120s recording!");
-                    self.start_recording("record120.txt", Duration::from_secs(120))
-                        .expect("Starting replay recording should succeed");
-                }
-            }
-            SubsystemState::Enabled {
-                file,
-                buffer,
-                state_buffer,
-                start_time,
-                duration,
-                previous_state,
-                mode,
-            } => match mode {
+        if let SubsystemState::Enabled {
+            file,
+            buffer,
+            state_buffer,
+            start_time,
+            duration,
+            previous_state,
+            mode,
+        } = current_state
+        {
+            match mode {
                 // Exit if the duration has passed or x pressed
                 _ if start_time.elapsed() > *duration || controller.button_x.is_now_pressed() => {
                     file.flush().expect("Flushing replay file should succeed");
@@ -141,32 +103,31 @@ impl ReplaySubsystem {
                         .expect("Reading replay file metadata should succeed");
                     println!("Ended recording!\nFile size: {} bytes", metadata.len());
                     *current_state = SubsystemState::Disabled;
-                },
+                }
                 // If recording, write to file
                 ReplayMode::Recording => {
                     state_buffer.clear();
-                    state_buffer.extend(
-                        states.iter()
-                            .filter_map(|(name, subsystem)| Some((name.to_string(), subsystem.state()?)))
-                    );
+                    state_buffer.extend(states.iter().filter_map(|(name, subsystem)| {
+                        Some((name.to_string(), subsystem.state()?))
+                    }));
 
                     if *state_buffer != *previous_state {
                         // 2^32 - 1 microseconds is well over the 2min this code needs to deal with, so discard the rest
-                        let micros_elapsed = start_time
-                            .elapsed()
-                            .as_micros() as u32;
+                        let micros_elapsed = start_time.elapsed().as_micros() as u32;
 
                         buffer.clear();
-                        ciborium::into_writer(&RecordingEntry {
-                            subsystem_states: state_buffer.clone(),
-                            micros_elapsed
-                        }, &mut *buffer).expect("Serializing recording entry should succeed");
+                        ciborium::into_writer(
+                            &RecordingEntry {
+                                subsystem_states: state_buffer.clone(),
+                                micros_elapsed,
+                            },
+                            &mut *buffer,
+                        )
+                        .expect("Serializing recording entry should succeed");
                         let unencoded_len = buffer.len();
 
-                        buffer.reserve(cobs::max_encoding_length(unencoded_len));
-                        for _ in 0..(buffer.capacity() - buffer.len()) {
-                            buffer.push(0u8);
-                        }
+                        let max_encoded_len = cobs::max_encoding_length(unencoded_len);
+                        buffer.resize(unencoded_len + max_encoded_len, 0);
 
                         let (unencoded, encoded) = buffer.split_at_mut(unencoded_len);
                         let encoded_len = cobs::encode(unencoded, encoded);
@@ -175,33 +136,41 @@ impl ReplaySubsystem {
                             .expect("Recording state should succeed");
                         file.write_all(b"\0")
                             .expect("Recording state delimeter should succeed");
+                        file.flush().expect("flushing should succeed");
 
                         _ = std::mem::replace(previous_state, state_buffer.clone());
                     }
-                },
-                _ => ()
-            },
+                }
+                _ => (),
+            }
         }
     }
 
-    pub async fn replay(&mut self, file: File, mut subsystems: HashMap<&'static str, &mut dyn ControllableSubsystem>) {
+    pub async fn replay(
+        &mut self,
+        file: File,
+        mut subsystems: HashMap<&'static str, &mut dyn ControllableSubsystem>,
+    ) {
         let mut reader = BufReader::new(file);
         let mut buffer = Vec::new();
 
         let mut magic = String::new();
         if let Err(e) = reader.read_line(&mut magic) {
             eprintln!("Reading magic line should succeed: {e:?}");
-            return
+            return;
         };
         magic.pop(); // newline
 
         let Some((_, secs)) = magic.split_once(MAGIC) else {
             eprintln!("Splitting magic line should succeed: {magic}");
-            return
+            return;
         };
         let Ok(secs) = secs.parse() else {
-            eprintln!("Parsing magic duration should succeed: {secs}, {}", secs.len());
-            return
+            eprintln!(
+                "Parsing magic duration should succeed: {secs}, {}",
+                secs.len()
+            );
+            return;
         };
         let duration = Duration::from_secs(secs);
 
@@ -218,7 +187,10 @@ impl ReplaySubsystem {
                 break;
             }
 
-            if next_entry.as_ref().is_some_and(|ne| elapsed > Duration::from_micros(ne.micros_elapsed as u64)) {
+            if next_entry
+                .as_ref()
+                .is_some_and(|ne| elapsed > Duration::from_micros(ne.micros_elapsed as u64))
+            {
                 current_states = Some(next_entry.take().unwrap().subsystem_states);
                 next_entry = read_entry(&mut reader, &mut buffer);
             }
@@ -227,6 +199,7 @@ impl ReplaySubsystem {
                 for (subsystem, state) in states {
                     if let Some(subsystem) = subsystems.get_mut(subsystem.as_str()) {
                         subsystem.direct(state);
+                        sleep(Duration::ZERO).await // Let VexOS flush everything necessary
                     }
                 }
             }

@@ -4,6 +4,7 @@ mod get_velocity;
 mod ping;
 mod set_offsets;
 mod set_scalars;
+mod set_led;
 
 use core::time::Duration;
 
@@ -13,6 +14,7 @@ pub use get_velocity::*;
 pub use ping::*;
 pub use set_offsets::*;
 pub use set_scalars::*;
+pub use set_led::*;
 
 use bytes::Bytes;
 use nom::{IResult, Parser};

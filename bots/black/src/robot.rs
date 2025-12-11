@@ -1,10 +1,6 @@
 use evian::drivetrain::model::Differential;
 use push_back::subsystems::{
-    ControllerConfiguration,
-    drivetrain::DrivetrainSubsystem,
-    intake::{IntakeMotors, IntakeSensors, IntakeSubsystem},
-    replay::ReplaySubsystem,
-    trunk::TrunkSubsystem,
+    copro::{tracking::CoproTracking, CoproSubsystem}, drivetrain::DrivetrainSubsystem, intake::{IntakeMotors, IntakeSensors, IntakeSubsystem}, replay::ReplaySubsystem, trunk::TrunkSubsystem, ControllerConfiguration
 };
 use vexide::{
     math::Direction,
@@ -15,45 +11,22 @@ use vexide::{
 
 pub struct Robot {
     // pub display: RefCell<Display>,
-    // pub coprocessor: CoproSubsystem,
+    pub coprocessor: CoproSubsystem,
     pub controller: Controller,
     pub configuration: ControllerConfiguration,
-    pub drivetrain: DrivetrainSubsystem<Differential, /* CoproTracking */ ()>,
+    pub drivetrain: DrivetrainSubsystem<Differential, CoproTracking>,
     pub intake: IntakeSubsystem,
     pub trunk: TrunkSubsystem,
     pub replay: ReplaySubsystem,
 }
 
-pub enum V1Bot {
-    White,
-    Black,
-}
-
 impl Robot {
-    pub async fn new(peripherals: Peripherals, bot: V1Bot) -> Self {
-        // let coprocessor = CoproSubsystem::new(peripherals.port_15).await;
+    pub async fn new(peripherals: Peripherals) -> Self {
+        let coprocessor = CoproSubsystem::new(peripherals.port_12).await;
         let controller = peripherals.primary_controller;
-        let configuration = match bot {
-            V1Bot::White => ControllerConfiguration::Connor,
-            V1Bot::Black => ControllerConfiguration::Noah,
-        };
+        let configuration = ControllerConfiguration::Noah;
         let drivetrain = DrivetrainSubsystem::new(
-            match bot {
-                V1Bot::White => Differential::new(
-                    [
-                        Motor::new(peripherals.port_1, Gearset::Blue, Direction::Reverse), // white bot
-                        Motor::new(peripherals.port_2, Gearset::Blue, Direction::Reverse),
-                        Motor::new(peripherals.port_3, Gearset::Blue, Direction::Forward),
-                        Motor::new(peripherals.port_4, Gearset::Blue, Direction::Forward),
-                    ],
-                    [
-                        Motor::new(peripherals.port_7, Gearset::Blue, Direction::Forward), // white bot
-                        Motor::new(peripherals.port_8, Gearset::Blue, Direction::Reverse),
-                        Motor::new(peripherals.port_9, Gearset::Blue, Direction::Forward),
-                        Motor::new(peripherals.port_10, Gearset::Blue, Direction::Reverse),
-                    ],
-                ),
-                V1Bot::Black => Differential::new(
+            Differential::new(
                     [
                         Motor::new(peripherals.port_1, Gearset::Blue, Direction::Reverse),
                         Motor::new(peripherals.port_2, Gearset::Blue, Direction::Forward),
@@ -66,10 +39,8 @@ impl Robot {
                         Motor::new(peripherals.port_9, Gearset::Blue, Direction::Reverse),
                         Motor::new(peripherals.port_10, Gearset::Blue, Direction::Forward),
                     ],
-                ),
-            },
-            // CoproTracking(coprocessor.data()),
-            (),
+            ),
+            CoproTracking(coprocessor.data()),
         );
         let intake = IntakeSubsystem::new(
             IntakeMotors {
@@ -117,7 +88,7 @@ impl Robot {
             intake,
             trunk,
             replay,
-            // coprocessor,
+            coprocessor,
         }
     }
 

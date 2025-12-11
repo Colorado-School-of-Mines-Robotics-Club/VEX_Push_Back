@@ -1,36 +1,44 @@
 import machine
-import qwiic_otos
+# import qwiic_otos
+from otos import OtosSensor
 import sys
 import time
-from neopixel import NeoPixel   
-#import cobs
-a=0
-uart = machine.UART(2, baudrate=115200, tx=17, rx=16)
-rs485_dir = machine.Pin(23, machine.Pin.OUT)
-LED_pin = machine.Pin(14, machine.Pin.OUT) 
-sdaPIN = machine.Pin(21)
-sclPIN = machine.Pin(22)
-i2c = machine.I2C(sda=sdaPIN, scl=sclPIN, freq=100000)
+from neopixel import NeoPixel
+import cobs
+
+RS485_UART = machine.UART(2, baudrate=115200, tx=17, rx=16)
+RS485_EN_PIN = machine.Pin(23, machine.Pin.OUT)
+LED_PIN = machine.Pin(14, machine.Pin.OUT)
+OTOS_I2C = machine.I2C(sda=machine.Pin(21), scl=machine.Pin(22), freq=100000)
+
+LED_BLACK = 0
+LED_RED = 1
+LED_BLUE = 2
+LED_RAINBOW = 3
+LED_ROTATE = 4
+LED_GREEN = 5
 
 class RGB():
-    def __init__(self, pin, ammout,bright):
-        self.np = NeoPixel(pin, ammout)
-        self.brightness = bright
-        self.mode = 0
-    def set_mode(self,mode):
+    def __init__(self, pin, length, brightness):
+        self.np = NeoPixel(pin, length)
+        self.brightness = brightness
+        self.set_mode(LED_BLACK)
+
+    def set_mode(self, mode: int):
         self.mode = mode
         self.update()
+
     def update(self):
-        if self.mode == 0:
+        if self.mode == LED_BLACK:
             for i in range(len(self.np)):
                 self.np[i] = (0,0,0)
-        elif self.mode == 1:
+        elif self.mode == LED_RED:
             for i in range(len(self.np)):
                 self.np[i] = (int(255/self.brightness),0,0)
-        elif self.mode == 2:
+        elif self.mode == LED_BLUE:
             for i in range(len(self.np)):
                 self.np[i] = (0,int(255/self.brightness),0)
-        elif self.mode == 3:
+        elif self.mode == LED_RAINBOW:
             for i in range(len(self.np)):
                 pos = int((i * 256) / len(self.np)) % 256
                 if pos < 85:
@@ -43,107 +51,81 @@ class RGB():
                     c= (0, int((pos * 3)/self.brightness), int((255 - pos * 3)/self.brightness))
                 self.np[i]=c
             self.mode=4
-        elif self.mode == 4:
+        elif self.mode == LED_ROTATE:
             last=self.np[0]
             for i in range(len(self.np)-1):
                 self.np[i] = self.np[i+1]
             self.np[-1]=last
-        elif self.mode == 5:
+        elif self.mode == LED_GREEN:
             for i in range(len(self.np)):
                 self.np[i] = (0,0,int(255/self.brightness))
+
         self.np.write()
 
-class brain():
-    def __init__(self,urat,on_off):
-        self.urat = urat
-        self.on_off = on_off
-    def send(self,data):
-        self.on_off.value(1)
-        self.urat.write(data)
-        time.sleep(.001)
-        self.on_off.value(0)
-    def receive(self):
-        if self.urat.any():
-            data = self.urat.read()
-            return data
-        else:
-            return None
+class VexBrain():
+    def __init__(self, uart, enable_pin):
+        self.uart = uart
+        self.enable_pin = enable_pin
+        self.buffer = bytearray()
 
-class fancysenser():
-    def __init__(self,senser,output,led):
-        self.senser = senser
-        self.output = output
-        self.senser.begin()
-        if self.senser.is_connected() == False:
-            print("The device isn't connected to the system. Please check your connection")
-            led.set_mode(1)
-            sys.exit()
-        else:
-            print("Device connected")
-            led.set_mode(2)
-        time.sleep(.1)
-    def calabrate(self):
-        print("Calibrating")
-        self.senser.calibrateImu()
-        time.sleep(.25)
-        LED.set_mode(5)
-    def reqest(self,type,extra):
-        if type == 1:
-            calabrate()
-            self.output.send(b'd')
-        elif type == 2:
-            pos = self.senser.getPosition()
-            self.output.send(b'%f%f%f' % (pos.x, pos.y, pos.h))
-        elif type == 3:
-            self.output.send(b'%f' % self.senser.getvelocity())
-        elif type == 4:
-            self.output.send(b'd')
-        elif type == 5:
-            self.senser.setoffset(extra)
-            self.output.send(b'd')
-        elif type == 6:
-            self.senser.resetTracking()
-            self.output.send(b'd')
-        elif type == 7:
-            self.senser.setscale(extra)
-            self.output.send(b'd')
-        
-if __name__ == '__main__':
-    LED=RGB(LED_pin,16,1)
-    LED.set_mode(0)
+    def send(self, data: bytes):
+        self.enable_pin.value(1)
+        self.uart.write(cobs.encode(data))
+        self.uart.flush()
+        self.enable_pin.value(0)
+
+    def receive(self):
+        for i in range(self.uart.any()):
+            self.buffer.append(self.uart.read(1)[0])
+            if self.buffer[-1] == 0x00:
+                encoded = bytes(self.buffer)
+                self.buffer = bytearray()
+                return cobs.decode(encoded)
+        return None
+
+def main():
+    LED = RGB(LED_PIN, 32, 1)
+    LED.set_mode(LED_BLACK)
     time.sleep(.5)
-    brain=brain(uart,rs485_dir)
-    otos=fancysenser(qwiic_otos.QwiicOTOS(),brain,LED)
-    otos.calabrate()
+    brain = VexBrain(RS485_UART, RS485_EN_PIN)
+    otos = OtosSensor(OTOS_I2C)
+    otos.calibrate()
+
+    led_mode = 0
+    i = 0
     while True:
-        data=brain.receive()
+        data = brain.receive()
         if data != None:
             print(data)
-            if data[0:1]==b'p':
-                otos.reqest(2,0)
-            elif data[0:1]==b'v':
-                otos.reqest(3,0)
-            elif data[0:1]==b'c':
-                otos.reqest(1,0)
-            elif data[0:1]==b'o':
-                extra=float(data[1:].decode('utf-8'))
-                otos.reqest(5,extra)
-            elif data[0:1]==b's':
-                extra=float(data[1:].decode('utf-8'))
-                otos.reqest(7,extra)
-            elif data[0:1]==b't':
-                otos.reqest(6,0)
-            elif data[0:1]==b'a':
-                otos.reqest(4,0)
-            elif data[0:1]==b'l':
-                a+=1
-                if a%4==0:
-                    LED.set_mode(0)
-                elif a%4==1:
-                    LED.set_mode(1)
-                elif a%4==2:
-                    LED.set_mode(2)
-                else:
-                    LED.set_mode(3)
-        LED.update()
-        
+            if data[0:1] == b'p':
+                brain.send(otos.get_position())
+            elif data[0:1] == b'v':
+                brain.send(otos.get_velocity())
+            elif data[0:1] == b'c':
+                otos.calibrate()
+                brain.send(b'd')
+            elif data[0:1] == b'o':
+                otos.set_offset(data[1:])
+                brain.send(b'd')
+            elif data[0:1] == b's':
+                otos.set_scalar(data[1:])
+                brain.send(b'd')
+            elif data[0:1] == b'a':
+                brain.send(b'd')
+            elif data[0:1] == b'l':
+                led_mode = (led_mode + 1) % 6
+                LED.set_mode(led_mode)
+                brain.send(b'd')
+        if i % 10 == 0:
+            LED.update()
+        i += 1
+
+        time.sleep(0.001)
+
+if __name__ == '__main__':
+    while True:
+        try:
+            main()
+        except Exception as e:
+            sys.print_exception(e)
+            time.sleep(1)

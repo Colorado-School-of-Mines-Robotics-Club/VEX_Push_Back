@@ -1,19 +1,18 @@
 #![allow(dead_code, unused_imports)]
 use core::time::Duration;
-use std::time::Instant;
+use std::{future::join, time::Instant};
 
+use coprocessor::requests::CalibrateRequest;
 use evian::{
-    math::Angle,
-    prelude::{TracksForwardTravel, TracksHeading, TracksPosition, TracksVelocity},
+    drivetrain::model::Differential, math::Angle, prelude::{TracksForwardTravel, TracksHeading, TracksPosition, TracksVelocity}
 };
-use push_back::subsystems::{
-    intake::{IntakeState, IntakeSubsystem, LineBreakState},
-    trunk::TrunkState,
+use crate::subsystems::{
+    copro::CoproSubsystem, drivetrain::DrivetrainSubsystem, intake::{IntakeState, IntakeSubsystem, LineBreakState}, trunk::{TrunkState, TrunkSubsystem}
 };
 use shrewnit::{DegreesPerSecond, RadiansPerSecond};
 use vexide::time::sleep;
 
-use crate::robot::Robot;
+use crate::subsystems::copro::tracking::CoproTracking;
 
 mod control {
     use core::time::Duration;
@@ -29,16 +28,16 @@ mod control {
         angular_controller: ANGULAR_PID,
         linear_tolerances: LINEAR_TOLERANCES,
         angular_tolerances: ANGULAR_TOLERANCES,
-        timeout: None,
+        timeout: Some(Duration::from_secs(5)),
     };
 
-    pub const LINEAR_PID: Pid = Pid::new(0.00, 0.00, 0.0, None);
+    pub const LINEAR_PID: Pid = Pid::new(0.035, 0.001, 0.02, None);
     pub const ANGULAR_PID: AngularPid = AngularPid::new(0.0, 0.00, 0.00, None);
 
     // TODO: actually check these
     pub const LINEAR_TOLERANCES: Tolerances = Tolerances::new()
-        .error(0.25)
-        .velocity(0.1)
+        .error(0.5)
+        .velocity(0.5)
         .duration(Duration::from_millis(15));
     pub const ANGULAR_TOLERANCES: Tolerances = Tolerances::new()
         .error(f64::to_radians(1.0))
@@ -67,10 +66,10 @@ async fn move_ball_to(intake: &mut IntakeSubsystem, using: IntakeState, until: L
     }
 }
 
-pub async fn throw_balls(robot: &mut Robot) {
+pub async fn throw_balls(intake: &mut IntakeSubsystem) {
     loop {
         move_ball_to(
-            &mut robot.intake,
+            intake,
             IntakeState::INTAKE_WHEELS,
             LineBreakState::INTAKE,
             None
@@ -79,7 +78,7 @@ pub async fn throw_balls(robot: &mut Robot) {
         println!("Intake");
 
         move_ball_to(
-            &mut robot.intake,
+            intake,
             IntakeState::INTAKE_WHEELS | IntakeState::BOTTOM | IntakeState::ELEVATOR_INTAKE,
             LineBreakState::ELEVATOR,
             None
@@ -88,7 +87,7 @@ pub async fn throw_balls(robot: &mut Robot) {
         println!("Elevator intake");
 
         move_ball_to(
-            &mut robot.intake,
+            intake,
             IntakeState::ELEVATOR_INTAKE | IntakeState::ELEVATOR,
             LineBreakState::TRUNK,
             None
@@ -97,7 +96,7 @@ pub async fn throw_balls(robot: &mut Robot) {
         println!("Elevator");
 
         move_ball_to(
-            &mut robot.intake,
+            intake,
             IntakeState::ELEVATOR | IntakeState::TRUNK,
             LineBreakState::OUTTAKE,
             Some(LineBreakState::TRUNK)
@@ -110,12 +109,12 @@ pub async fn throw_balls(robot: &mut Robot) {
     }
 }
 
-pub async fn print_state(robot: &mut Robot) {
+pub async fn print_state(intake: &mut IntakeSubsystem, trunk: &mut TrunkSubsystem) {
     let mut i = 0u8;
-    _ = robot.intake.run(IntakeState::FULL);
-    _ = robot.trunk.set_state(TrunkState::Down);
+    _ = intake.run(IntakeState::FULL);
+    _ = trunk.set_state(TrunkState::Down);
     loop {
-        let current_sensors = robot.intake.sensors();
+        let current_sensors = intake.sensors();
 
         if i.is_multiple_of(50) {
             println!(
@@ -140,7 +139,7 @@ pub async fn print_state(robot: &mut Robot) {
                 } else {
                     'o'
                 },
-                robot.intake.jams().bits()
+                intake.jams().bits()
             );
         }
 
@@ -149,32 +148,41 @@ pub async fn print_state(robot: &mut Robot) {
     }
 }
 
-// pub async fn print_pose(robot: &mut Robot) {
-//     loop {
-//         println!(
-//             "LH: {:.4} LP: ({:.4}, {:.4}) VH: {:.4} VP: {:.4}",
-//             robot.drivetrain.tracking.heading().as_degrees(),
-//             robot.drivetrain.tracking.position().x,
-//             robot.drivetrain.tracking.position().y,
-//             (robot.drivetrain.tracking.angular_velocity() * RadiansPerSecond)
-//                 .to::<DegreesPerSecond>(),
-//             robot.drivetrain.tracking.linear_velocity(),
-//         );
-//         sleep(Duration::from_millis(500)).await;
-//     }
-// }
+pub async fn print_pose(tracking: &CoproTracking) {
+    loop {
+        println!(
+            "LH: {:.4} LP: ({:.4}, {:.4}) VH: {:.4} VP: {:.4}",
+            tracking.heading().as_degrees(),
+            tracking.position().x,
+            tracking.position().y,
+            (tracking.angular_velocity() * RadiansPerSecond)
+                .to::<DegreesPerSecond>(),
+            tracking.linear_velocity(),
+        );
+        sleep(Duration::from_millis(500)).await;
+    }
+}
 
-// pub async fn tune_pid(robot: &mut Robot) {
-//     let mut basic = control::BASIC_CONTROL;
+pub async fn tune_pid(copro: &mut CoproSubsystem, drivetrain: &mut DrivetrainSubsystem<Differential, CoproTracking>) {
+    let mut basic = control::BASIC_CONTROL;
 
-//     let start = robot.drivetrain.tracking.forward_travel();
-//     println!("START: {:.2}", start);
+    println!("Calibrating...");
+    if let Err(e) = copro.port().send_request(CalibrateRequest).await {
+        eprintln!("Error calibrating: {e:?}");
+        return;
+    }
 
-//     basic.drive_distance(&mut robot.drivetrain, 12.0).await;
+    sleep(Duration::from_millis(100)).await;
 
-//     let end = robot.drivetrain.tracking.forward_travel();
-//     println!("END: {:.2}\nDIFF: {:.2}", end, end - start);
-// }
+    let start = drivetrain.tracking.forward_travel();
+    println!("START: {:.2}", start);
+
+    basic.drive_distance(drivetrain, 12.0).await;
+    dbg!(drivetrain.tracking.linear_velocity());
+
+    let end = drivetrain.tracking.forward_travel();
+    println!("END: {:.2}\nDIFF: {:.2}", end, end - start);
+}
 
 // pub async fn auton_1(robot: &mut Robot) {
 //     let mut basic = control::BASIC_CONTROL;

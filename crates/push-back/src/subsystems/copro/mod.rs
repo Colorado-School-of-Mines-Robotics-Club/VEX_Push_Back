@@ -21,13 +21,15 @@ pub struct CoproSubsystem {
 impl CoproSubsystem {
     pub async fn new(port: SmartPort) -> Self {
         // Ensure the smart port is actually just a serial device and not a radio or something
-        assert_eq!(port.device_type(), Some(SmartDeviceType::GenericSerial));
-
         let (port, data) = CoprocessorSmartPort::new(port).await;
         Self {
             port,
             data: Rc::new(RefCell::new(data)),
         }
+    }
+
+    pub fn port(&self) -> &CoprocessorSmartPort {
+        &self.port
     }
 
     pub fn data(&self) -> Rc<RefCell<CoprocessorData>> {

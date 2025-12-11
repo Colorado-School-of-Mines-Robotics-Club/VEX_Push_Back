@@ -1,5 +1,7 @@
-use std::{collections::HashMap, fs::File, time::Duration};
+use std::time::Duration;
 
+use coprocessor::requests::SetLedRequest;
+use evian::prelude::Tank;
 use push_back::subsystems::ControllableSubsystem;
 use vexide::prelude::*;
 
@@ -26,7 +28,7 @@ impl Compete for Robot {
 
                 // Run subsystems
                 self.drivetrain.control(&controller, self.configuration);
-                // self.coprocessor.control(&controller, self.configuration);
+                self.coprocessor.control(&controller, self.configuration);
                 self.intake.control(&controller, self.configuration);
                 self.trunk.control(&controller, self.configuration);
 
@@ -49,6 +51,7 @@ impl Compete for Robot {
     }
 
     async fn autonomous(&mut self) {
+        _ = self.drivetrain.drivetrain.model.drive_tank(0.0, 0.0);
         println!("Auton!");
 
         // if let Ok(file) = File::options().read(true).open("record30.txt") {
@@ -59,11 +62,14 @@ impl Compete for Robot {
         //     self.replay.replay(file, subsystems).await;
         // }
 
-        // crate::autons::print_pose(self).await;
-        // crate::autons::auton_1(self).await;
-        // crate::autons::tune_pid(self).await;
-        // crate::autons::print_state(self).await;
-        crate::autons::throw_balls(self).await;
+        // push_back::autons::print_pose(self).await;
+        // push_back::autons::auton_1(self).await;
+        // push_back::autons::tune_pid(&mut self.coprocessor, &mut self.drivetrain).await;
+        // push_back::autons::print_state(self).await;
+        // push_back::autons::throw_balls(self).await;
+        // push_back::autons::print_pose(&self.drivetrain.tracking).await;
+
+        self.coprocessor.port().send_request(SetLedRequest).await;
     }
 
     async fn disabled(&mut self) {

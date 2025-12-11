@@ -13,5 +13,5 @@ compress = true
 vexide = { workspace = true }
 evian = { workspace = true }
 shrewnit = { workspace = true }
-v1 = { path = "../v1" }
+push-back = { path = "../../crates/push-back" }
 # display = { path = "./display" }

@@ -6,34 +6,26 @@ use std::{
     time::{Duration, Instant},
 };
 
-use push_back::subsystems::intake::IntakeState;
+use coprocessor::{requests::SetLedRequest, vexide::CoprocessorSmartPort};
+use push_back::subsystems::{copro::CoproSubsystem, intake::IntakeState};
 use vex_sdk::{
     V5_AdiPortConfiguration, V5_DeviceT, vexDeviceAdiPortConfigSet, vexDeviceAdiValueGet,
     vexDeviceGetByIndex,
 };
 use vexide::{controller::ControllerState, prelude::*};
 
-const FILE: &str = "testing.txt";
-
 #[vexide::main]
 async fn main(peripherals: Peripherals) {
-    let mut port = SerialPort::open(peripherals.port_1, 115200).await;
-    let mut buf = [0u8; 2048];
-    let start = Instant::now();
+    let (copro, mut data) = CoprocessorSmartPort::new(peripherals.port_1).await;
+
+    let mut i = 0u16;
     loop {
-        let mut out = std::io::stdout().lock();
-        while let Ok(len) = port.read(&mut buf)
-            && len > 0
-        {
-            _ = out.write_all(&buf[0..len]);
+        if i.is_multiple_of(5) {
+            println!("{:?}", data.position.read().heading);
         }
 
-        if let Ok(controller) = peripherals.primary_controller.state()
-            && controller.button_a.is_now_pressed()
-        {
-            _ = port.write_all(b"a ");
-            _ = port.write_all(start.elapsed().as_secs().to_string().as_bytes());
-        }
+
+        i = i.wrapping_add(1);
         sleep(Duration::from_millis(10)).await;
     }
 }

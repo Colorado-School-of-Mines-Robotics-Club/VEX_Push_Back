@@ -59,7 +59,7 @@ pub struct CoprocessorSmartPort {
 
 impl CoprocessorSmartPort {
     pub async fn new(port: SmartPort) -> (Self, CoprocessorData) {
-        let port = Arc::new(Mutex::new(SerialPort::open(port, 921600).await));
+        let port = Arc::new(Mutex::new(SerialPort::open(port, 115200).await));
         let (latest_data_sink, latest_data) = CoprocessorData::new();
         (
             Self {
@@ -157,7 +157,7 @@ impl CoprocessorSmartPort {
         let mut last_position = OtosPosition::default();
         let mut forward_travel = Length::default();
         loop {
-            println!("Sending position request...");
+            // println!("Sending position request...");
             match Self::send_request_with_port(port.clone(), GetPositionRequest).await {
                 Ok(position) => {
                     // Update the position through the sink
@@ -184,7 +184,7 @@ impl CoprocessorSmartPort {
                 Err(_e) => (), // TODO: error state indication?
             };
 
-            println!("Sending velocity request...");
+            // println!("Sending velocity request...");
             match Self::send_request_with_port(port.clone(), GetVelocityRequest).await {
                 Ok(velocity) => {
                     latest_data_sink.velocity.write(velocity);

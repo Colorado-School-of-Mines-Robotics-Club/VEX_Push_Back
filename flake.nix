@@ -89,6 +89,7 @@
                         ))
                         evcxr
                         SDL2
+                        mpremote
                     ]);
                 };
 

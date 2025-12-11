@@ -17,7 +17,7 @@ const FILE: &str = "testing.txt";
 
 #[vexide::main]
 async fn main(peripherals: Peripherals) {
-    let mut port = SerialPort::open(peripherals.port_1, 921600).await;
+    let mut port = SerialPort::open(peripherals.port_1, 115200).await;
     let mut buf = [0u8; 2048];
     let start = Instant::now();
     loop {

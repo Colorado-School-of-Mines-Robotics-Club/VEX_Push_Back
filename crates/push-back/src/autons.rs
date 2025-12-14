@@ -167,7 +167,7 @@ pub async fn tune_pid(copro: &mut CoproSubsystem, drivetrain: &mut DrivetrainSub
     let mut basic = control::BASIC_CONTROL;
 
     println!("Calibrating...");
-    if let Err(e) = copro.port().send_request(CalibrateRequest).await {
+    if let Err(e) = copro.send_request(CalibrateRequest).await {
         eprintln!("Error calibrating: {e:?}");
         return;
     }

@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, ops::{Deref, DerefMut}, rc::Rc};
 
 use coprocessor::{
     requests::CalibrateRequest,
@@ -6,7 +6,7 @@ use coprocessor::{
 };
 use vexide::{
     controller::ControllerState,
-    smart::{SmartDeviceType, SmartPort},
+    smart::SmartPort,
 };
 
 use crate::subsystems::{ControllableSubsystem, ControllerConfiguration};
@@ -26,10 +26,6 @@ impl CoproSubsystem {
             port,
             data: Rc::new(RefCell::new(data)),
         }
-    }
-
-    pub fn port(&self) -> &CoprocessorSmartPort {
-        &self.port
     }
 
     pub fn data(&self) -> Rc<RefCell<CoprocessorData>> {
@@ -52,5 +48,19 @@ impl ControllableSubsystem for CoproSubsystem {
             })
             .detach();
         }
+    }
+}
+
+impl Deref for CoproSubsystem {
+    type Target = CoprocessorSmartPort;
+
+    fn deref(&self) -> &Self::Target {
+        &self.port
+    }
+}
+
+impl DerefMut for CoproSubsystem {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.port
     }
 }

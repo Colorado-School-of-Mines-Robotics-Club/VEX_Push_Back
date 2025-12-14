@@ -81,8 +81,8 @@ impl Robot {
             },
         );
         let trunk = TrunkSubsystem::new(
-            AdiDigitalOut::new(peripherals.adi_g),
             AdiDigitalOut::new(peripherals.adi_h),
+            AdiDigitalOut::new(peripherals.adi_g),
         );
         let replay = ReplaySubsystem::new();
 

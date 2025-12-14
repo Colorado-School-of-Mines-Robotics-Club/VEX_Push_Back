@@ -69,7 +69,7 @@ impl Compete for Robot {
         // push_back::autons::throw_balls(self).await;
         // push_back::autons::print_pose(&self.drivetrain.tracking).await;
 
-        self.coprocessor.port().send_request(SetLedRequest).await;
+        _ = self.coprocessor.send_request(SetLedRequest).await;
     }
 
     async fn disabled(&mut self) {

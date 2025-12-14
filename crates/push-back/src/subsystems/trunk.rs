@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use vexide::{controller::ControllerState, prelude::AdiDigitalOut, smart::PortError};
+use vexide::{adi::digital::LogicLevel, controller::ControllerState, prelude::AdiDigitalOut, smart::PortError};
 
 use crate::subsystems::{ControllableSubsystem, ControllerConfiguration};
 
@@ -11,37 +11,89 @@ pub enum TrunkState {
 }
 
 pub struct TrunkSubsystem {
-    lower_pneumatic: AdiDigitalOut,
-    upper_pneumatic: AdiDigitalOut,
+    pusher: AdiPneumatic,
+    puller: AdiPneumatic,
     state: TrunkState,
 }
 
-impl TrunkSubsystem {
-    pub fn new(mut lower_pneumatic: AdiDigitalOut, mut upper_pneumatic: AdiDigitalOut) -> Self {
-        _ = lower_pneumatic.set_low();
-        _ = upper_pneumatic.set_low();
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Ord, Eq)]
+pub enum PneumaticState {
+    Extended,
+    Contracted
+}
 
-        Self {
-            lower_pneumatic,
-            upper_pneumatic,
-            state: TrunkState::Down,
+pub struct AdiPneumatic {
+    pub port: AdiDigitalOut,
+    pub high_mode: PneumaticState
+}
+
+impl AdiPneumatic {
+    pub fn state(&self) -> Result<PneumaticState, PortError> {
+        let level = self.port.level()?;
+
+        // vexide i swear to god
+        // let level = !level;
+
+        if self.high_mode == PneumaticState::Extended {
+            if level == LogicLevel::High {
+                Ok(PneumaticState::Extended)
+            } else {
+                Ok(PneumaticState::Contracted)
+            }
+        } else {
+            if level == LogicLevel::High {
+                Ok(PneumaticState::Contracted)
+            } else {
+                Ok(PneumaticState::Extended)
+            }
         }
+    }
+
+    pub fn set_state(&mut self, state: PneumaticState) -> Result<(), PortError> {
+        let level = if self.high_mode == PneumaticState::Contracted {
+            match state {
+                PneumaticState::Contracted => LogicLevel::High,
+                PneumaticState::Extended => LogicLevel::Low
+            }
+        } else {
+            match state {
+                PneumaticState::Contracted => LogicLevel::Low,
+                PneumaticState::Extended => LogicLevel::High
+            }
+        };
+
+        // vexide i swear to god
+        self.port.set_level(level)
+    }
+}
+
+impl TrunkSubsystem {
+    pub fn new(pusher: AdiPneumatic, puller: AdiPneumatic) -> Self {
+        let mut sub = Self {
+            pusher,
+            puller,
+            state: TrunkState::Down,
+        };
+
+        _ = sub.set_state(TrunkState::Down);
+
+        sub
     }
 
     pub fn set_state(&mut self, state: TrunkState) -> Result<(), PortError> {
         // dbg!(state);
         match state {
             TrunkState::Down => {
-                self.lower_pneumatic.set_low()?;
-                self.upper_pneumatic.set_low()?;
+                self.pusher.set_state(PneumaticState::Contracted)?;
+                self.puller.set_state(PneumaticState::Extended)?;
             }
             TrunkState::Upper => {
-                self.lower_pneumatic.set_high()?;
-                self.upper_pneumatic.set_high()?;
+                self.pusher.set_state(PneumaticState::Extended)?;
+                self.puller.set_state(PneumaticState::Contracted)?;
             }
             TrunkState::Lower => {
-                self.lower_pneumatic.set_high()?;
-                self.upper_pneumatic.set_low()?;
+                self.pusher.set_state(PneumaticState::Extended)?;
+                self.puller.set_state(PneumaticState::Extended)?;
             }
         }
         self.state = state;

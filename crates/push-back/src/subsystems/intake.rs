@@ -19,7 +19,7 @@ use vexide::{
 
 use crate::subsystems::{ControllableSubsystem, ControllerConfiguration};
 
-const JAM_THRESHOLD: f64 = 2.00;
+const JAM_RPM_THRESHOLD: f64 = 3.0;
 
 pub struct IntakeMotors {
     pub intake_wheels: Vec<Motor>,
@@ -194,7 +194,7 @@ impl IntakeSubsystem {
 
         for (flag, motors) in self.motors.into_iter() {
             let len = motors.len();
-            if motors.filter_map(|m| m.current().ok()).sum::<f64>() / len as f64 > JAM_THRESHOLD {
+            if motors.filter_map(|m| m.velocity().ok()).sum::<f64>() / (len as f64) < JAM_RPM_THRESHOLD {
                 jams |= flag;
             }
         }

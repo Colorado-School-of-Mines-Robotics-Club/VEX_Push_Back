@@ -1,6 +1,5 @@
 use std::time::Duration;
 
-use coprocessor::requests::SetLedRequest;
 use evian::prelude::Tank;
 use push_back::subsystems::ControllableSubsystem;
 use vexide::prelude::*;
@@ -67,9 +66,9 @@ impl Compete for Robot {
         // push_back::autons::tune_pid(&mut self.coprocessor, &mut self.drivetrain).await;
         // push_back::autons::print_state(self).await;
         // push_back::autons::throw_balls(self).await;
-        // push_back::autons::print_pose(&self.drivetrain.tracking).await;
+        push_back::autons::print_pose(&self.drivetrain.tracking).await;
 
-        _ = self.coprocessor.send_request(SetLedRequest).await;
+        // _ = self.coprocessor.send_request(SetLedRequest).await;
     }
 
     async fn disabled(&mut self) {

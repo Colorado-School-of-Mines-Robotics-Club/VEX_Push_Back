@@ -1,8 +1,5 @@
 use std::{
-    io::{self, Write as _},
-    sync::Arc,
-    time::Duration,
-    time::Instant,
+    any::TypeId, io::{self, Write as _}, sync::Arc, time::{Duration, Instant}
 };
 
 use bytes::{BufMut, BytesMut};
@@ -16,7 +13,7 @@ use vexide::{
 };
 
 use crate::requests::{
-    CoprocessorRequest, GetPositionRequest, GetVelocityRequest, OtosPosition, OtosVelocity,
+    CoprocessorRequest, GetPositionRequest, GetVelocityRequest, OtosPosition, OtosVelocity, PingRequest,
 };
 
 macro_rules! make_coprocessor_data {
@@ -77,7 +74,7 @@ impl CoprocessorSmartPort {
         Self::send_request_with_port(self.port.clone(), request)
     }
 
-    async fn send_request_with_port<R: CoprocessorRequest>(
+    async fn send_request_with_port<R: CoprocessorRequest + 'static>(
         port_lock: Arc<Mutex<SerialPort>>,
         request: R,
     ) -> Result<R::Response, io::Error> {
@@ -142,7 +139,8 @@ impl CoprocessorSmartPort {
         buf.truncate(len);
         let buf = buf.freeze();
 
-        R::parse_response(&buf).map(|(_, d)| d).map_err(|_| {
+        R::parse_response(&buf).map(|(_, d)| d).map_err(|e| {
+            // dbg!(e);
             io::Error::new(
                 io::ErrorKind::InvalidData,
                 "decoded data was unable to be parsed correctly",

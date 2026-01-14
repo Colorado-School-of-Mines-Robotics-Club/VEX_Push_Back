@@ -10,3 +10,7 @@ nom = { workspace = true }
 shrewnit = { workspace = true }
 vexide = { workspace = true }
 triple_buffer = { workspace = true }
+
+[build-dependencies]
+sha2 = "0.10.9"
+base16ct = { version = "1.0.0", features = ["alloc"] }

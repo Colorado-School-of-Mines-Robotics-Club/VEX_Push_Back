@@ -10,6 +10,7 @@ icon = "cool-x"
 compress = true
 
 [dependencies]
+cobs = { workspace = true }
 vexide = { workspace = true }
 evian = { workspace = true }
 shrewnit = { workspace = true }

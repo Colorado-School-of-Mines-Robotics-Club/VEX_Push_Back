@@ -15,37 +15,86 @@ use vexide::time::sleep;
 use crate::subsystems::copro::tracking::CoproTracking;
 
 mod control {
-    use core::time::Duration;
+    pub(super) mod basic {
+        use core::time::Duration;
 
-    use evian::{
-        control::loops::{AngularPid, Pid},
-        motion::Basic,
-        prelude::Tolerances,
-    };
+        use evian::{
+            control::loops::{AngularPid, Pid}, math::Angle, motion::{Basic, Seeking}, prelude::Tolerances
+        };
 
-    pub const BASIC_CONTROL: Basic<Pid, AngularPid> = Basic {
-        linear_controller: LINEAR_PID,
-        angular_controller: ANGULAR_PID,
-        linear_tolerances: LINEAR_TOLERANCES,
-        angular_tolerances: ANGULAR_TOLERANCES,
-        timeout: Some(Duration::from_secs(5)),
-    };
+        pub const CONTROLLER: Basic<Pid, AngularPid> = Basic {
+            linear_controller: LINEAR_PID,
+            angular_controller: ANGULAR_PID,
+            linear_tolerances: LINEAR_TOLERANCES,
+            angular_tolerances: ANGULAR_TOLERANCES,
+            timeout: Some(Duration::from_secs(5)),
+        };
 
-    pub const LINEAR_PID: Pid = Pid::new(0.035, 0.001, 0.02, None);
-    pub const ANGULAR_PID: AngularPid = AngularPid::new(0.0, 0.00, 0.00, None);
+        pub const LINEAR_PID: Pid = Pid::new(0.035, 0.001, 0.02, None);
+        pub const ANGULAR_PID: AngularPid = AngularPid::new(0.50, 0.02, 0.01, None);
 
-    // TODO: actually check these
-    pub const LINEAR_TOLERANCES: Tolerances = Tolerances::new()
-        .error(0.5)
-        .velocity(0.5)
-        .duration(Duration::from_millis(15));
-    pub const ANGULAR_TOLERANCES: Tolerances = Tolerances::new()
-        .error(f64::to_radians(1.0))
-        .velocity(0.05)
-        .duration(Duration::from_millis(15));
+        // TODO: actually check these
+        pub const LINEAR_TOLERANCES: Tolerances = Tolerances::new()
+            .error(0.5)
+            .velocity(0.5)
+            .duration(Duration::from_millis(15));
+        pub const ANGULAR_TOLERANCES: Tolerances = Tolerances::new()
+            .error(Angle::from_degrees(5.0).as_radians())
+            .velocity(Angle::from_degrees(0.15).as_radians())
+            .duration(Duration::from_millis(15));
+    }
+
+    // pub(super) mod seeking {
+    //     use core::time::Duration;
+
+    //     use evian::{
+    //         control::loops::{AngularPid, Pid},
+    //         motion::{Basic, Seeking},
+    //         prelude::Tolerances,
+    //     };
+
+    //     pub const CONTROLLER: Seeking<Pid, Pid> = Seeking {
+    //         linear_controller: LINEAR_PID,
+    //         lateral_controller: LATERAL_PID,
+    //         tolerances: LINEAR_TOLERANCES,
+    //         timeout: Some(Duration::from_secs(5)),
+    //     };
+
+    //     pub const LINEAR_PID: Pid = Pid::new(0.035, 0.001, 0.02, None);
+    //     pub const LATERAL_PID: Pid = Pid::new(0.055, 0.005, 0.00, None);
+
+    //     pub const LINEAR_TOLERANCES: Tolerances = Tolerances::new()
+    //         .error(0.5)
+    //         .velocity(0.5)
+    //         .duration(Duration::from_millis(15));
+    // }
 }
 
-// Note to self: trunk jam detection needs a higher limit
+async fn intake_balls(intake: &mut IntakeSubsystem) {
+    // Intake balls until both elevator top & bottom are broken (with debounce)
+    _ = intake.run(IntakeState::full_forward() - IntakeState::TRUNK);
+    let mut last_trigger = None;
+    loop {
+        last_trigger = if intake.sensors().contains(LineBreakState::ELEVATOR & LineBreakState::TRUNK) && last_trigger.is_none() {
+            Some(Instant::now())
+        } else { None };
+
+        if let Some(last_trigger) = last_trigger && last_trigger.elapsed() > Duration::from_millis(100) {
+            break;
+        }
+
+        sleep(Duration::from_millis(3)).await;
+    }
+
+    // Move balls until first ball hits outtake
+    _ = intake.run(IntakeState::full_forward());
+    while intake.sensors().contains(LineBreakState::OUTTAKE) {
+        sleep(Duration::from_millis(3)).await;
+    }
+    _ = intake.run(IntakeState::full_brake());
+}
+
+// Note to self: trunk jam detection needs a higher limit?
 async fn move_ball_to(intake: &mut IntakeSubsystem, using: IntakeState, until: LineBreakState, move_from: Option<LineBreakState>) {
     _ = intake.run(using);
     let mut unjammed_from_at = Instant::now();
@@ -164,7 +213,8 @@ pub async fn print_pose(tracking: &CoproTracking) {
 }
 
 pub async fn tune_pid(copro: &mut CoproSubsystem, drivetrain: &mut DrivetrainSubsystem<Differential, CoproTracking>) {
-    let mut basic = control::BASIC_CONTROL;
+    let mut basic = control::basic::CONTROLLER;
+    // let mut seeking = control::seeking::CONTROLLER;
 
     println!("Calibrating...");
     if let Err(e) = copro.send_request(CalibrateRequest).await {
@@ -172,36 +222,42 @@ pub async fn tune_pid(copro: &mut CoproSubsystem, drivetrain: &mut DrivetrainSub
         return;
     }
 
-    sleep(Duration::from_millis(100)).await;
+    // let starting_pos = drivetrain.tracking.position();
+    // let starting_heading = drivetrain.tracking.heading();
 
-    let start = drivetrain.tracking.forward_travel();
-    println!("START: {:.2}", start);
+    // sleep(Duration::from_millis(100)).await;
 
-    basic.drive_distance(drivetrain, 12.0).await;
-    dbg!(drivetrain.tracking.linear_velocity());
+    // let start = drivetrain.tracking.forward_travel();
+    // println!("START: {:.2}", start);
 
-    let end = drivetrain.tracking.forward_travel();
-    println!("END: {:.2}\nDIFF: {:.2}", end, end - start);
+    // basic.drive_distance(drivetrain, 12.0).await;
+    // dbg!(drivetrain.tracking.linear_velocity());
+
+    // let end = drivetrain.tracking.forward_travel();
+    // println!("END: {:.2}\nDIFF: {:.2}", end, end - start);
+
+    println!("Turning to right!");
+
+    let start = drivetrain.tracking.heading();
+    println!("START: {:.2}", start.as_degrees());
+    basic.turn_to_heading(drivetrain, Angle::from_degrees(0.0)).await;
+    let end = drivetrain.tracking.heading();
+    println!("END: {:.2}\nDIFF: {:.2}", end.as_degrees(), (((end - start).as_degrees() + 180.0) % 360.0) - 180.0);
+
+    let mut i = 0;
+    loop {
+        let angle = if i % 2 == 0 {
+            90.0
+        } else { 0.0 };
+
+        basic.turn_to_heading(drivetrain, Angle::from_degrees(angle)).await;
+
+        i += 1;
+        sleep(Duration::from_millis(500)).await;
+    }
+
+    // println!("Moving back...");
+    // seeking.move_to_point(drivetrain, starting_pos).await;
+    // basic.turn_to_heading(drivetrain, starting_heading).await;
+    // println!("Done!");
 }
-
-// pub async fn auton_1(robot: &mut Robot) {
-//     let mut basic = control::BASIC_CONTROL;
-
-//     // The following coded is intended to make the robot drive forward, turn left, drive forward again,
-//     // grab a triball, drive backwards, turn left and drive forward.
-
-//     basic.drive_distance(&mut robot.drivetrain, 10.0).await;
-//     basic
-//         .turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(90.0))
-//         .await;
-//     basic.drive_distance(&mut robot.drivetrain, 5.0).await;
-
-//     // _ = self.intake.set_velocity(200);
-//     sleep(Duration::from_secs(1)).await;
-//     // _ = self.intake.set_velocity(0);
-
-//     basic.drive_distance(&mut robot.drivetrain, 5.0).await;
-//     basic
-//         .turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(180.0))
-//         .await;
-// }

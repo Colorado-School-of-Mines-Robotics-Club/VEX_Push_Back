@@ -22,7 +22,7 @@ pub struct Robot {
 
 impl Robot {
     pub async fn new(peripherals: Peripherals) -> Self {
-        let coprocessor = CoproSubsystem::new(peripherals.port_12).await;
+        let coprocessor = CoproSubsystem::new(peripherals.port_15).await;
         let controller = peripherals.primary_controller;
         let configuration = ControllerConfiguration::Noah;
         let drivetrain = DrivetrainSubsystem::new(

@@ -1,4 +1,4 @@
-#![feature(never_type, future_join)]
+#![feature(never_type, future_join, duration_millis_float)]
 
 mod robot;
 mod compete;

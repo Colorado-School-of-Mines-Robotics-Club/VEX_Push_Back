@@ -30,21 +30,22 @@ impl TracksForwardTravel for CoproTracking {
 }
 
 impl TracksHeading for CoproTracking {
+    // OTOS heading:
+    // Clockwise is negative, until 180
+    // Counterclockwise is positive, until 180
     fn heading(&self) -> vexide::math::Angle {
         let mut data = self.borrow_mut();
-        let heading = data.position.read().heading;
+        let mut heading = data.position.read().heading;
 
-        // +- pi
-        //     0 = +y
-        // -pi/2 = +x
-        //  pi/2 = -x
-        let radians = (heading - 45.0 * Degrees).to::<Radians>();
+        // Adjust negatives to absolute
+        if heading < 0.0 * Degrees {
+            heading += 360.0 * Degrees;
+        }
 
-        Angle::from_radians(if radians.is_sign_positive() {
-            radians
-        } else {
-            radians + 2.0 * PI
-        })
+        // Correct 0 as Y to 0 as X
+        heading += 90.0 * Degrees;
+
+        Angle::from_radians(heading.to::<Radians>()).wrapped_full()
     }
 }
 
@@ -52,7 +53,14 @@ impl TracksPosition for CoproTracking {
     fn position(&self) -> evian::math::Vec2<f64> {
         let mut data = self.borrow_mut();
         let pos = data.position.read();
-        Vec2::new(pos.x.to::<Inches>(), pos.y.to::<Inches>())
+
+        // Sensor orientation:
+        // Forward -> +x Should be +y
+        // Left    -> +y Should be -x
+        let x = -pos.y.to::<Inches>();
+        let y = pos.x.to::<Inches>();
+
+        Vec2::new(x, y)
     }
 }
 

@@ -1,7 +1,7 @@
 use std::time::{Duration, Instant};
 
 use coprocessor::requests::CalibrateRequest;
-use evian::{control::loops::{AngularPid, Pid}, motion::Basic, prelude::{Arcade, Tank, Tolerances}};
+use evian::{control::loops::{AngularPid, Pid}, math::Angle, motion::Basic, prelude::*};
 use push_back::subsystems::{intake::IntakeState, trunk::TrunkState, ControllableSubsystem};
 use vexide::prelude::*;
 
@@ -102,22 +102,33 @@ impl Compete for Robot {
     async fn autonomous(&mut self) {
         _ = self.drivetrain.drivetrain.model.drive_tank(0.0, 0.0);
         println!("Auton!");
+        _ = self.coprocessor.send_request(CalibrateRequest).await;
+        let mut basic: Basic<Pid, AngularPid> = crate::control::basic::CONTROLLER;
+        //basic.turn_to_heading(&mut self.drivetrain, (Angle::from_degrees(90.0+42.0)).wrapped_full()).await;
 
-        // if let Ok(file) = File::options().read(true).open("record30.txt") {
-        //     let mut subsystems = HashMap::<&'static str, &mut dyn ControllableSubsystem>::new();
-        //     subsystems.insert("drivetrain", &mut self.drivetrain);
-        //     subsystems.insert("intake", &mut self.intake);
-        //     subsystems.insert("trunk", &mut self.trunk);
-        //     self.replay.replay(file, subsystems).await;
-        // }
+        let start = self.drivetrain.tracking.forward_travel();
+        println!("START: {:.2}", start);
 
-        // push_back::autons::print_pose(self).await;
-        // push_back::autons::auton_1(self).await;
-        push_back::autons::tune_pid(&mut self.coprocessor, &mut self.drivetrain).await;
-        // push_back::autons::print_state(&mut self.intake, &mut self.trunk).await;
-        // push_back::autons::throw_balls(self).await;
-        // push_back::autons::print_pose(&self.drivetrain.tracking).await;
-        // bad_auton(self).await;
+        basic.drive_distance(&mut self.drivetrain, 46.0).await;
+
+        let end = self.drivetrain.tracking.forward_travel();
+        println!("END: {:.2}\nDIFF: {:.2}", end, end - start);
+        
+        //basic.turn_to_heading(&mut self.drivetrain, (Angle::from_degrees(90.0+0.0)).wrapped_full()).await;
+        //_ = self.intake.run(IntakeState::full_forward());
+        //_ = self.intake.run(IntakeState::INTAKE_WHEELS & IntakeState::BOTTOM).unwrap();
+        //sleep(Duration::from_millis(5)).await;
+        //basic.drive_distance(&mut self.drivetrain, 10.0).await;
+        //_ = self.intake.run(IntakeState::full_brake());
+        //basic.drive_distance(&mut self.drivetrain, -10.0).await;
+        //basic.turn_to_heading(&mut self.drivetrain, (Angle::from_degrees(90.0+360.0 - 90.0)).wrapped_full()).await;
+        //basic.drive_distance(&mut self.drivetrain, 25.0).await;
+        //basic.turn_to_heading(&mut self.drivetrain, (Angle::from_degrees(90.0+360.0 - 45.0)).wrapped_full()).await;
+        //basic.drive_distance(&mut self.drivetrain, 8.0).await;
+        //_ = self.intake.run(IntakeState::full_forward());
+
+
+
 
     }
 

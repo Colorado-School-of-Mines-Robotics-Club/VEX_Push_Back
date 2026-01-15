@@ -13,12 +13,12 @@ pub mod basic {
         timeout: Some(Duration::from_secs(5)),
     };
 
-    pub const LINEAR_PID: Pid = Pid::new(0.035, 0.001, 0.02, None);
-    pub const ANGULAR_PID: AngularPid = AngularPid::new(0.50, 0.02, 0.01, None);
+    pub const LINEAR_PID: Pid = Pid::new(0.025, 0.001, 0.0005, None);
+    pub const ANGULAR_PID: AngularPid = AngularPid::new(0.65, 0.01, 0.04, None);
 
     // TODO: actually check these
     pub const LINEAR_TOLERANCES: Tolerances = Tolerances::new()
-        .error(0.15)
+        .error(1.0)
         .velocity(0.5)
         .duration(Duration::from_millis(15));
     pub const ANGULAR_TOLERANCES: Tolerances = Tolerances::new()

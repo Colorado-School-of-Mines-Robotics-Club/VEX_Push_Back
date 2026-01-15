@@ -49,8 +49,9 @@ impl From<&IntakeSensors> for LineBreakState {
             (&sensors.outtake, LineBreakState::OUTTAKE),
         ]
         .into_iter()
+        .map(|(s, p)| if p == LineBreakState::OUTTAKE { (!s.level().unwrap_or(LogicLevel::Low), p) } else { (s.level().unwrap_or(LogicLevel::Low), p) })
         // NOTE: this should be checking for low, but vexide's logic appeaars to be reversed
-        .filter(|(s, _)| matches!(s.level(), Ok(LogicLevel::High)))
+        .filter(|(s, _)| matches!(s, LogicLevel::High))
         .fold(LineBreakState::empty(), |acc, (_, f)| acc.union(f))
     }
 }

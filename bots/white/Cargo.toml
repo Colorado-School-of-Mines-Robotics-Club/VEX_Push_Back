@@ -14,4 +14,5 @@ vexide = { workspace = true }
 evian = { workspace = true }
 shrewnit = { workspace = true }
 push-back = { path = "../../crates/push-back" }
+coprocessor = { path = "../../coprocessor/brain" }
 # display = { path = "./display" }

@@ -101,6 +101,7 @@ dependencies = [
 name = "bot-white"
 version = "0.1.0"
 dependencies = [
+ "coprocessor",
  "evian",
  "push-back",
  "shrewnit",

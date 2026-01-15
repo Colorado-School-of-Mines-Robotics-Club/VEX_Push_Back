@@ -13,16 +13,21 @@ pub mod basic {
         timeout: Some(Duration::from_secs(5)),
     };
 
-    pub const LINEAR_PID: Pid = Pid::new(0.037, 0.001, 0.03, None);
-    pub const ANGULAR_PID: AngularPid = AngularPid::new(0.65, 0.01, 0.04, None);
+    pub const LINEAR_PID: Pid = Pid::new(0.035, 0.0025, 0.00005, None);
+    // pub const LINEAR_PID: Pid = Pid::new(0.02, 0.015, 0.0012, None);
+    pub const ANGULAR_PID: AngularPid = AngularPid::new(0.57, 0.10, 0.0045, None);
+    // pub const ANGULAR_PID: AngularPid = AngularPid::new(0.00, 0.00, 0.00, None);
+
+    // pub const LINEAR_PID: Pid = Pid::new(0.015, 0.0025, 0.0003, None);
+    // pub const ANGULAR_PID: AngularPid = AngularPid::new(0.65, 0.01, 0.0, None);
 
     // TODO: actually check these
     pub const LINEAR_TOLERANCES: Tolerances = Tolerances::new()
-        .error(0.15)
+        .error(0.75)
         .velocity(0.5)
-        .duration(Duration::from_millis(15));
+        .duration(Duration::from_millis(250));
     pub const ANGULAR_TOLERANCES: Tolerances = Tolerances::new()
         .error(Angle::from_degrees(5.0).as_radians())
         .velocity(Angle::from_degrees(0.15).as_radians())
-        .duration(Duration::from_millis(15));
+        .duration(Duration::from_millis(250));
 }

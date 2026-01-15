@@ -190,7 +190,7 @@ impl CoprocessorSmartPort {
                 Err(_e) => (), // TODO: error state indication?
             };
 
-            sleep(Duration::from_millis(5)).await
+            sleep(Duration::from_millis(3)).await
         }
     }
 }

@@ -70,7 +70,7 @@ mod control {
     // }
 }
 
-async fn intake_balls(intake: &mut IntakeSubsystem) {
+pub async fn intake_balls(intake: &mut IntakeSubsystem) {
     // Intake balls until both elevator top & bottom are broken (with debounce)
     _ = intake.run(IntakeState::full_forward() - IntakeState::TRUNK);
     let mut last_trigger = None;
@@ -197,7 +197,7 @@ pub async fn print_state(intake: &mut IntakeSubsystem, trunk: &mut TrunkSubsyste
     }
 }
 
-pub async fn print_pose(tracking: &CoproTracking) {
+pub async fn print_pose(tracking: &CoproTracking) -> ! {
     loop {
         println!(
             "LH: {:.4} LP: ({:.4}, {:.4}) VH: {:.4} VP: {:.4}",

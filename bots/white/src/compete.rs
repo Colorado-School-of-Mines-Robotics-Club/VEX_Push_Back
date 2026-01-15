@@ -1,11 +1,13 @@
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
-use evian::math::Angle;
+use coprocessor::requests::CalibrateRequest;
+use evian::math::{Angle, Vec2};
 use evian::prelude::*;
 use push_back::subsystems::intake::IntakeState;
 
-use push_back::subsystems::ControllableSubsystem;
 use push_back::subsystems::trunk::TrunkState;
+use push_back::subsystems::ControllableSubsystem;
+use shrewnit::{FeetPerSecond, LinearVelocity, MetersPerSecond, Milliseconds};
 use vexide::prelude::*;
 
 use crate::robot::Robot;
@@ -121,7 +123,7 @@ impl Compete for Robot {
         //     self.replay.replay(file, subsystems).await;
         // }
 
-        // crate::autons::print_pose(self).await;
+        // push_back::autons::print_pose(&self.drivetrain.tracking).await;
         // crate::autons::auton_1(self).await;
         // crate::autons::tune_pid(self).await;
         // crate::autons::print_state(self).await;
@@ -130,19 +132,85 @@ impl Compete for Robot {
 
         let mut basic = crate::control::basic::CONTROLLER;
 
-        // let start = self.drivetrain.tracking.forward_travel();
-        // println!("START: {:.2}", start);
+        while self.coprocessor.send_request(CalibrateRequest).await.is_err() {
+            eprintln!("Failed calibration...");
+            sleep(Duration::from_secs(1)).await;
+        }
+        sleep(Duration::from_secs(1)).await;
 
-        // basic.drive_distance(&mut self.drivetrain, 12.0).await;
+        // let start = self.drivetrain.tracking.heading();
+        // println!("START: {:.2}", start.as_degrees());
+        // basic.turn_to_heading(&mut self.drivetrain, (start + Angle::from_degrees(90.0)).wrapped_full()).await;
+        // let end = self.drivetrain.tracking.heading();
+        // println!("END: {:.2}\nDIFF: {:.2}", end.as_degrees(), (end - start).wrapped_full().as_degrees());
+        // return;
 
-        // let end = self.drivetrain.tracking.forward_travel();
-        // println!("END: {:.2}\nDIFF: {:.2}", end, end - start);
+        // Move to correct balls on right
+        basic.turn_to_point(&mut self.drivetrain, Vec2::new(22.0, 24.0)).await;
+        basic.drive_distance(&mut self.drivetrain, 32.0).await;
 
-        let start = self.drivetrain.tracking.heading();
-        println!("START: {:.2}", start.as_degrees());
-        basic.turn_to_heading(&mut self.drivetrain, (start + Angle::from_degrees(90.0)).wrapped_full()).await;
-        let end = self.drivetrain.tracking.heading();
-        println!("END: {:.2}\nDIFF: {:.2}", end.as_degrees(), (end - start).wrapped_full().as_degrees());
+        basic.timeout = Some(Duration::from_secs(1));
+
+        // Intake 2 team balls
+        _ = self.intake.run(IntakeState::full_forward() - IntakeState::TRUNK - IntakeState::ELEVATOR);
+        // sleep(Duration::from_millis(500)).await;
+        basic.drive_distance(&mut self.drivetrain, 12.0).await;
+        basic.drive_distance_at_heading(&mut self.drivetrain, 6.5, Angle::from_degrees(75.0)).await;
+        sleep(Duration::from_secs(3)).await;
+        _ = self.intake.run(IntakeState::full_brake());
+
+        // Move to center low goal
+        basic.drive_distance_at_heading(&mut self.drivetrain, -6.0, Angle::from_degrees(45.0)).await; // Avoid line
+
+        let goal_load_pos = Vec2::new(0.0, 36.0);
+        basic.turn_to_point(&mut self.drivetrain, goal_load_pos).await;
+        basic.timeout = Some(Duration::from_secs(2));
+        let dist = (self.drivetrain.tracking.position() - goal_load_pos).length();
+        basic.drive_distance(&mut self.drivetrain, dist).await;
+
+        basic.turn_to_heading(&mut self.drivetrain, Angle::from_degrees(135.0)).await; // Turn towards goal
+
+        _ = self.drivetrain.model.drive_arcade(0.5, 0.0);
+        sleep(Duration::from_millis(500)).await;
+        _ = self.drivetrain.model.drive_arcade(0.0, 0.0);
+
+        // Dump all 3 team balls into goal
+        _ = self.trunk.set_state(TrunkState::Lower);
+        _ = self.intake.run(IntakeState::full_reverse());
+        sleep(Duration::from_secs(3)).await;
+        _ = self.intake.run(IntakeState::full_forward());
+        sleep(Duration::from_millis(500)).await;
+        _ = self.intake.run(IntakeState::full_reverse());
+        sleep(Duration::from_millis(1500)).await;
+        _ = self.intake.run(IntakeState::full_forward());
+        sleep(Duration::from_millis(500)).await;
+        _ = self.intake.run(IntakeState::full_reverse());
+        sleep(Duration::from_millis(1500)).await;
+        _ = self.intake.run(IntakeState::full_brake());
+
+        // Move to matchload thingy
+        basic.drive_distance(&mut self.drivetrain, -6.0).await;
+
+        let matchload_pos = Vec2::new(30.0, 0.0);
+        basic.turn_to_point(&mut self.drivetrain, matchload_pos).await; // Turn towards goal
+        let dist = (self.drivetrain.tracking.position() - matchload_pos).length();
+        basic.drive_distance(&mut self.drivetrain, dist).await;
+
+        // Engage matchload
+        _ = self.trunk.set_state(TrunkState::Upper);
+        basic.turn_to_heading(&mut self.drivetrain, Angle::from_degrees(270.0)).await;
+        _ = self.drivetrain.model.drive_arcade(0.5, 0.0);
+        sleep(Duration::from_secs(1)).await;
+
+        // Take 3 team balls
+        push_back::autons::intake_balls(&mut self.intake).await;
+        _ = self.drivetrain.model.drive_arcade(0.0, 0.0);
+
+        // Take 3 opp balls
+        _ = self.intake.run(IntakeState::full_forward() - IntakeState::TRUNK);
+        sleep(Duration::from_secs(2)).await;
+
+        println!("Done");
     }
 
     async fn disabled(&mut self) {

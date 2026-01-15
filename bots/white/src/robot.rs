@@ -1,6 +1,6 @@
 use evian::drivetrain::model::Differential;
 use push_back::subsystems::{
-    drivetrain::DrivetrainSubsystem, intake::{IntakeMotors, IntakeSensors, IntakeSubsystem}, replay::ReplaySubsystem, trunk::{AdiPneumatic, PneumaticState, TrunkSubsystem}, ControllerConfiguration
+    copro::{tracking::CoproTracking, CoproSubsystem}, drivetrain::DrivetrainSubsystem, intake::{IntakeMotors, IntakeSensors, IntakeSubsystem}, replay::ReplaySubsystem, trunk::{AdiPneumatic, PneumaticState, TrunkSubsystem}, ControllerConfiguration
 };
 use vexide::{
     math::Direction,
@@ -11,10 +11,10 @@ use vexide::{
 
 pub struct Robot {
     // pub display: RefCell<Display>,
-    // pub coprocessor: CoproSubsystem,
+    pub coprocessor: CoproSubsystem,
     pub controller: Controller,
     pub configuration: ControllerConfiguration,
-    pub drivetrain: DrivetrainSubsystem<Differential, /* CoproTracking */ ()>,
+    pub drivetrain: DrivetrainSubsystem<Differential, CoproTracking>,
     pub intake: IntakeSubsystem,
     pub trunk: TrunkSubsystem,
     pub replay: ReplaySubsystem,
@@ -22,7 +22,7 @@ pub struct Robot {
 
 impl Robot {
     pub async fn new(peripherals: Peripherals) -> Self {
-        // let coprocessor = CoproSubsystem::new(peripherals.port_15).await;
+        let coprocessor = CoproSubsystem::new(peripherals.port_15).await;
         let controller = peripherals.primary_controller;
         let configuration = ControllerConfiguration::Connor;
         let drivetrain = DrivetrainSubsystem::new(
@@ -40,8 +40,7 @@ impl Robot {
                     Motor::new(peripherals.port_10, Gearset::Blue, Direction::Forward),
                 ],
             ),
-            // CoproTracking(coprocessor.data()),
-            (),
+            CoproTracking(coprocessor.data()),
         );
         let intake = IntakeSubsystem::new(
             IntakeMotors {
@@ -95,7 +94,7 @@ impl Robot {
             intake,
             trunk,
             replay,
-            // coprocessor,
+            coprocessor,
         }
     }
 

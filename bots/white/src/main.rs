@@ -2,6 +2,7 @@
 
 mod robot;
 mod compete;
+mod control;
 
 use vexide::prelude::*;
 

@@ -70,11 +70,16 @@ mod control {
     // }
 }
 
-pub async fn intake_balls(intake: &mut IntakeSubsystem) {
+pub async fn intake_balls(intake: &mut IntakeSubsystem, timeout: Duration) {
+    let start = Instant::now();
     // Intake balls until both elevator top & bottom are broken (with debounce)
     _ = intake.run(IntakeState::full_forward() - IntakeState::TRUNK);
     let mut last_trigger = None;
     loop {
+        if start.elapsed() >= timeout {
+            break;
+        }
+
         last_trigger = if intake.sensors().contains(LineBreakState::ELEVATOR & LineBreakState::TRUNK) && last_trigger.is_none() {
             Some(Instant::now())
         } else { None };
@@ -88,7 +93,7 @@ pub async fn intake_balls(intake: &mut IntakeSubsystem) {
 
     // Move balls until first ball hits outtake
     _ = intake.run(IntakeState::full_forward());
-    while intake.sensors().contains(LineBreakState::OUTTAKE) {
+    while intake.sensors().contains(LineBreakState::OUTTAKE) && start.elapsed() < timeout {
         sleep(Duration::from_millis(3)).await;
     }
     _ = intake.run(IntakeState::full_brake());

@@ -58,6 +58,14 @@ async fn bad_auton(robot: &mut Robot) {
 
 impl Compete for Robot {
     async fn driver(&mut self) {
+        let mut basic = crate::control::basic::CONTROLLER;
+        push_back::autons::tune_basic_pid(
+            &mut basic,
+            &self.controller,
+            &mut self.coprocessor,
+            &mut self.drivetrain
+        ).await;
+
         println!("Driver!");
         _ = self
             .controller
@@ -100,68 +108,67 @@ impl Compete for Robot {
     }
 
     async fn autonomous(&mut self) {
-
-        _ = self.drivetrain.drivetrain.model.drive_tank(0.0, 0.0);
-        println!("Auton!");
-        _ = self.coprocessor.send_request(CalibrateRequest).await;
-        let mut basic: Basic<Pid, AngularPid> = crate::control::basic::CONTROLLER;
-        basic.timeout = Some(Duration::from_secs(1));
-        basic.turn_to_heading(&mut self.drivetrain, (Angle::from_degrees(90.0+40.0)).wrapped_full()).await;
-        basic.timeout = Some(Duration::from_secs(3));
-        basic.drive_distance(&mut self.drivetrain, 42.0).await;
-        basic.timeout = Some(Duration::from_secs(1));
-        basic.turn_to_heading(&mut self.drivetrain, (Angle::from_degrees(90.0+70.0)).wrapped_full()).await;
-        _ = self.intake.run(IntakeState::full_forward() - IntakeState::TRUNK - IntakeState::ELEVATOR);
-        sleep(Duration::from_millis(5)).await;
-        basic.drive_distance(&mut self.drivetrain, 7.0).await;
-        _ = self.intake.run(IntakeState::full_brake());
-        basic.drive_distance(&mut self.drivetrain, -7.0).await;
-        basic.turn_to_heading(&mut self.drivetrain, (Angle::from_degrees(90.0+360.0 - 90.0)).wrapped_full()).await;
-        basic.timeout = Some(Duration::from_secs(3));
-        basic.drive_distance(&mut self.drivetrain, 23.0).await;
-        basic.timeout = Some(Duration::from_secs(1));
-        basic.turn_to_heading(&mut self.drivetrain, (Angle::from_degrees(90.0+360.0 - 45.0)).wrapped_full()).await;
-        basic.timeout = Some(Duration::from_millis(200));
-        basic.drive_distance(&mut self.drivetrain, 500.0).await;
-        _ = self.intake.run(IntakeState::full_forward());
-        sleep(Duration::from_secs(3)).await;
-        _ = self.intake.run(IntakeState::full_brake());
-        basic.timeout = Some(Duration::from_secs(1));
-        basic.turn_to_heading(&mut self.drivetrain, (Angle::from_degrees(90.0+360.0 - 45.0 - 180.0)).wrapped_full()).await;
-        basic.timeout = Some(Duration::from_secs(3));
-        _ = self.trunk.set_state(TrunkState::Upper);
-        basic.drive_distance_at_heading(&mut self.drivetrain, 45.0, (Angle::from_degrees(90.0+360.0 - 45.0 - 170.0)).wrapped_full()).await;
-        basic.timeout = Some(Duration::from_secs(1));
-        basic.turn_to_heading(&mut self.drivetrain, (Angle::from_degrees(-85.0)).wrapped_full()).await;
-        basic.timeout = Some(Duration::from_millis(450));
-        _ = self.intake.run(IntakeState::full_forward() - IntakeState::TRUNK);
-        basic.drive_distance(&mut self.drivetrain, 500.0).await;
-        sleep(Duration::from_secs(3)).await;
-        _ = self.intake.run(IntakeState::full_brake());
-        basic.timeout = Some(Duration::from_secs(1));
-        basic.drive_distance(&mut self.drivetrain, -10.0).await;
-        _ = self.trunk.set_state(TrunkState::Lower);
-        _ = self.intake.run(IntakeState::full_reverse());
-        sleep(Duration::from_millis(200)).await;
-        _ = self.intake.run(IntakeState::full_brake());
-        basic.turn_to_heading(&mut self.drivetrain, (Angle::from_degrees(85.5)).wrapped_full()).await;
-        basic.drive_distance(&mut self.drivetrain, 30.0).await;
-        _ = self.intake.run(IntakeState::full_forward());
-        sleep(Duration::from_secs(3)).await;
-        _ = self.intake.run(IntakeState::full_reverse());
-        sleep(Duration::from_millis(150)).await;
-        _ = self.intake.run(IntakeState::full_forward());
-        sleep(Duration::from_secs(3)).await;
-        _ = self.intake.run(IntakeState::full_reverse());
-        sleep(Duration::from_millis(150)).await;
-        _ = self.intake.run(IntakeState::full_forward());
-        sleep(Duration::from_secs(3)).await;
-        _ = self.intake.run(IntakeState::full_reverse());
-        sleep(Duration::from_millis(150)).await;
-        _ = self.intake.run(IntakeState::full_forward());
-        sleep(Duration::from_secs(3)).await;
-        _ = self.intake.run(IntakeState::full_reverse());
-        sleep(Duration::from_millis(150)).await;
+        // _ = self.drivetrain.drivetrain.model.drive_tank(0.0, 0.0);
+        // println!("Auton!");
+        // _ = self.coprocessor.send_request(CalibrateRequest).await;
+        // let mut basic: Basic<Pid, AngularPid> = crate::control::basic::CONTROLLER;
+        // basic.timeout = Some(Duration::from_secs(1));
+        // basic.turn_to_heading(&mut self.drivetrain, (Angle::from_degrees(90.0+40.0)).wrapped_full()).await;
+        // basic.timeout = Some(Duration::from_secs(3));
+        // basic.drive_distance(&mut self.drivetrain, 42.0).await;
+        // basic.timeout = Some(Duration::from_secs(1));
+        // basic.turn_to_heading(&mut self.drivetrain, (Angle::from_degrees(90.0+70.0)).wrapped_full()).await;
+        // _ = self.intake.run(IntakeState::full_forward() - IntakeState::TRUNK - IntakeState::ELEVATOR);
+        // sleep(Duration::from_millis(5)).await;
+        // basic.drive_distance(&mut self.drivetrain, 7.0).await;
+        // _ = self.intake.run(IntakeState::full_brake());
+        // basic.drive_distance(&mut self.drivetrain, -7.0).await;
+        // basic.turn_to_heading(&mut self.drivetrain, (Angle::from_degrees(90.0+360.0 - 90.0)).wrapped_full()).await;
+        // basic.timeout = Some(Duration::from_secs(3));
+        // basic.drive_distance(&mut self.drivetrain, 23.0).await;
+        // basic.timeout = Some(Duration::from_secs(1));
+        // basic.turn_to_heading(&mut self.drivetrain, (Angle::from_degrees(90.0+360.0 - 45.0)).wrapped_full()).await;
+        // basic.timeout = Some(Duration::from_millis(200));
+        // basic.drive_distance(&mut self.drivetrain, 500.0).await;
+        // _ = self.intake.run(IntakeState::full_forward());
+        // sleep(Duration::from_secs(3)).await;
+        // _ = self.intake.run(IntakeState::full_brake());
+        // basic.timeout = Some(Duration::from_secs(1));
+        // basic.turn_to_heading(&mut self.drivetrain, (Angle::from_degrees(90.0+360.0 - 45.0 - 180.0)).wrapped_full()).await;
+        // basic.timeout = Some(Duration::from_secs(3));
+        // _ = self.trunk.set_state(TrunkState::Upper);
+        // basic.drive_distance_at_heading(&mut self.drivetrain, 45.0, (Angle::from_degrees(90.0+360.0 - 45.0 - 170.0)).wrapped_full()).await;
+        // basic.timeout = Some(Duration::from_secs(1));
+        // basic.turn_to_heading(&mut self.drivetrain, (Angle::from_degrees(-85.0)).wrapped_full()).await;
+        // basic.timeout = Some(Duration::from_millis(450));
+        // _ = self.intake.run(IntakeState::full_forward() - IntakeState::TRUNK);
+        // basic.drive_distance(&mut self.drivetrain, 500.0).await;
+        // sleep(Duration::from_secs(3)).await;
+        // _ = self.intake.run(IntakeState::full_brake());
+        // basic.timeout = Some(Duration::from_secs(1));
+        // basic.drive_distance(&mut self.drivetrain, -10.0).await;
+        // _ = self.trunk.set_state(TrunkState::Lower);
+        // _ = self.intake.run(IntakeState::full_reverse());
+        // sleep(Duration::from_millis(200)).await;
+        // _ = self.intake.run(IntakeState::full_brake());
+        // basic.turn_to_heading(&mut self.drivetrain, (Angle::from_degrees(85.5)).wrapped_full()).await;
+        // basic.drive_distance(&mut self.drivetrain, 30.0).await;
+        // _ = self.intake.run(IntakeState::full_forward());
+        // sleep(Duration::from_secs(3)).await;
+        // _ = self.intake.run(IntakeState::full_reverse());
+        // sleep(Duration::from_millis(150)).await;
+        // _ = self.intake.run(IntakeState::full_forward());
+        // sleep(Duration::from_secs(3)).await;
+        // _ = self.intake.run(IntakeState::full_reverse());
+        // sleep(Duration::from_millis(150)).await;
+        // _ = self.intake.run(IntakeState::full_forward());
+        // sleep(Duration::from_secs(3)).await;
+        // _ = self.intake.run(IntakeState::full_reverse());
+        // sleep(Duration::from_millis(150)).await;
+        // _ = self.intake.run(IntakeState::full_forward());
+        // sleep(Duration::from_secs(3)).await;
+        // _ = self.intake.run(IntakeState::full_reverse());
+        // sleep(Duration::from_millis(150)).await;
 
     }
 

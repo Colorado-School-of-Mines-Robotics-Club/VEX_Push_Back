@@ -4,13 +4,13 @@ use std::{future::join, time::Instant};
 
 use coprocessor::requests::CalibrateRequest;
 use evian::{
-    drivetrain::model::Differential, math::Angle, prelude::{TracksForwardTravel, TracksHeading, TracksPosition, TracksVelocity}
+    control::loops::{AngularPid, Pid}, drivetrain::model::Differential, math::Angle, motion::Basic, prelude::{TracksForwardTravel, TracksHeading, TracksPosition, TracksVelocity}
 };
 use crate::subsystems::{
     copro::CoproSubsystem, drivetrain::DrivetrainSubsystem, intake::{IntakeState, IntakeSubsystem, LineBreakState}, trunk::{TrunkState, TrunkSubsystem}
 };
 use shrewnit::{DegreesPerSecond, RadiansPerSecond};
-use vexide::time::sleep;
+use vexide::{controller::ControllerState, prelude::Controller, time::sleep};
 
 use crate::subsystems::copro::tracking::CoproTracking;
 
@@ -217,52 +217,87 @@ pub async fn print_pose(tracking: &CoproTracking) -> ! {
     }
 }
 
-pub async fn tune_pid(copro: &mut CoproSubsystem, drivetrain: &mut DrivetrainSubsystem<Differential, CoproTracking>) {
-    let mut basic = control::basic::CONTROLLER;
-    // let mut seeking = control::seeking::CONTROLLER;
-
+async fn wait_calibration(copro: &mut CoproSubsystem) {
     println!("Calibrating...");
-    if let Err(e) = copro.send_request(CalibrateRequest).await {
-        eprintln!("Error calibrating: {e:?}");
-        return;
+    while copro.send_request(CalibrateRequest).await.is_err() {
+        eprintln!("Failed calibration...");
+        sleep(Duration::from_secs(1)).await;
     }
+    sleep(Duration::from_secs(1)).await;
+}
 
-    // let starting_pos = drivetrain.tracking.position();
-    // let starting_heading = drivetrain.tracking.heading();
+pub async fn tune_basic_pid(basic: &mut Basic<Pid, AngularPid>, controller: &Controller, copro: &mut CoproSubsystem, drivetrain: &mut DrivetrainSubsystem<Differential, CoproTracking>) {
+    'outer: loop {
+        println!("--- L1: Fwd 1ft, L2: Fwd 3ft, L3, R1: +15deg, R2: +90deg ---");
 
-    // sleep(Duration::from_millis(100)).await;
+        loop {
+            let Ok(state) = controller.state() else {
+                println!("Controller not connected :(");
+                return;
+            };
 
-    // let start = drivetrain.tracking.forward_travel();
-    // println!("START: {:.2}", start);
+            if state.button_x.is_now_pressed() {
+                break 'outer;
+            }
 
-    // basic.drive_distance(drivetrain, 12.0).await;
-    // dbg!(drivetrain.tracking.linear_velocity());
+            if state.button_l1.is_now_pressed() {
+                wait_calibration(copro).await;
 
-    // let end = drivetrain.tracking.forward_travel();
-    // println!("END: {:.2}\nDIFF: {:.2}", end, end - start);
+                let start = drivetrain.tracking.forward_travel();
+                let dist = 12.0 * if state.button_b.is_pressed() { -1.0 } else { 1.0 };
+                println!("START: {:.2}", start);
 
-    println!("Turning to right!");
+                basic.drive_distance(drivetrain, dist).await;
 
-    let start = drivetrain.tracking.heading();
-    println!("START: {:.2}", start.as_degrees());
-    basic.turn_to_heading(drivetrain, Angle::from_degrees(0.0)).await;
-    let end = drivetrain.tracking.heading();
-    println!("END: {:.2}\nDIFF: {:.2}", end.as_degrees(), (((end - start).as_degrees() + 180.0) % 360.0) - 180.0);
+                let end = drivetrain.tracking.forward_travel();
+                println!("END: {:.2}\nDIFF: {:.2}\nERR: {:.2}", end, end - start, end - start - dist);
+            } else if state.button_l2.is_now_pressed() {
+                wait_calibration(copro).await;
 
-    let mut i = 0;
-    loop {
-        let angle = if i % 2 == 0 {
-            90.0
-        } else { 0.0 };
+                let start = drivetrain.tracking.forward_travel();
+                let dist = 36.0 * if state.button_b.is_pressed() { -1.0 } else { 1.0 };
+                println!("START: {:.2}", start);
 
-        basic.turn_to_heading(drivetrain, Angle::from_degrees(angle)).await;
+                basic.drive_distance(drivetrain, dist).await;
 
-        i += 1;
+                let end = drivetrain.tracking.forward_travel();
+                println!("END: {:.2}\nDIFF: {:.2}\nERR: {:.2}", end, end - start, (end - start - dist) * dist.signum());
+            } else if state.button_r1.is_now_pressed() {
+                wait_calibration(copro).await;
+
+                let start = drivetrain.tracking.heading();
+                let dist = Angle::from_degrees(15.0) * if state.button_b.is_pressed() { -1.0 } else { 1.0 };
+                println!("START: {:.2}", start.as_degrees());
+
+                basic.turn_to_heading(drivetrain, (start + dist).wrapped_full()).await;
+
+                let end = drivetrain.tracking.heading();
+                println!("END: {:.2}\nDIFF: {:.2}\nERR: {:.2}", end.as_degrees(), (end - start).as_degrees(), (end - start - dist).as_degrees());
+            } else if state.button_r2.is_now_pressed() {
+                wait_calibration(copro).await;
+
+                let start = drivetrain.tracking.heading();
+                let dist = Angle::from_degrees(90.0) * if state.button_b.is_pressed() { -1.0 } else { 1.0 };
+                println!("START: {:.2}", start.as_degrees());
+
+                basic.turn_to_heading(drivetrain, (start + dist).wrapped_full()).await;
+
+                let end = drivetrain.tracking.heading();
+                println!("END: {:.2}\nDIFF: {:.2}\nERR: {:.2}", end.as_degrees(), (end - start).as_degrees(), (end - start - dist).as_degrees());
+            } else {
+                sleep(Duration::from_millis(5)).await;
+                continue
+            }
+
+            break;
+        }
+
         sleep(Duration::from_millis(500)).await;
     }
 
-    // println!("Moving back...");
-    // seeking.move_to_point(drivetrain, starting_pos).await;
-    // basic.turn_to_heading(drivetrain, starting_heading).await;
-    // println!("Done!");
+    // let start = drivetrain.tracking.heading();
+    // println!("START: {:.2}", start.as_degrees());
+    // basic.turn_to_heading(drivetrain, Angle::from_degrees(0.0)).await;
+    // let end = drivetrain.tracking.heading();
+    // println!("END: {:.2}\nDIFF: {:.2}", end.as_degrees(), (((end - start).as_degrees() + 180.0) % 360.0) - 180.0);
 }

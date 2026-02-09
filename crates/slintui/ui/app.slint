@@ -1,0 +1,68 @@
+import "./static/NotoSans-Regular-Small.ttf";
+import { AutonsPage, State as AutonsPageState } from "./pages/autons.slint";
+import { OdometryPage, State as OdometryPageState } from "./pages/odometry.slint";
+
+export { AutonsPageState, OdometryPageState }
+
+export component App inherits Window {
+    default-font-family: "Noto Sans";
+    height: 240px;
+    width: 480px;
+
+    out property<[string]> pages: [
+        "Autons",
+        "Odometry",
+        "y=x^2"
+    ];
+    in-out property<int> current_page: 0;
+
+    in property <image> graph_source <=> layout.graph_source;
+    out property <length> graph_width <=> layout.graph_width;
+    out property <length> graph_height <=> layout.graph_height;
+    layout := VerticalLayout {
+        Rectangle {
+            background: black;
+            width: 100%;
+            height: 12%;
+
+            HorizontalLayout {
+                spacing: 1px;
+                property<int> page_count: root.pages.length;
+
+                for i in page_count: Rectangle {
+                    preferred-width: root.width / page_count;
+
+                    background:
+                        root.current_page == i
+                            ? green
+                            : darkgreen;
+                    Text {
+                        text: root.pages[i];
+                        horizontal-alignment: center;
+                    }
+
+                    TouchArea {
+                        clicked => {
+                            root.current_page = i;
+                        }
+                    }
+                }
+            }
+        }
+
+        if current_page == 0: autons := AutonsPage { }
+        if current_page == 1: OdometryPage { }
+
+        property <image> graph_source;
+        property <length> graph_width: self.width;
+        property <length> graph_height: self.height * 3/4;
+        if current_page == 2: graph := Image {
+            source <=> graph_source;
+            width <=> graph_width;
+            height <=> graph_height;
+
+            // preferred-height: 100%;
+            // preferred-width: 100%;
+        }
+    }
+}

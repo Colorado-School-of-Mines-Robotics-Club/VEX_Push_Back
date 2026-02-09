@@ -3,12 +3,6 @@ name = "push-back"
 version = "0.1.0"
 edition = "2024"
 
-[package.metadata.v5]
-upload-strategy = "differential"
-slot = 1
-icon = "cool-x"
-compress = true
-
 [dependencies]
 evian = { workspace = true }
 shrewnit = { workspace = true }

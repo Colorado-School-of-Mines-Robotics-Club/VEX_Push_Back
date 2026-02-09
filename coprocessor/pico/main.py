@@ -143,6 +143,9 @@ def main():
         if data != None:
             if data[0:1] == b'p':
                 brain.send(otos.get_position())
+            elif data[0:1] == b'P':
+                otos.set_position(data[1:])
+                brain.send(b'd')
             elif data[0:1] == b'v':
                 brain.send(otos.get_velocity())
             elif data[0:1] == b'c':

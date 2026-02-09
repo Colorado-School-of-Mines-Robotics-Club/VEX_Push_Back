@@ -40,11 +40,10 @@ impl CoprocessorRequest for PingRequest {
     }
 
     fn parse_response(input: &[u8]) -> nom::IResult<&[u8], Self::Response> {
-        nom::combinator::all_consuming(
-            nom::combinator::map_res(
-                nom::bytes::complete::take::<usize, _, _>(32 /* SHA256 hash */),
-                |bytes: &[u8]| bytes.try_into()
-            )
-        ).parse(input)
+        nom::combinator::all_consuming(nom::combinator::map_res(
+            nom::bytes::complete::take::<usize, _, _>(32 /* SHA256 hash */),
+            |bytes: &[u8]| bytes.try_into(),
+        ))
+        .parse(input)
     }
 }

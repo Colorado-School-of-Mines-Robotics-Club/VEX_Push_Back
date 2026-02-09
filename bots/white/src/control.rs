@@ -2,7 +2,10 @@ pub mod basic {
     use core::time::Duration;
 
     use evian::{
-        control::loops::{AngularPid, Pid}, math::Angle, motion::Basic, prelude::Tolerances
+        control::loops::{AngularPid, Pid},
+        math::Angle,
+        motion::Basic,
+        prelude::Tolerances,
     };
 
     pub const CONTROLLER: Basic<Pid, AngularPid> = Basic {
@@ -36,7 +39,10 @@ pub mod basic_noah {
     use core::time::Duration;
 
     use evian::{
-        control::loops::{AngularPid, Pid}, math::Angle, motion::{Basic, Seeking}, prelude::Tolerances
+        control::loops::{AngularPid, Pid},
+        math::Angle,
+        motion::{Basic, Seeking},
+        prelude::Tolerances,
     };
 
     pub const CONTROLLER: Basic<Pid, AngularPid> = Basic {

@@ -49,7 +49,13 @@ impl From<&IntakeSensors> for LineBreakState {
             (&sensors.outtake, LineBreakState::OUTTAKE),
         ]
         .into_iter()
-        .map(|(s, p)| if p == LineBreakState::OUTTAKE { (!s.level().unwrap_or(LogicLevel::Low), p) } else { (s.level().unwrap_or(LogicLevel::Low), p) })
+        .map(|(s, p)| {
+            if p == LineBreakState::OUTTAKE {
+                (!s.level().unwrap_or(LogicLevel::Low), p)
+            } else {
+                (s.level().unwrap_or(LogicLevel::Low), p)
+            }
+        })
         // NOTE: this should be checking for low, but vexide's logic appeaars to be reversed
         .filter(|(s, _)| matches!(s, LogicLevel::High))
         .fold(LineBreakState::empty(), |acc, (_, f)| acc.union(f))
@@ -195,7 +201,9 @@ impl IntakeSubsystem {
 
         for (flag, motors) in self.motors.into_iter() {
             let len = motors.len();
-            if motors.filter_map(|m| m.velocity().ok()).sum::<f64>() / (len as f64) < JAM_RPM_THRESHOLD {
+            if motors.filter_map(|m| m.velocity().ok()).sum::<f64>() / (len as f64)
+                < JAM_RPM_THRESHOLD
+            {
                 jams |= flag;
             }
         }
@@ -223,16 +231,13 @@ impl IntakeSubsystem {
             match (state.contains(flag), state.contains(flag.reverse())) {
                 (true, false) => {
                     for m in motors {
-                        let voltage =
-                            m.max_voltage();
+                        let voltage = m.max_voltage();
                         m.set_voltage(voltage)?
                     }
                 }
                 (true, true) => {
                     for m in motors {
-                        m.set_voltage(
-                            -m.max_voltage(),
-                        )?
+                        m.set_voltage(-m.max_voltage())?
                     }
                 }
                 _ => {

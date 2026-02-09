@@ -1,0 +1,93 @@
+export struct Pose {
+    x: float, // inches
+    y: float, // inches
+    h: float, // degrees
+}
+
+export enum UpdatedStatus {
+    updated,
+    outdated,
+    unknown
+}
+
+export global State {
+    in property <Pose> position;
+    in property <Pose> velocity;
+    in property <Pose> acceleration;
+    in property <UpdatedStatus> updated_status: unknown;
+    in property <float> bot_size: 15;
+}
+
+component BotOverlay {
+    // All in inches, using cartesian plane with center field as reference
+    in property <length> field_px;
+    property <float> field_size: 144;
+
+    Rectangle {
+        background: greenyellow;
+
+        x: (State.position.x / field_size * field_px) - (self.width / 2) - 1px;
+        y: (-State.position.y / field_size * field_px) - (self.width / 2) - 1px;
+        width: (State.bot_size / field_size) * field_px;
+        height: (State.bot_size / field_size) * field_px;
+
+        border-radius: self.width / 2;
+    }
+}
+
+export component OdometryPage {
+    HorizontalLayout {
+        spacing: self.width * 2%;
+        padding: self.width * 2%;
+
+        Rectangle {
+            background: grey;
+            border-radius: 15px;
+            horizontal-stretch: 1;
+            width: parent.width / 3;
+
+            Text {
+                font-size: 6pt;
+                text:
+                    "\n  PX: " + State.position.x
+                    + "\n  PY: " + State.position.y
+                    + "\n  PH: " + State.position.h
+                    + "\n  VX: " + State.velocity.x
+                    + "\n  VY: " + State.velocity.y
+                    + "\n  VH: " + State.velocity.h
+                    + "\n  AX: " + State.acceleration.x
+                    + "\n  AY: " + State.acceleration.y
+                    + "\n  AH: " + State.acceleration.h
+                    ;
+            }
+        }
+        Rectangle {
+            border-radius: 15px;
+            horizontal-stretch: 2;
+            background: grey;
+
+            property <length> field_px: 150px;
+
+            if State.updated_status != UpdatedStatus.unknown: Rectangle {
+                x: parent.width * 2%;
+                y: parent.width * 2%;
+                height: 5%;
+                width: self.height;
+                border-radius: self.width / 2;
+
+                background: State.updated_status == UpdatedStatus.updated ? lightgreen : orange;
+            }
+
+            Image {
+                width: field_px;
+                height: field_px;
+
+                source: @image-url("../static/field-150x150.jpg");
+            }
+
+            BotOverlay {
+                field_px: parent.field_px;
+            }
+        }
+    }
+}

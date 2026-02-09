@@ -1,6 +1,11 @@
 use evian::drivetrain::model::Differential;
 use push_back::subsystems::{
-    copro::{tracking::CoproTracking, CoproSubsystem}, drivetrain::DrivetrainSubsystem, intake::{IntakeMotors, IntakeSensors, IntakeSubsystem}, replay::ReplaySubsystem, trunk::{AdiPneumatic, PneumaticState, TrunkSubsystem}, ControllerConfiguration
+    ControllerConfiguration,
+    copro::{CoproSubsystem, tracking::CoproTracking},
+    drivetrain::DrivetrainSubsystem,
+    intake::{IntakeMotors, IntakeSensors, IntakeSubsystem},
+    replay::ReplaySubsystem,
+    trunk::{AdiPneumatic, PneumaticState, TrunkSubsystem},
 };
 use vexide::{
     math::Direction,
@@ -28,9 +33,9 @@ impl Robot {
         let drivetrain = DrivetrainSubsystem::new(
             Differential::new(
                 [
-                    Motor::new(peripherals.port_3,  Gearset::Blue, Direction::Reverse),
-                    Motor::new(peripherals.port_4,  Gearset::Blue, Direction::Reverse),
-                    Motor::new(peripherals.port_5,  Gearset::Blue, Direction::Forward),
+                    Motor::new(peripherals.port_3, Gearset::Blue, Direction::Reverse),
+                    Motor::new(peripherals.port_4, Gearset::Blue, Direction::Reverse),
+                    Motor::new(peripherals.port_5, Gearset::Blue, Direction::Forward),
                     Motor::new(peripherals.port_12, Gearset::Blue, Direction::Forward),
                 ],
                 [
@@ -78,12 +83,12 @@ impl Robot {
         let trunk = TrunkSubsystem::new(
             AdiPneumatic {
                 port: AdiDigitalOut::new(peripherals.adi_g),
-                high_mode: PneumaticState::Extended
+                high_mode: PneumaticState::Extended,
             },
             AdiPneumatic {
                 port: AdiDigitalOut::new(peripherals.adi_h),
-                high_mode: PneumaticState::Extended
-            }
+                high_mode: PneumaticState::Extended,
+            },
         );
         let replay = ReplaySubsystem::new();
 

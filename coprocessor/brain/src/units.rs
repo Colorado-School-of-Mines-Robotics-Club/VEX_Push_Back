@@ -33,10 +33,11 @@ macro_rules! impl_otos_reg_unit {
                     .canonical()
                     / (i16::MAX as f64),
             );
-            const ONE_CANONICAL: f64 = { $base::ONE as $dimension }
-                .mul_scalar($max as f64)
-                .canonical()
-                / (i16::MAX as f64);
+            // TODO: address rounding problems
+            const ONE_CANONICAL: f64 = $dimension::<f64>::from_canonical(1.0)
+                .to::<$base>()
+                / ($max as f64)
+                * (i16::MAX as f64);
         }
     };
 }

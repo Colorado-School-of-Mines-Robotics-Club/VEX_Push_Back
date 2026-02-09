@@ -2,12 +2,19 @@
 use core::time::Duration;
 use std::{future::join, time::Instant};
 
+use crate::subsystems::{
+    copro::CoproSubsystem,
+    drivetrain::DrivetrainSubsystem,
+    intake::{IntakeState, IntakeSubsystem, LineBreakState},
+    trunk::{TrunkState, TrunkSubsystem},
+};
 use coprocessor::requests::CalibrateRequest;
 use evian::{
-    control::loops::{AngularPid, Pid}, drivetrain::model::Differential, math::Angle, motion::Basic, prelude::{TracksForwardTravel, TracksHeading, TracksPosition, TracksVelocity}
-};
-use crate::subsystems::{
-    copro::CoproSubsystem, drivetrain::DrivetrainSubsystem, intake::{IntakeState, IntakeSubsystem, LineBreakState}, trunk::{TrunkState, TrunkSubsystem}
+    control::loops::{AngularPid, Pid},
+    drivetrain::model::Differential,
+    math::Angle,
+    motion::Basic,
+    prelude::{TracksForwardTravel, TracksHeading, TracksPosition, TracksVelocity},
 };
 use shrewnit::{DegreesPerSecond, RadiansPerSecond};
 use vexide::{controller::ControllerState, prelude::Controller, time::sleep};
@@ -19,7 +26,10 @@ mod control {
         use core::time::Duration;
 
         use evian::{
-            control::loops::{AngularPid, Pid}, math::Angle, motion::{Basic, Seeking}, prelude::Tolerances
+            control::loops::{AngularPid, Pid},
+            math::Angle,
+            motion::{Basic, Seeking},
+            prelude::Tolerances,
         };
 
         pub const CONTROLLER: Basic<Pid, AngularPid> = Basic {
@@ -80,11 +90,19 @@ pub async fn intake_balls(intake: &mut IntakeSubsystem, timeout: Duration) {
             break;
         }
 
-        last_trigger = if intake.sensors().contains(LineBreakState::ELEVATOR & LineBreakState::TRUNK) && last_trigger.is_none() {
+        last_trigger = if intake
+            .sensors()
+            .contains(LineBreakState::ELEVATOR & LineBreakState::TRUNK)
+            && last_trigger.is_none()
+        {
             Some(Instant::now())
-        } else { None };
+        } else {
+            None
+        };
 
-        if let Some(last_trigger) = last_trigger && last_trigger.elapsed() > Duration::from_millis(100) {
+        if let Some(last_trigger) = last_trigger
+            && last_trigger.elapsed() > Duration::from_millis(100)
+        {
             break;
         }
 
@@ -100,7 +118,12 @@ pub async fn intake_balls(intake: &mut IntakeSubsystem, timeout: Duration) {
 }
 
 // Note to self: trunk jam detection needs a higher limit?
-async fn move_ball_to(intake: &mut IntakeSubsystem, using: IntakeState, until: LineBreakState, move_from: Option<LineBreakState>) {
+async fn move_ball_to(
+    intake: &mut IntakeSubsystem,
+    using: IntakeState,
+    until: LineBreakState,
+    move_from: Option<LineBreakState>,
+) {
     _ = intake.run(using);
     let mut unjammed_from_at = Instant::now();
     while !intake.sensors().contains(until) {
@@ -110,7 +133,10 @@ async fn move_ball_to(intake: &mut IntakeSubsystem, using: IntakeState, until: L
             _ = intake.run(using);
             sleep(Duration::from_millis(100)).await;
         }
-        if let Some(move_from) = move_from && unjammed_from_at.elapsed() > Duration::from_millis(750) && intake.sensors().contains(move_from) {
+        if let Some(move_from) = move_from
+            && unjammed_from_at.elapsed() > Duration::from_millis(750)
+            && intake.sensors().contains(move_from)
+        {
             _ = intake.run(using.reverse());
             sleep(Duration::from_millis(250)).await;
             _ = intake.run(using);
@@ -126,7 +152,7 @@ pub async fn throw_balls(intake: &mut IntakeSubsystem) {
             intake,
             IntakeState::INTAKE_WHEELS,
             LineBreakState::INTAKE,
-            None
+            None,
         )
         .await;
         println!("Intake");
@@ -135,7 +161,7 @@ pub async fn throw_balls(intake: &mut IntakeSubsystem) {
             intake,
             IntakeState::INTAKE_WHEELS | IntakeState::BOTTOM | IntakeState::ELEVATOR_INTAKE,
             LineBreakState::ELEVATOR,
-            None
+            None,
         )
         .await;
         println!("Elevator intake");
@@ -144,7 +170,7 @@ pub async fn throw_balls(intake: &mut IntakeSubsystem) {
             intake,
             IntakeState::ELEVATOR_INTAKE | IntakeState::ELEVATOR,
             LineBreakState::TRUNK,
-            None
+            None,
         )
         .await;
         println!("Elevator");
@@ -153,7 +179,7 @@ pub async fn throw_balls(intake: &mut IntakeSubsystem) {
             intake,
             IntakeState::ELEVATOR | IntakeState::TRUNK,
             LineBreakState::OUTTAKE,
-            Some(LineBreakState::TRUNK)
+            Some(LineBreakState::TRUNK),
         )
         .await;
         println!("Thrown");
@@ -209,15 +235,14 @@ pub async fn print_pose(tracking: &CoproTracking) -> ! {
             tracking.heading().as_degrees(),
             tracking.position().x,
             tracking.position().y,
-            (tracking.angular_velocity() * RadiansPerSecond)
-                .to::<DegreesPerSecond>(),
+            (tracking.angular_velocity() * RadiansPerSecond).to::<DegreesPerSecond>(),
             tracking.linear_velocity(),
         );
         sleep(Duration::from_millis(500)).await;
     }
 }
 
-async fn wait_calibration(copro: &mut CoproSubsystem) {
+pub async fn wait_calibration(copro: &mut CoproSubsystem) {
     println!("Calibrating...");
     while copro.send_request(CalibrateRequest).await.is_err() {
         eprintln!("Failed calibration...");
@@ -226,7 +251,12 @@ async fn wait_calibration(copro: &mut CoproSubsystem) {
     sleep(Duration::from_secs(1)).await;
 }
 
-pub async fn tune_basic_pid(basic: &mut Basic<Pid, AngularPid>, controller: &Controller, copro: &mut CoproSubsystem, drivetrain: &mut DrivetrainSubsystem<Differential, CoproTracking>) {
+pub async fn tune_basic_pid(
+    basic: &mut Basic<Pid, AngularPid>,
+    controller: &Controller,
+    copro: &mut CoproSubsystem,
+    drivetrain: &mut DrivetrainSubsystem<Differential, CoproTracking>,
+) {
     'outer: loop {
         println!("--- L1: Fwd 1ft, L2: Fwd 3ft, L3, R1: +15deg, R2: +90deg ---");
 
@@ -244,49 +274,93 @@ pub async fn tune_basic_pid(basic: &mut Basic<Pid, AngularPid>, controller: &Con
                 wait_calibration(copro).await;
 
                 let start = drivetrain.tracking.forward_travel();
-                let dist = 12.0 * if state.button_b.is_pressed() { -1.0 } else { 1.0 };
+                let dist = 12.0
+                    * if state.button_b.is_pressed() {
+                        -1.0
+                    } else {
+                        1.0
+                    };
                 println!("START: {:.2}", start);
 
                 basic.drive_distance(drivetrain, dist).await;
 
                 let end = drivetrain.tracking.forward_travel();
-                println!("END: {:.2}\nDIFF: {:.2}\nERR: {:.2}", end, end - start, end - start - dist);
+                println!(
+                    "END: {:.2}\nDIFF: {:.2}\nERR: {:.2}",
+                    end,
+                    end - start,
+                    end - start - dist
+                );
             } else if state.button_l2.is_now_pressed() {
                 wait_calibration(copro).await;
 
                 let start = drivetrain.tracking.forward_travel();
-                let dist = 36.0 * if state.button_b.is_pressed() { -1.0 } else { 1.0 };
+                let dist = 36.0
+                    * if state.button_b.is_pressed() {
+                        -1.0
+                    } else {
+                        1.0
+                    };
                 println!("START: {:.2}", start);
 
                 basic.drive_distance(drivetrain, dist).await;
 
                 let end = drivetrain.tracking.forward_travel();
-                println!("END: {:.2}\nDIFF: {:.2}\nERR: {:.2}", end, end - start, (end - start - dist) * dist.signum());
+                println!(
+                    "END: {:.2}\nDIFF: {:.2}\nERR: {:.2}",
+                    end,
+                    end - start,
+                    (end - start - dist) * dist.signum()
+                );
             } else if state.button_r1.is_now_pressed() {
                 wait_calibration(copro).await;
 
                 let start = drivetrain.tracking.heading();
-                let dist = Angle::from_degrees(15.0) * if state.button_b.is_pressed() { -1.0 } else { 1.0 };
+                let dist = Angle::from_degrees(15.0)
+                    * if state.button_b.is_pressed() {
+                        -1.0
+                    } else {
+                        1.0
+                    };
                 println!("START: {:.2}", start.as_degrees());
 
-                basic.turn_to_heading(drivetrain, (start + dist).wrapped_full()).await;
+                basic
+                    .turn_to_heading(drivetrain, (start + dist).wrapped_full())
+                    .await;
 
                 let end = drivetrain.tracking.heading();
-                println!("END: {:.2}\nDIFF: {:.2}\nERR: {:.2}", end.as_degrees(), (end - start).as_degrees(), (end - start - dist).as_degrees());
+                println!(
+                    "END: {:.2}\nDIFF: {:.2}\nERR: {:.2}",
+                    end.as_degrees(),
+                    (end - start).as_degrees(),
+                    (end - start - dist).as_degrees()
+                );
             } else if state.button_r2.is_now_pressed() {
                 wait_calibration(copro).await;
 
                 let start = drivetrain.tracking.heading();
-                let dist = Angle::from_degrees(90.0) * if state.button_b.is_pressed() { -1.0 } else { 1.0 };
+                let dist = Angle::from_degrees(90.0)
+                    * if state.button_b.is_pressed() {
+                        -1.0
+                    } else {
+                        1.0
+                    };
                 println!("START: {:.2}", start.as_degrees());
 
-                basic.turn_to_heading(drivetrain, (start + dist).wrapped_full()).await;
+                basic
+                    .turn_to_heading(drivetrain, (start + dist).wrapped_full())
+                    .await;
 
                 let end = drivetrain.tracking.heading();
-                println!("END: {:.2}\nDIFF: {:.2}\nERR: {:.2}", end.as_degrees(), (end - start).as_degrees(), (end - start - dist).as_degrees());
+                println!(
+                    "END: {:.2}\nDIFF: {:.2}\nERR: {:.2}",
+                    end.as_degrees(),
+                    (end - start).as_degrees(),
+                    (end - start - dist).as_degrees()
+                );
             } else {
                 sleep(Duration::from_millis(5)).await;
-                continue
+                continue;
             }
 
             break;

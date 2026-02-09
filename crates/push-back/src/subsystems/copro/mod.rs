@@ -1,13 +1,14 @@
-use std::{cell::RefCell, ops::{Deref, DerefMut}, rc::Rc};
+use std::{
+    cell::RefCell,
+    ops::{Deref, DerefMut},
+    rc::Rc,
+};
 
 use coprocessor::{
     requests::CalibrateRequest,
     vexide::{CoprocessorData, CoprocessorSmartPort},
 };
-use vexide::{
-    controller::ControllerState,
-    smart::SmartPort,
-};
+use vexide::{controller::ControllerState, smart::SmartPort};
 
 use crate::subsystems::{ControllableSubsystem, ControllerConfiguration};
 
@@ -31,6 +32,8 @@ impl CoproSubsystem {
     pub fn data(&self) -> Rc<RefCell<CoprocessorData>> {
         self.data.clone()
     }
+
+    // pub fn calibrate
 }
 
 impl ControllableSubsystem for CoproSubsystem {

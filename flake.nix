@@ -71,6 +71,12 @@
                         python3Packages = ps;
                     };
                 };
+                # Make winit work on NixOS
+                libPath = with pkgs; lib.makeLibraryPath [
+                    libGL
+                    libxkbcommon
+                    wayland
+                ];
             in
             {
                 # Provide a development environment with rust, cargo-v5, and the formatter
@@ -90,7 +96,10 @@
                         evcxr
                         SDL2
                         mpremote
+                        slint-viewer
                     ]);
+
+                    LD_LIBRARY_PATH = libPath;
                 };
 
                 formatter = treefmt.config.build.wrapper;

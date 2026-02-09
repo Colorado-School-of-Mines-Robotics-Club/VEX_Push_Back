@@ -1,8 +1,13 @@
 use std::time::{Duration, Instant};
 
 use coprocessor::requests::CalibrateRequest;
-use evian::{control::loops::{AngularPid, Pid}, math::Angle, motion::Basic, prelude::*};
-use push_back::subsystems::{intake::IntakeState, trunk::TrunkState, ControllableSubsystem};
+use evian::{
+    control::loops::{AngularPid, Pid},
+    math::Angle,
+    motion::Basic,
+    prelude::*,
+};
+use push_back::subsystems::{ControllableSubsystem, intake::IntakeState, trunk::TrunkState};
 use vexide::prelude::*;
 
 use crate::robot::Robot;
@@ -11,9 +16,14 @@ async fn bad_auton(robot: &mut Robot) {
     let velocity = 1.0;
     let start = Instant::now();
     let time = Duration::from_millis(1400);
-    while let elapsed = start.elapsed() && elapsed < time {
+    while let elapsed = start.elapsed()
+        && elapsed < time
+    {
         let coeff = (1.0 - elapsed.div_duration_f64(time));
-        _ = robot.drivetrain.model.drive_arcade(velocity * coeff, -0.15 * coeff);
+        _ = robot
+            .drivetrain
+            .model
+            .drive_arcade(velocity * coeff, -0.15 * coeff);
         sleep(Duration::from_millis(3)).await;
     }
 
@@ -26,8 +36,13 @@ async fn bad_auton(robot: &mut Robot) {
     let velocity = 1.0;
     let start = Instant::now();
     let time = Duration::from_millis(1250);
-    while let elapsed = start.elapsed() && elapsed < time {
-        _ = robot.drivetrain.model.drive_arcade(velocity * (1.0 - elapsed.div_duration_f64(time)), 0.0);
+    while let elapsed = start.elapsed()
+        && elapsed < time
+    {
+        _ = robot
+            .drivetrain
+            .model
+            .drive_arcade(velocity * (1.0 - elapsed.div_duration_f64(time)), 0.0);
         sleep(Duration::from_millis(3)).await;
     }
 
@@ -39,18 +54,27 @@ async fn bad_auton(robot: &mut Robot) {
     let velocity = -0.5;
     let start = Instant::now();
     let time = Duration::from_millis(1000);
-    while let elapsed = start.elapsed() && elapsed < time {
-        _ = robot.drivetrain.model.drive_arcade(velocity * (1.0 - elapsed.div_duration_f64(time)), 0.01);
+    while let elapsed = start.elapsed()
+        && elapsed < time
+    {
+        _ = robot
+            .drivetrain
+            .model
+            .drive_arcade(velocity * (1.0 - elapsed.div_duration_f64(time)), 0.01);
         sleep(Duration::from_millis(3)).await;
     }
     _ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
 
-
     let velocity = 0.05;
     let start = Instant::now();
     let time = Duration::from_millis(750);
-    while let elapsed = start.elapsed() && elapsed < time {
-        _ = robot.drivetrain.model.drive_arcade(0.1, velocity * (1.0 - (time.as_millis_f64() / 2.0 - elapsed.as_millis_f64()).abs()));
+    while let elapsed = start.elapsed()
+        && elapsed < time
+    {
+        _ = robot.drivetrain.model.drive_arcade(
+            0.1,
+            velocity * (1.0 - (time.as_millis_f64() / 2.0 - elapsed.as_millis_f64()).abs()),
+        );
         sleep(Duration::from_millis(3)).await;
     }
     _ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
@@ -58,14 +82,6 @@ async fn bad_auton(robot: &mut Robot) {
 
 impl Compete for Robot {
     async fn driver(&mut self) {
-        let mut basic = crate::control::basic::CONTROLLER;
-        push_back::autons::tune_basic_pid(
-            &mut basic,
-            &self.controller,
-            &mut self.coprocessor,
-            &mut self.drivetrain
-        ).await;
-
         println!("Driver!");
         _ = self
             .controller
@@ -169,7 +185,6 @@ impl Compete for Robot {
         // sleep(Duration::from_secs(3)).await;
         // _ = self.intake.run(IntakeState::full_reverse());
         // sleep(Duration::from_millis(150)).await;
-
     }
 
     async fn disabled(&mut self) {

@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
-use vexide::{adi::digital::LogicLevel, controller::ControllerState, prelude::AdiDigitalOut, smart::PortError};
+use vexide::{
+    adi::digital::LogicLevel, controller::ControllerState, prelude::AdiDigitalOut, smart::PortError,
+};
 
 use crate::subsystems::{ControllableSubsystem, ControllerConfiguration};
 
@@ -19,12 +21,12 @@ pub struct TrunkSubsystem {
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Ord, Eq)]
 pub enum PneumaticState {
     Extended,
-    Contracted
+    Contracted,
 }
 
 pub struct AdiPneumatic {
     pub port: AdiDigitalOut,
-    pub high_mode: PneumaticState
+    pub high_mode: PneumaticState,
 }
 
 impl AdiPneumatic {
@@ -53,12 +55,12 @@ impl AdiPneumatic {
         let level = if self.high_mode == PneumaticState::Contracted {
             match state {
                 PneumaticState::Contracted => LogicLevel::High,
-                PneumaticState::Extended => LogicLevel::Low
+                PneumaticState::Extended => LogicLevel::Low,
             }
         } else {
             match state {
                 PneumaticState::Contracted => LogicLevel::Low,
-                PneumaticState::Extended => LogicLevel::High
+                PneumaticState::Extended => LogicLevel::High,
             }
         };
 

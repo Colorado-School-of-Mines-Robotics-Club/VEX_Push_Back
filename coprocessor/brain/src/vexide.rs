@@ -1,5 +1,8 @@
 use std::{
-    any::TypeId, io::{self, Write as _}, sync::Arc, time::{Duration, Instant}
+    any::TypeId,
+    io::{self, Write as _},
+    sync::Arc,
+    time::{Duration, Instant},
 };
 
 use bytes::{BufMut, BytesMut};
@@ -13,7 +16,8 @@ use vexide::{
 };
 
 use crate::requests::{
-    CoprocessorRequest, GetPositionRequest, GetVelocityRequest, OtosPosition, OtosVelocity, PingRequest,
+    CoprocessorRequest, GetPositionRequest, GetVelocityRequest, OtosPosition, OtosVelocity,
+    PingRequest,
 };
 
 macro_rules! make_coprocessor_data {
@@ -154,6 +158,7 @@ impl CoprocessorSmartPort {
     ) -> ! {
         let mut last_position = OtosPosition::default();
         let mut forward_travel = Length::default();
+        let mut i: usize = 0;
         loop {
             // println!("Sending position request...");
             match Self::send_request_with_port(port.clone(), GetPositionRequest).await {
@@ -190,6 +195,7 @@ impl CoprocessorSmartPort {
                 Err(_e) => (), // TODO: error state indication?
             };
 
+            i = i.wrapping_add(3);
             sleep(Duration::from_millis(3)).await
         }
     }

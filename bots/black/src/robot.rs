@@ -1,6 +1,11 @@
 use evian::drivetrain::model::Differential;
 use push_back::subsystems::{
-    copro::{tracking::CoproTracking, CoproSubsystem}, drivetrain::DrivetrainSubsystem, intake::{IntakeMotors, IntakeSensors, IntakeSubsystem}, replay::ReplaySubsystem, trunk::{AdiPneumatic, PneumaticState, TrunkSubsystem}, ControllerConfiguration
+    ControllerConfiguration,
+    copro::{CoproSubsystem, tracking::CoproTracking},
+    drivetrain::DrivetrainSubsystem,
+    intake::{IntakeMotors, IntakeSensors, IntakeSubsystem},
+    replay::ReplaySubsystem,
+    trunk::{AdiPneumatic, PneumaticState, TrunkSubsystem},
 };
 use vexide::{
     math::Direction,
@@ -27,18 +32,18 @@ impl Robot {
         let configuration = ControllerConfiguration::Noah;
         let drivetrain = DrivetrainSubsystem::new(
             Differential::new(
-                    [
-                        Motor::new(peripherals.port_1, Gearset::Blue, Direction::Reverse),
-                        Motor::new(peripherals.port_2, Gearset::Blue, Direction::Forward),
-                        Motor::new(peripherals.port_3, Gearset::Blue, Direction::Reverse),
-                        Motor::new(peripherals.port_4, Gearset::Blue, Direction::Forward),
-                    ],
-                    [
-                        Motor::new(peripherals.port_7, Gearset::Blue, Direction::Reverse),
-                        Motor::new(peripherals.port_8, Gearset::Blue, Direction::Forward),
-                        Motor::new(peripherals.port_9, Gearset::Blue, Direction::Reverse),
-                        Motor::new(peripherals.port_10, Gearset::Blue, Direction::Forward),
-                    ],
+                [
+                    Motor::new(peripherals.port_1, Gearset::Blue, Direction::Reverse),
+                    Motor::new(peripherals.port_2, Gearset::Blue, Direction::Forward),
+                    Motor::new(peripherals.port_3, Gearset::Blue, Direction::Reverse),
+                    Motor::new(peripherals.port_4, Gearset::Blue, Direction::Forward),
+                ],
+                [
+                    Motor::new(peripherals.port_7, Gearset::Blue, Direction::Reverse),
+                    Motor::new(peripherals.port_8, Gearset::Blue, Direction::Forward),
+                    Motor::new(peripherals.port_9, Gearset::Blue, Direction::Reverse),
+                    Motor::new(peripherals.port_10, Gearset::Blue, Direction::Forward),
+                ],
             ),
             CoproTracking(coprocessor.data()),
         );
@@ -78,12 +83,12 @@ impl Robot {
         let trunk = TrunkSubsystem::new(
             AdiPneumatic {
                 port: AdiDigitalOut::new(peripherals.adi_h),
-                high_mode: PneumaticState::Extended
+                high_mode: PneumaticState::Extended,
             },
             AdiPneumatic {
                 port: AdiDigitalOut::new(peripherals.adi_g),
-                high_mode: PneumaticState::Contracted
-            }
+                high_mode: PneumaticState::Contracted,
+            },
         );
         let replay = ReplaySubsystem::new();
 

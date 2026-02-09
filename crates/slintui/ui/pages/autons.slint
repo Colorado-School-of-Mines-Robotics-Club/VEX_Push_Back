@@ -1,0 +1,48 @@
+export global State {
+    in property <[string]> autons: [
+        "teehee 1",
+        "teehee 2",
+        "teehee 3",
+        "teehee 4",
+        "teehee 5",
+    ];
+    in-out property <int> selected: 0;
+}
+
+export component AutonsPage {
+    preferred-width: 100%;
+    preferred-height: 100%;
+
+    property <int> cols: ceil(sqrt(State.autons.length * 0.5));
+
+    if State.autons.length > 0: Rectangle {
+        background: blue;
+
+        HorizontalLayout {
+            spacing: 1px;
+            for column in cols: VerticalLayout {
+                spacing: 1px;
+                for row in ceil(State.autons.length / cols): Rectangle {
+                    background: State.selected == row * cols + column ? grey : black;
+
+                    TouchArea {
+                        width: parent.width;
+                        height: parent.height;
+                        clicked => {
+                            if row * cols + column < State.autons.length {
+                                State.selected = row * cols + column;
+                            }
+                        }
+                    }
+
+                    Text {
+                        text: State.autons[row * cols + column];
+                    }
+                }
+            }
+        }
+    }
+    if State.autons.length == 0: Text {
+        text: "No autons!";
+    }
+}

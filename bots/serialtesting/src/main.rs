@@ -2,10 +2,18 @@
 #![allow(unused_variables, unused_imports)] // this is just testing, often code won't be used
 
 use std::{
-    fmt::Write as _, io::{Read, Write as _}, time::{Duration, Instant}
+    fmt::Write as _,
+    io::{Read, Write as _},
+    time::{Duration, Instant},
 };
 
-use coprocessor::{requests::{CalibrateRequest, CoprocessorRequest, GetPositionRequest, GetVelocityRequest, PingRequest, SetLedRequest}, vexide::CoprocessorSmartPort};
+use coprocessor::{
+    requests::{
+        CalibrateRequest, CoprocessorRequest, GetPositionRequest, GetVelocityRequest, PingRequest,
+        SetLedRequest,
+    },
+    vexide::CoprocessorSmartPort,
+};
 use evian::math::Vec2;
 use push_back::subsystems::{copro::CoproSubsystem, intake::IntakeState};
 use shrewnit::{Degrees, FeetPerSecond, Inches};
@@ -29,7 +37,12 @@ async fn main(mut peripherals: Peripherals) {
 
         println!("Running tests attempt {i}:");
 
-        run_tests(current_presses != last_presses, &copro, &mut peripherals.display).await;
+        run_tests(
+            current_presses != last_presses,
+            &copro,
+            &mut peripherals.display,
+        )
+        .await;
 
         last_presses = current_presses;
 
@@ -50,19 +63,29 @@ async fn run_tests(calibration: bool, port: &CoprocessorSmartPort, display: &mut
 
     // Test ping
     results.push(match port.send_request(PingRequest).await {
-        Ok(hash) => format!("PASS - Ping test, up to date: {}", PingRequest::verify_hash(hash)),
+        Ok(hash) => format!(
+            "PASS - Ping test, up to date: {}",
+            PingRequest::verify_hash(hash)
+        ),
         Err(e) => format!("FAIL - Ping test: {e:?}"),
     });
 
     // Test position
     results.push(match port.send_request(GetPositionRequest).await {
-        Ok(pos) => format!("PASS - Position test, heading: {:.4}deg", pos.heading.to::<Degrees>()),
+        Ok(pos) => format!(
+            "PASS - Position test, heading: {:.4}deg",
+            pos.heading.to::<Degrees>()
+        ),
         Err(e) => format!("FAIL - Position test: {e:?}"),
     });
 
     // Test velocity
     results.push(match port.send_request(GetVelocityRequest).await {
-        Ok(vel) => format!("PASS - Velocity test, speed: {:.4}in/s", (vel.x.to::<FeetPerSecond>().powi(2) + vel.y.to::<FeetPerSecond>().powi(2)).sqrt() * 12.0),
+        Ok(vel) => format!(
+            "PASS - Velocity test, speed: {:.4}in/s",
+            (vel.x.to::<FeetPerSecond>().powi(2) + vel.y.to::<FeetPerSecond>().powi(2)).sqrt()
+                * 12.0
+        ),
         Err(e) => format!("FAIL - Velocity test: {e:?}"),
     });
 

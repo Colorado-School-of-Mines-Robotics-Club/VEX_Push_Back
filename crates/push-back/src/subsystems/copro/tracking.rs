@@ -37,11 +37,6 @@ impl TracksHeading for CoproTracking {
         let mut data = self.borrow_mut();
         let mut heading = data.position.read().heading;
 
-        // Adjust negatives to absolute
-        if heading < 0.0 * Degrees {
-            heading += 360.0 * Degrees;
-        }
-
         // Correct 0 as Y to 0 as X
         heading += 90.0 * Degrees;
 
@@ -54,11 +49,8 @@ impl TracksPosition for CoproTracking {
         let mut data = self.borrow_mut();
         let pos = data.position.read();
 
-        // Sensor orientation:
-        // Forward -> +x Should be +y
-        // Left    -> +y Should be -x
-        let x = -pos.y.to::<Inches>();
-        let y = pos.x.to::<Inches>();
+        let x = pos.x.to::<Inches>();
+        let y = pos.y.to::<Inches>();
 
         Vec2::new(x, y)
     }

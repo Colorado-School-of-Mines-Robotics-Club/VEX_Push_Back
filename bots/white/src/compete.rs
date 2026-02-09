@@ -5,8 +5,8 @@ use evian::math::{Angle, Vec2};
 use evian::prelude::*;
 use push_back::subsystems::intake::IntakeState;
 
-use push_back::subsystems::trunk::TrunkState;
 use push_back::subsystems::ControllableSubsystem;
+use push_back::subsystems::trunk::TrunkState;
 use shrewnit::{FeetPerSecond, LinearVelocity, MetersPerSecond, Milliseconds};
 use vexide::prelude::*;
 
@@ -16,35 +16,75 @@ async fn noah_auton_skills(robot: &mut Robot) {
     _ = robot.drivetrain.drivetrain.model.drive_tank(0.0, 0.0);
     println!("Auton!");
     let mut basic = crate::control::basic_noah::CONTROLLER;
-    basic.turn_to_heading(&mut robot.drivetrain, (Angle::from_degrees(90.0-40.0)).wrapped_full()).await;
+    basic
+        .turn_to_heading(
+            &mut robot.drivetrain,
+            (Angle::from_degrees(90.0 - 40.0)).wrapped_full(),
+        )
+        .await;
     basic.timeout = Some(Duration::from_secs(3));
     basic.drive_distance(&mut robot.drivetrain, 42.0).await;
     basic.timeout = Some(Duration::from_secs(1));
-    basic.turn_to_heading(&mut robot.drivetrain, (Angle::from_degrees(90.0-70.0)).wrapped_full()).await;
-    _ = robot.intake.run(IntakeState::full_forward() - IntakeState::TRUNK - IntakeState::ELEVATOR);
+    basic
+        .turn_to_heading(
+            &mut robot.drivetrain,
+            (Angle::from_degrees(90.0 - 70.0)).wrapped_full(),
+        )
+        .await;
+    _ = robot
+        .intake
+        .run(IntakeState::full_forward() - IntakeState::TRUNK - IntakeState::ELEVATOR);
     sleep(Duration::from_millis(5)).await;
     basic.drive_distance(&mut robot.drivetrain, 7.0).await;
     _ = robot.intake.run(IntakeState::full_brake());
     basic.drive_distance(&mut robot.drivetrain, -7.0).await;
-    basic.turn_to_heading(&mut robot.drivetrain, (Angle::from_degrees(180.0)).wrapped_full()).await;
+    basic
+        .turn_to_heading(
+            &mut robot.drivetrain,
+            (Angle::from_degrees(180.0)).wrapped_full(),
+        )
+        .await;
     basic.timeout = Some(Duration::from_secs(3));
     basic.drive_distance(&mut robot.drivetrain, 23.0).await;
     basic.timeout = Some(Duration::from_secs(1));
-    basic.turn_to_heading(&mut robot.drivetrain, (Angle::from_degrees(90.0 + 45.0)).wrapped_full()).await;
+    basic
+        .turn_to_heading(
+            &mut robot.drivetrain,
+            (Angle::from_degrees(90.0 + 45.0)).wrapped_full(),
+        )
+        .await;
     basic.timeout = Some(Duration::from_millis(200));
     basic.drive_distance(&mut robot.drivetrain, 500.0).await;
     _ = robot.intake.run(IntakeState::full_forward());
     sleep(Duration::from_secs(3)).await;
     _ = robot.intake.run(IntakeState::full_brake());
     basic.timeout = Some(Duration::from_secs(1));
-    basic.turn_to_heading(&mut robot.drivetrain, (Angle::from_degrees(90.0 + 45.0 - 180.0)).wrapped_full()).await;
+    basic
+        .turn_to_heading(
+            &mut robot.drivetrain,
+            (Angle::from_degrees(90.0 + 45.0 - 180.0)).wrapped_full(),
+        )
+        .await;
     basic.timeout = Some(Duration::from_secs(3));
     _ = robot.trunk.set_state(TrunkState::Upper);
-    basic.drive_distance_at_heading(&mut robot.drivetrain, 45.0, (Angle::from_degrees(90.0 + 45.0 + 170.0)).wrapped_full()).await;
+    basic
+        .drive_distance_at_heading(
+            &mut robot.drivetrain,
+            45.0,
+            (Angle::from_degrees(90.0 + 45.0 + 170.0)).wrapped_full(),
+        )
+        .await;
     basic.timeout = Some(Duration::from_secs(1));
-    basic.turn_to_heading(&mut robot.drivetrain, (Angle::from_degrees(-85.0 + 180.0)).wrapped_full()).await;
+    basic
+        .turn_to_heading(
+            &mut robot.drivetrain,
+            (Angle::from_degrees(-85.0 + 180.0)).wrapped_full(),
+        )
+        .await;
     basic.timeout = Some(Duration::from_millis(450));
-    _ = robot.intake.run(IntakeState::full_forward() - IntakeState::TRUNK);
+    _ = robot
+        .intake
+        .run(IntakeState::full_forward() - IntakeState::TRUNK);
     basic.drive_distance(&mut robot.drivetrain, 500.0).await;
     sleep(Duration::from_secs(3)).await;
     _ = robot.intake.run(IntakeState::full_brake());
@@ -54,7 +94,12 @@ async fn noah_auton_skills(robot: &mut Robot) {
     _ = robot.intake.run(IntakeState::full_reverse());
     sleep(Duration::from_millis(200)).await;
     _ = robot.intake.run(IntakeState::full_brake());
-    basic.turn_to_heading(&mut robot.drivetrain, (Angle::from_degrees(85.5 + 180.0)).wrapped_full()).await;
+    basic
+        .turn_to_heading(
+            &mut robot.drivetrain,
+            (Angle::from_degrees(85.5 + 180.0)).wrapped_full(),
+        )
+        .await;
     basic.drive_distance(&mut robot.drivetrain, 30.0).await;
     _ = robot.intake.run(IntakeState::full_forward());
     sleep(Duration::from_secs(3)).await;
@@ -77,31 +122,34 @@ async fn noah_auton_skills(robot: &mut Robot) {
 async fn leo_auton_skills(robot: &mut Robot) {
     // Code from Leo, still a work in progress.
 
-        // The robot turns left, drives forward, then turns right and drives towards the first ball.
+    // The robot turns left, drives forward, then turns right and drives towards the first ball.
 
     _ = robot.drivetrain.model.drive_tank(0.5, 0.5);
     sleep(Duration::from_secs(1)).await;
     _ = robot.drivetrain.model.drive_tank(0.5, -0.5);
     sleep(Duration::from_millis(450)).await;
-    _ = robot.trunk.set_state(push_back::subsystems::trunk::TrunkState::Upper);
+    _ = robot
+        .trunk
+        .set_state(push_back::subsystems::trunk::TrunkState::Upper);
     _ = robot.drivetrain.model.drive_tank(0.5, 0.5);
     sleep(Duration::from_millis(600)).await;
     _ = robot.drivetrain.model.drive_tank(0.0, 0.0);
 
-        // Robot begans intaking the balls from the pillar.
+    // Robot begans intaking the balls from the pillar.
 
     _ = robot.intake.run(IntakeState::FULL);
     sleep(Duration::from_secs(2)).await;
     _ = robot.intake.run(IntakeState::empty());
 
-
-        // Robot positions itself in front of the beams and ejects its balls.
+    // Robot positions itself in front of the beams and ejects its balls.
 
     _ = robot.drivetrain.model.drive_tank(-0.5, -0.5);
     sleep(Duration::from_millis(500)).await;
-    _ = robot.trunk.set_state(push_back::subsystems::trunk::TrunkState::Lower);
+    _ = robot
+        .trunk
+        .set_state(push_back::subsystems::trunk::TrunkState::Lower);
     _ = robot.drivetrain.model.drive_tank(-0.5, 0.5);
-    sleep(Duration::from_millis(956)).await;                // This line of code only works if the robot is placed in an exact spot. Someone please fix this when we get the position sensor installed on the bot.
+    sleep(Duration::from_millis(956)).await; // This line of code only works if the robot is placed in an exact spot. Someone please fix this when we get the position sensor installed on the bot.
     _ = robot.drivetrain.model.drive_tank(0.0, 0.0);
     _ = robot.drivetrain.model.drive_tank(0.5, 0.5);
     sleep(Duration::from_millis(450)).await;
@@ -113,9 +161,11 @@ async fn leo_auton_skills(robot: &mut Robot) {
 
     //Remove after making final phase work.
 
-        // Robot goes to the nearest balls and picks them up.
+    // Robot goes to the nearest balls and picks them up.
 
-    _ = robot.trunk.set_state(push_back::subsystems::trunk::TrunkState::Down);
+    _ = robot
+        .trunk
+        .set_state(push_back::subsystems::trunk::TrunkState::Down);
 
     _ = robot.drivetrain.model.drive_tank(0.5, -0.5);
     sleep(Duration::from_millis(600)).await;
@@ -210,7 +260,9 @@ impl Compete for Robot {
 
         // Move to correct balls on right
         basic.timeout = Some(Duration::from_secs(1));
-        basic.turn_to_point(&mut self.drivetrain, Vec2::new(25.0, 24.0)).await;
+        basic
+            .turn_to_point(&mut self.drivetrain, Vec2::new(25.0, 24.0))
+            .await;
         // basic.turn_to_point(&mut self.drivetrain, Vec2::new(22.0, 24.0)).await;
         basic.timeout = Some(Duration::from_secs(3));
         basic.drive_distance(&mut self.drivetrain, 28.0).await;
@@ -219,24 +271,34 @@ impl Compete for Robot {
         basic.timeout = Some(Duration::from_secs(1));
 
         // Intake 2 team balls
-        _ = self.intake.run(IntakeState::full_forward() - IntakeState::TRUNK - IntakeState::ELEVATOR);
+        _ = self
+            .intake
+            .run(IntakeState::full_forward() - IntakeState::TRUNK - IntakeState::ELEVATOR);
         // sleep(Duration::from_millis(500)).await;
         basic.drive_distance(&mut self.drivetrain, 9.0).await;
-        basic.drive_distance_at_heading(&mut self.drivetrain, 3.5, Angle::from_degrees(75.0)).await;
+        basic
+            .drive_distance_at_heading(&mut self.drivetrain, 3.5, Angle::from_degrees(75.0))
+            .await;
         sleep(Duration::from_secs(3)).await;
         _ = self.intake.run(IntakeState::full_brake());
 
         // Move to center low goal
-        basic.drive_distance_at_heading(&mut self.drivetrain, -6.0, Angle::from_degrees(45.0)).await; // Avoid line
+        basic
+            .drive_distance_at_heading(&mut self.drivetrain, -6.0, Angle::from_degrees(45.0))
+            .await; // Avoid line
 
         let goal_load_pos = Vec2::new(0.0, 32.0);
         // let goal_load_pos = Vec2::new(0.0, 36.0);
-        basic.turn_to_point(&mut self.drivetrain, goal_load_pos).await;
+        basic
+            .turn_to_point(&mut self.drivetrain, goal_load_pos)
+            .await;
         basic.timeout = Some(Duration::from_secs(2));
         let dist = (self.drivetrain.tracking.position() - goal_load_pos).length();
         basic.drive_distance(&mut self.drivetrain, dist).await;
 
-        basic.turn_to_heading(&mut self.drivetrain, Angle::from_degrees(135.0)).await; // Turn towards goal
+        basic
+            .turn_to_heading(&mut self.drivetrain, Angle::from_degrees(135.0))
+            .await; // Turn towards goal
 
         _ = self.drivetrain.model.drive_arcade(0.5, 0.0);
         sleep(Duration::from_millis(500)).await;
@@ -260,13 +322,17 @@ impl Compete for Robot {
         basic.drive_distance(&mut self.drivetrain, -6.0).await;
 
         let matchload_pos = Vec2::new(30.0, 0.0);
-        basic.turn_to_point(&mut self.drivetrain, matchload_pos).await; // Turn towards goal
+        basic
+            .turn_to_point(&mut self.drivetrain, matchload_pos)
+            .await; // Turn towards goal
         let dist = (self.drivetrain.tracking.position() - matchload_pos).length();
         basic.drive_distance(&mut self.drivetrain, dist).await;
 
         // Engage matchload
         _ = self.trunk.set_state(TrunkState::Upper);
-        basic.turn_to_heading(&mut self.drivetrain, Angle::from_degrees(270.0)).await;
+        basic
+            .turn_to_heading(&mut self.drivetrain, Angle::from_degrees(270.0))
+            .await;
         _ = self.drivetrain.model.drive_arcade(0.5, 0.0);
         sleep(Duration::from_secs(1)).await;
 
@@ -275,7 +341,9 @@ impl Compete for Robot {
         _ = self.drivetrain.model.drive_arcade(0.0, 0.0);
 
         // Take 3 opp balls
-        _ = self.intake.run(IntakeState::full_forward() - IntakeState::TRUNK);
+        _ = self
+            .intake
+            .run(IntakeState::full_forward() - IntakeState::TRUNK);
         sleep(Duration::from_secs(2)).await;
 
         println!("Done");

@@ -1,20 +1,19 @@
 [package]
-name = "bot-replaytesting"
+name = "bot-blackui"
 version = "0.1.0"
 edition = "2024"
 
 [package.metadata.v5]
 upload-strategy = "differential"
-slot = 6
-icon = "cool-x"
+slot = 1
+icon = "pizza"
 compress = true
 
 [dependencies]
 vexide = { workspace = true }
 evian = { workspace = true }
 shrewnit = { workspace = true }
-cobs = { workspace = true }
-ciborium = { workspace = true }
 push-back = { path = "../../crates/push-back" }
-vex-sdk = "0.28.0"
+coprocessor = { path = "../../coprocessor/brain" }
+slintui = { path = "../../crates/slintui" }
 # display = { path = "./display" }

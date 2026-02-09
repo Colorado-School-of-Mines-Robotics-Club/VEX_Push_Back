@@ -1,0 +1,8 @@
+[package]
+name = "evian-extra"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+evian = { workspace = true }
+vexide = { workspace = true }

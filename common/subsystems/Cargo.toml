@@ -1,0 +1,14 @@
+[package]
+name = "subsystems"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+evian = { workspace = true }
+shrewnit = { workspace = true }
+vexide = { workspace = true }
+coprocessor = { path = "../../coprocessor/brain" }
+bitflags = { workspace = true }
+ciborium = { workspace = true }
+cobs = { workspace = true }
+serde = { workspace = true }

@@ -7,7 +7,7 @@
             inputs.nixpkgs.follows = "nixpkgs";
         };
         cargo-v5 = {
-            url = "github:vexide/cargo-v5/upstreamed-target";
+            url = "github:vexide/cargo-v5";
             inputs = {
                 nixpkgs.follows = "nixpkgs";
                 rust-overlay.follows = "rust-overlay";
@@ -42,11 +42,13 @@
                 treefmtCfg = lib.modules.importApply ./treefmt.nix { inherit rust'; };
                 treefmt = treefmt-nix.lib.evalModule pkgs treefmtCfg;
                 # Make winit work on NixOS
-                libPath = with pkgs; lib.makeLibraryPath [
-                    libGL
-                    libxkbcommon
-                    wayland
-                ];
+                libPath =
+                    with pkgs;
+                    lib.makeLibraryPath [
+                        libGL
+                        libxkbcommon
+                        wayland
+                    ];
             in
             {
                 # Provide a development environment with rust, cargo-v5, and the formatter

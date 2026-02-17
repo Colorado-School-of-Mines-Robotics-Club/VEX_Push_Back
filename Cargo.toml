@@ -1,21 +1,17 @@
 [workspace]
 resolver = "3"
-members = ["bots/*", "crates/*", "coprocessor/brain"]
-exclude = [
-    "crates/display-simulator", # Needs to run on different target
-    "crates/display" # Broken
-]
+members = ["bots/*", "common/*", "coprocessor/brain", "misc/*"]
+exclude = []
 
 [workspace.dependencies]
 vexide = { version = "0.8.0", features = ["full", "vex-sdk-jumptable", "vex-sdk-mock"] }
 vexide-motorgroup = { version = "2.2.0" }
-# vexide-embedded-graphics = { git = "https://github.com/vexide/vexide-embedded-graphics.git", rev = "014559a70eea8f077a41bbef59885e4641709cee" }
 shrewnit = { git = "https://github.com/Gavin-Niederman/shrewnit.git", rev = "73617f18d1faf79ffed097d1fc7ef0e1ae8663de" }
 evian = { git = "https://github.com/vexide/evian", rev = "bc300becbbbc8612de4a0d559fc66159040cd841" }
-# evian = { git = "https://github.com/Colorado-School-of-Mines-Robotics-Club/evian", branch = "refactor/vexide-0.8.0" }
-bytes = { version = "1.10.1", default-features = false }
-bytemuck = { version = "1.24.0", features = ["derive", "min_const_generics", "must_cast"] }
+bytes = { version = "1.11.1", default-features = false }
 triple_buffer = "8.1.1"
 nom = { version = "8.0.0", default-features = false, features = ["alloc"] }
-cobs = { version = "0.4.0", default-features = false, features = ["alloc"] }
+cobs = { version = "0.5.0", default-features = false, features = ["alloc"] }
 ciborium = "0.2.2"
+bitflags = { version = "2.10.0" }
+serde = { version = "1.0.228", features = ["derive"] }

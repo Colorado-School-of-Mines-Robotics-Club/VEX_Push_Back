@@ -14,8 +14,14 @@
         };
     };
 
-    settings.formatter.nixfmt.options = [
-        "--indent"
-        "4"
-    ];
+    settings.formatter = {
+        nixfmt.options = [
+            "--indent"
+            "4"
+        ];
+        rustfmt.options = [
+            "--config-path"
+            "${./rustfmt.toml}"
+        ];
+    };
 }

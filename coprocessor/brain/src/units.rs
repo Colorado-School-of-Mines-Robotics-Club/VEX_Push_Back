@@ -1,7 +1,7 @@
 use shrewnit::{
-    Angle, AngularAcceleration, AngularVelocity, Degrees, DegreesPerSecond,
-    DegreesPerSecondSquared, Length, LinearAcceleration, LinearVelocity, Meters, MetersPerSecond,
-    MetersPerSecondSquared,
+	Angle, AngularAcceleration, AngularVelocity, Degrees, DegreesPerSecond,
+	DegreesPerSecondSquared, Length, LinearAcceleration, LinearVelocity, Meters, MetersPerSecond,
+	MetersPerSecondSquared,
 };
 
 // Shrewnit simple_unit!() doesn't support X per Y canonical so this is a workaround
@@ -44,10 +44,10 @@ macro_rules! impl_otos_reg_unit {
 
 // Implement all of the OTOS register units
 impl_otos_reg_unit!(
-    OtosLength (Length):                           10      Meters,
-    OtosAngle (Angle):                             180     Degrees,
-    OtosLinearVelocity (LinearVelocity):           5       MetersPerSecond,
-    OtosAngularVelocity (AngularVelocity):         2_000   DegreesPerSecond,
-    OtosLinearAcceleration (LinearAcceleration):   157     MetersPerSecondSquared,
-    OtosAngularAcceleration (AngularAcceleration): 180_000 DegreesPerSecondSquared
+	OtosLength (Length):                           10      Meters,
+	OtosAngle (Angle):                             180     Degrees,
+	OtosLinearVelocity (LinearVelocity):           5       MetersPerSecond,
+	OtosAngularVelocity (AngularVelocity):         2_000   DegreesPerSecond,
+	OtosLinearAcceleration (LinearAcceleration):   157     MetersPerSecondSquared,
+	OtosAngularAcceleration (AngularAcceleration): 180_000 DegreesPerSecondSquared
 );

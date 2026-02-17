@@ -1,6 +1,0 @@
-[build]
-target = "host"
-
-[unstable]
-build-std = ["std"]
-# build-std-features = ["compiler-builtins-mem"]

@@ -8,16 +8,16 @@ use crate::requests::{CoprocessorRequest, assert_byte_tag};
 pub struct CalibrateRequest;
 
 impl CoprocessorRequest for CalibrateRequest {
-    const RESPONSE_SIZE: usize = size_of::<u8>();
-    const TIMEOUT: Duration = Duration::from_millis(2000);
+	const RESPONSE_SIZE: usize = size_of::<u8>();
+	const TIMEOUT: Duration = Duration::from_millis(2000);
 
-    type Response = ();
+	type Response = ();
 
-    fn serialize_request(&self) -> Bytes {
-        Bytes::from_static(b"c")
-    }
+	fn serialize_request(&self) -> Bytes {
+		Bytes::from_static(b"c")
+	}
 
-    fn parse_response(input: &[u8]) -> nom::IResult<&[u8], Self::Response> {
-        nom::combinator::all_consuming(assert_byte_tag(b'd')).parse(input)
-    }
+	fn parse_response(input: &[u8]) -> nom::IResult<&[u8], Self::Response> {
+		nom::combinator::all_consuming(assert_byte_tag(b'd')).parse(input)
+	}
 }

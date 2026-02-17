@@ -10,7 +10,7 @@ use crate::robot::Robot;
 
 #[vexide::main]
 async fn main(peripherals: Peripherals) {
-    let robot = Robot::new(peripherals).await;
+	let robot = Robot::new(peripherals).await;
 
-    robot.start().await;
+	robot.start().await;
 }

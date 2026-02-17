@@ -8,7 +8,8 @@ evian = { workspace = true }
 shrewnit = { workspace = true }
 vexide = { workspace = true }
 coprocessor = { path = "../../coprocessor/brain" }
-bitflags = { workspace = true }
+vexide-motorgroup = { workspace = true }
+# bitflags = { workspace = true }
 ciborium = { workspace = true }
 cobs = { workspace = true }
 serde = { workspace = true }

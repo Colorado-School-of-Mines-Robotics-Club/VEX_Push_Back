@@ -5,8 +5,8 @@ use vexide::controller::ControllerState;
 pub mod copro;
 pub mod drivetrain;
 pub mod intake;
+pub mod pnemuatics;
 pub mod replay;
-pub mod trunk;
 
 #[derive(Clone, Copy, Debug)]
 pub enum ControllerConfiguration {

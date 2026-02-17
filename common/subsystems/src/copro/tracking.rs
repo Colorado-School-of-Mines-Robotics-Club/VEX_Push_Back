@@ -1,6 +1,5 @@
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
-use coprocessor::vexide::CoprocessorData;
 use evian::{
 	math::{Angle, Vec2},
 	prelude::{TracksForwardTravel, TracksHeading, TracksPosition, TracksVelocity},
@@ -8,12 +7,14 @@ use evian::{
 };
 use shrewnit::{Degrees, FeetPerSecond, Inches, Radians, RadiansPerSecond};
 
+use crate::copro::CoproData;
+
 /// A struct that, given a reference to updated coprocessor data,
 /// implements standard methods for recieving odometry information.
-pub struct CoproTracking(pub Rc<RefCell<CoprocessorData>>);
+pub struct CoproTracking(pub Rc<RefCell<CoproData>>);
 
 impl Deref for CoproTracking {
-	type Target = RefCell<CoprocessorData>;
+	type Target = RefCell<CoproData>;
 
 	fn deref(&self) -> &Self::Target {
 		&self.0
@@ -24,8 +25,7 @@ impl Tracking for CoproTracking {}
 
 impl TracksForwardTravel for CoproTracking {
 	fn forward_travel(&self) -> f64 {
-		let mut data = self.borrow_mut();
-		data.forward_travel.read().to::<Inches>()
+		self.borrow().forward_travel.to::<Inches>()
 	}
 }
 
@@ -34,11 +34,7 @@ impl TracksHeading for CoproTracking {
 	// Clockwise is negative, until 180
 	// Counterclockwise is positive, until 180
 	fn heading(&self) -> vexide::math::Angle {
-		let mut data = self.borrow_mut();
-		let mut heading = data.position.read().heading;
-
-		// Correct 0 as Y to 0 as X
-		heading += 90.0 * Degrees;
+		let heading = self.borrow().position.heading + 90.0 * Degrees; // The sensor uses 0.0 as forward, so adjust it to cartesian-style
 
 		Angle::from_radians(heading.to::<Radians>()).wrapped_full()
 	}
@@ -46,8 +42,7 @@ impl TracksHeading for CoproTracking {
 
 impl TracksPosition for CoproTracking {
 	fn position(&self) -> evian::math::Vec2<f64> {
-		let mut data = self.borrow_mut();
-		let pos = data.position.read();
+		let pos = self.borrow().position;
 
 		let x = pos.x.to::<Inches>();
 		let y = pos.y.to::<Inches>();
@@ -58,8 +53,7 @@ impl TracksPosition for CoproTracking {
 
 impl TracksVelocity for CoproTracking {
 	fn linear_velocity(&self) -> f64 {
-		let mut data = self.borrow_mut();
-		let velocity = data.velocity.read();
+		let velocity = self.borrow().velocity;
 
 		Vec2::new(
 			velocity.x.to::<FeetPerSecond>() * 12.0,
@@ -69,8 +63,6 @@ impl TracksVelocity for CoproTracking {
 	}
 
 	fn angular_velocity(&self) -> f64 {
-		let mut data = self.borrow_mut();
-
-		data.velocity.read().heading.to::<RadiansPerSecond>()
+		self.borrow().velocity.heading.to::<RadiansPerSecond>()
 	}
 }

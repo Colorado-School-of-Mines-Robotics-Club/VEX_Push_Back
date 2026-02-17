@@ -4,7 +4,7 @@ pub mod basic {
 	use evian::{
 		control::loops::{AngularPid, Pid},
 		math::Angle,
-		motion::{Basic, Seeking},
+		motion::Basic,
 		prelude::Tolerances,
 	};
 
@@ -17,13 +17,13 @@ pub mod basic {
 	};
 
 	pub const LINEAR_PID: Pid = {
-		let mut pid = Pid::new(0.037, 0.049, 0.00015, Some(4.0));
+		let mut pid = Pid::new(0.031, 0.00, 0.00050, Some(2.0));
 		pid.set_output_limit(Some(0.60));
 		pid
 	};
 	pub const ANGULAR_PID: AngularPid = {
-		let mut pid = AngularPid::new(1.0, 1.1, 0.037, Some(Angle::from_degrees(15.0)));
-		pid.set_output_limit(Some(0.4));
+		let mut pid = AngularPid::new(0.25, 0.00, 0.00, Some(Angle::from_degrees(15.0)));
+		pid.set_output_limit(Some(0.5));
 		pid
 	};
 
@@ -31,8 +31,8 @@ pub mod basic {
 	// pub const ANGULAR_PID: AngularPid = AngularPid::new(0.65, 0.01, 0.04, None);
 
 	pub const LINEAR_TOLERANCES: Tolerances = Tolerances::new()
-		.error(0.40)
-		.velocity(0.15)
+		.error(0.50)
+		// .velocity(0.50)
 		.duration(Duration::from_millis(15));
 	pub const ANGULAR_TOLERANCES: Tolerances = Tolerances::new()
 		.error(Angle::from_degrees(1.5).as_radians())

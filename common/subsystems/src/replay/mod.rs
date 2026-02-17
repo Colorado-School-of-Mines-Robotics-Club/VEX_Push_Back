@@ -65,6 +65,8 @@ impl ReplaySubsystem {
 		file.write_all(b"\n")?;
 		file.flush()?;
 
+		println!("Started recording for {duration:?}");
+
 		self.state = SubsystemState::Enabled {
 			file,
 			buffer: Vec::new(),

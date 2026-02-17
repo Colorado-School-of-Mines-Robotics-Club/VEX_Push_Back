@@ -1,5 +1,6 @@
 #![feature(never_type, future_join, duration_millis_float)]
 
+mod autons;
 mod compete;
 mod control;
 mod robot;

@@ -1,5 +1,5 @@
 [package]
-name = "bot-blackui"
+name = "bot-white"
 version = "0.1.0"
 edition = "2024"
 
@@ -13,7 +13,8 @@ compress = true
 vexide = { workspace = true }
 evian = { workspace = true }
 shrewnit = { workspace = true }
+vexide-motorgroup = { workspace = true }
+autons = { workspace = true }
 subsystems = { path = "../../common/subsystems" }
 coprocessor = { path = "../../coprocessor/brain" }
 slintui = { path = "../../common/slintui" }
-# display = { path = "./display" }

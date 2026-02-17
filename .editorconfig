@@ -8,5 +8,5 @@ indent_size = 4
 [*.{rs,py,json}]
 indent_style = tab
 
-[*.rs]
+[*.nix]
 indent_style = space

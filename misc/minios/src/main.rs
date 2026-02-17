@@ -1,5 +1,4 @@
 use std::{
-	collections::HashMap,
 	io::{self, BufRead, Read as _, Write as _, stdin},
 	time::Duration,
 };

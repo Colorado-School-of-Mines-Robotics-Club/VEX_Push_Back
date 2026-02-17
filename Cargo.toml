@@ -15,3 +15,4 @@ cobs = { version = "0.5.0", default-features = false, features = ["alloc"] }
 ciborium = "0.2.2"
 bitflags = { version = "2.10.0" }
 serde = { version = "1.0.228", features = ["derive"] }
+autons = { version = "0.2.0", default-features = false, features = ["compete", "simple"] }

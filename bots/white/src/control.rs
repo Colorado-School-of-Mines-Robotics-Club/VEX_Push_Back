@@ -43,5 +43,4 @@ pub const LINEAR_TOLERANCES: Tolerances = Tolerances::new()
 	.duration(Duration::from_millis(15));
 pub const ANGULAR_TOLERANCES: Tolerances = Tolerances::new()
 	.error(Angle::from_degrees(1.5).as_radians())
-	.velocity(Angle::from_degrees(1.0).as_radians())
 	.duration(Duration::from_millis(15));

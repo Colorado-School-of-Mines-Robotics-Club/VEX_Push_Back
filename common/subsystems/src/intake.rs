@@ -73,9 +73,18 @@ impl IntakeSubsystem {
 	}
 
 	pub fn run(&mut self, state: IntakeState) {
-		_ = self.motors.top.set_voltage(state.top);
-		_ = self.motors.middle.set_voltage(state.middle);
-		_ = self.motors.bottom.set_voltage(state.bottom);
+		_ = self
+			.motors
+			.top
+			.set_voltage(state.top * self.motors.top.max_voltage());
+		_ = self
+			.motors
+			.middle
+			.set_voltage(state.middle * self.motors.middle.max_voltage());
+		_ = self
+			.motors
+			.bottom
+			.set_voltage(state.bottom * self.motors.bottom.max_voltage());
 	}
 }
 

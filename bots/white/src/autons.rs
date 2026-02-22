@@ -1,12 +1,25 @@
-use crate::robot::Robot;
 use evian::{
-	math::{Angle, Vec2},
-	prelude::{TracksForwardTravel, TracksHeading, TracksPosition},
+	control::loops::AngularPid, drivetrain, math::{Angle, Vec2}, motion::Basic, prelude::{TracksForwardTravel, TracksHeading, TracksPosition}
 };
+use slintui::{OdometryPageState, Pose, plotting::TrackedPid, slint::ComponentHandle as _};
+use subsystems::{intake::IntakeState, pnemuatics::PneumaticState};
+use vexide::time::sleep;
+
+use crate::robot::Robot;
 
 pub async fn do_nothing(_robot: &mut Robot) {
 	println!("Doing absolutely nothing!!!");
 }
+
+// Start of Leo's test code.
+pub async fn testAuton(robot: &mut Robot){
+	robot.pneumatics.extender.set_state(PneumaticState::Extended);
+
+	
+	
+}
+
+// End of test code from Leo.
 
 pub async fn pid_testing(robot: &mut Robot) {
 	println!("Pid testing!!!");

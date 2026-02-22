@@ -134,7 +134,7 @@ impl Robot {
 			[
 				route!("Do nothing", crate::autons::do_nothing),
 				route!("PID testing", crate::autons::pid_testing),
-				// route!("PID Angle testing", crate::autons::pid_angle_testing),
+				route!("testAuton", crate::autons::testAuton),
 			],
 		)))
 		.detach();

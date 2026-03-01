@@ -145,74 +145,6 @@ pub async fn match_auton(robot: &mut Robot) {
 
 	let mut basic = crate::control::BASIC_CONTROLLER;
 
-	// Robot drives to balls under the goal.
-
-	// println!("Drive out of start");
-	// basic.drive_distance(&mut robot.drivetrain, 20.0).await;
-
-	// println!("Move to balls");
-	// let start = robot.drivetrain.tracking.position();
-	// let target = Vec2::new(18.0, 55.5);
-	// println!("{:?}", start);
-	// seeking.move_to_point(&mut robot.drivetrain, target).await;
-	// let end = robot.drivetrain.tracking.position();
-	// println!("{:?}", end);
-	// println!("{:?}", end - target);
-
-	// println!("Turn towards balls");
-	// basic
-	// 	.angular_controller
-	// 	.set_kp(basic.angular_controller.kp() * 2.0);
-	// basic
-	// 	.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(10.0))
-	// 	.await;
-	// basic
-	// 	.angular_controller
-	// 	.set_kp(basic.angular_controller.kp() / 2.0);
-	// println!(
-	// 	"{:.02} deg",
-	// 	robot.drivetrain.tracking.heading().as_degrees()
-	// );
-
-	// println!("Move to position to grab balls");
-	// basic
-	// 	.linear_controller
-	// 	.set_kp(basic.linear_controller.kp() * 3.0);
-	// basic.drive_distance(&mut robot.drivetrain, 3.0).await;
-	// basic
-	// 	.linear_controller
-	// 	.set_kp(basic.linear_controller.kp() / 3.0);
-
-	// println!("Pull down bar");
-	// _ = robot
-	// 	.pneumatics
-	// 	.front_bar
-	// 	.set_state(PneumaticState::Extended);
-
-	// sleep(Duration::from_secs(1)).await;
-
-	// return;
-	// // Robot intakes balls.
-	// robot.intake.run(IntakeState::full_forward());
-
-	// _ = robot.drivetrain.model.drive_arcade(0.15, 0.0);
-
-	// sleep(Duration::from_secs(3)).await;
-
-	// robot.intake.run(IntakeState::full_brake());
-
-	// _ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
-
-	// // Robot positions itself towards middle bar and ejects balls.
-
-	// let target = Vec2::new(0.0, 46.7);
-	// basic.turn_to_point(&mut robot.drivetrain, target).await;
-	// seeking.move_to_point(&mut robot.drivetrain, target).await;
-
-	// // Robot positions itself near the tower and intakes the balls in the tower.
-
-	// // Robot turns 180 degress and positions itself toward the upper side beam, then ejects its balls.
-
 	basic.drive_distance(&mut robot.drivetrain, 46.5).await;
 
 	basic
@@ -317,7 +249,20 @@ pub async fn match_auton(robot: &mut Robot) {
 		.angular_controller
 		.set_kp(basic.angular_controller.kp() / 1.1);
 
-	println!("WOWOWOWOOWOWOW");
+	_ = robot.drivetrain.model.drive_arcade(-0.25, 0.0);
+
+	sleep(Duration::from_secs(2));
+
+	_ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
+
+	robot.intake.run(IntakeState {
+		top: -1.0,
+		middle: -1.0,
+		bottom: -0.35,
+	});
+	sleep(Duration::from_secs(2)).await;
+	robot.intake.run(IntakeState::full_brake());
+
 }
 
 // End of test code from Leo.

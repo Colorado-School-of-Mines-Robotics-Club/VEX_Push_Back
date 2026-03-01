@@ -1,3 +1,5 @@
+import { Button } from "std-widgets.slint";
+
 export struct Pose {
     x: float, // inches
     y: float, // inches
@@ -13,9 +15,9 @@ export enum UpdatedStatus {
 export global State {
     in property <Pose> position;
     in property <Pose> velocity;
-    in property <Pose> acceleration;
     in property <UpdatedStatus> updated_status: unknown;
     in property <float> bot_size: 15;
+    callback calibrate();
 }
 
 component BotOverlay {
@@ -46,21 +48,31 @@ export component OdometryPage {
             horizontal-stretch: 1;
             width: parent.width / 3;
 
-            Text {
+            VerticalLayout {
                 height: 100%;
                 width: 100%;
-                font-size: 6pt;
-                text:
-                    "\n  PX: " + State.position.x
-                    + "\n  PY: " + State.position.y
-                    + "\n  PH: " + State.position.h
-                    + "\n  VX: " + State.velocity.x
-                    + "\n  VY: " + State.velocity.y
-                    + "\n  VH: " + State.velocity.h
-                    + "\n  AX: " + State.acceleration.x
-                    + "\n  AY: " + State.acceleration.y
-                    + "\n  AH: " + State.acceleration.h
-                    ;
+
+                spacing: 5px;
+
+                Text {
+                    height: 75%;
+                    font-size: 6pt;
+                    text:
+                        "\n  PX: " + State.position.x
+                        + "\n  PY: " + State.position.y
+                        + "\n  PH: " + State.position.h
+                        + "\n  VX: " + State.velocity.x
+                        + "\n  VY: " + State.velocity.y
+                        + "\n  VH: " + State.velocity.h
+                        ;
+                }
+
+                Button {
+                    text: "Calibrate";
+                    clicked => {
+                        State.calibrate();
+                    };
+                }
             }
         }
         Rectangle {

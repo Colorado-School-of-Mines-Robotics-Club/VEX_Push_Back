@@ -12,8 +12,7 @@ export component App inherits Window {
     out property<[string]> pages: [
         "Autons",
         "Odometry",
-        "y=x^2",
-        "lol"
+        // "Control"
     ];
     in-out property<int> current_page: 0;
 
@@ -57,13 +56,15 @@ export component App inherits Window {
         property <image> graph_source;
         property <length> graph_width: self.width;
         property <length> graph_height: self.height * 3/4;
-        if current_page == 2: graph := Image {
-            source <=> graph_source;
-            width <=> graph_width;
-            height <=> graph_height;
 
-            // preferred-height: 100%;
-            // preferred-width: 100%;
-        }
+        // TODO don't bother until I make it hide when not in use and such (or make it a button on the odom page)
+        // if current_page == 2: graph := Image {
+        //     source <=> graph_source;
+        //     width <=> graph_width;
+        //     height <=> graph_height;
+
+        //     // preferred-height: 100%;
+        //     // preferred-width: 100%;
+        // }
     }
 }

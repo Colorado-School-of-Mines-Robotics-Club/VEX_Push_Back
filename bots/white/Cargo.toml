@@ -17,4 +17,8 @@ vexide-motorgroup = { workspace = true }
 autons = { workspace = true }
 subsystems = { path = "../../common/subsystems" }
 coprocessor = { path = "../../coprocessor/brain" }
-slintui = { path = "../../common/slintui" }
+slintui = { path = "../../common/slintui", optional = true }
+
+[features]
+default = ["ui"]
+ui = ["dep:slintui"]

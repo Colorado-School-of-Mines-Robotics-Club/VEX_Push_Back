@@ -11,8 +11,10 @@ pub struct SlintSelector<const N: usize, R> {
 }
 
 impl<const N: usize, R> SlintSelector<N, R> {
-	pub fn new(app: &App, routes: [Route<R>; N]) -> Self {
-		app.global::<AutonsPageState>().set_autons(
+	pub fn new(app: &App, default: &'static str, routes: [Route<R>; N]) -> Self {
+		let autons_page_state = app.global::<AutonsPageState>();
+
+		autons_page_state.set_autons(
 			Rc::new(
 				routes
 					.iter()
@@ -20,6 +22,12 @@ impl<const N: usize, R> SlintSelector<N, R> {
 					.collect::<VecModel<_>>(),
 			)
 			.into(),
+		);
+		autons_page_state.set_selected(
+			routes
+				.iter()
+				.position(|r| r.name == default)
+				.unwrap_or_default() as i32,
 		);
 
 		Self {

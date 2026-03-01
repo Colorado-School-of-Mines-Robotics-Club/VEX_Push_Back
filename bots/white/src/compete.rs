@@ -8,7 +8,9 @@ use crate::robot::Robot;
 
 impl SelectCompete for Robot {
 	async fn driver(&mut self) {
+		sleep(Duration::from_millis(100)).await;
 		_ = self.pneumatics.initialize().await;
+
 		println!("Driver!");
 		_ = self
 			.controller
@@ -24,6 +26,11 @@ impl SelectCompete for Robot {
 						.controller
 						.set_text(self.configuration.as_str(), 1, 1)
 						.await
+				}
+
+				if controller.button_y.is_now_pressed() {
+					_ = self.imu.borrow_mut().calibrate().await;
+					println!("IMU calibrated");
 				}
 
 				// Run subsystems

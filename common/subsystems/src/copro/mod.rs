@@ -13,7 +13,7 @@ use coprocessor::{
 	vexide::CoprocessorSmartPort,
 };
 use shrewnit::{Degrees, Length, Radians};
-use vexide::{controller::ControllerState, smart::SmartPort, time::sleep};
+use vexide::{controller::ControllerState, prelude::InertialSensor, smart::SmartPort, time::sleep};
 
 use crate::{ControllableSubsystem, ControllerConfiguration};
 
@@ -63,6 +63,12 @@ impl CoproSubsystem {
 
 	pub fn data(&self) -> &Rc<RefCell<CoproData>> {
 		&self.data
+	}
+
+	pub async fn calibrate(
+		&self,
+	) -> Result<<PingRequest as CoprocessorRequest>::Response, std::io::Error> {
+		Self::setup(&self.port, self.offsets).await
 	}
 
 	pub async fn setup(

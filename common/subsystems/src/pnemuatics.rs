@@ -122,11 +122,14 @@ impl PneumaticsSubsystem {
 			.is_ok_and(|s| s != PneumaticState::Contracted)
 			|| self.flap.state().is_err()
 		{
+			println!("Adjusting flap");
 			_ = self.flap.set_state(PneumaticState::Extended);
 
 			sleep(Duration::from_millis(250)).await;
 
 			_ = self.flap.set_state(PneumaticState::Contracted);
+		} else {
+			println!("Flap already adjusted");
 		}
 	}
 }

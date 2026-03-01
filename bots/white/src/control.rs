@@ -27,13 +27,18 @@ pub const LINEAR_PID: Pid = {
 	pid
 };
 pub const ANGULAR_PID: AngularPid = {
-	let mut pid = AngularPid::new(0.41, 0.00, 0.02, Some(Angle::from_degrees(1.0)));
+	let mut pid = AngularPid::new(0.41, 0.005, 0.02, Some(Angle::from_degrees(2.0)));
 	// pid.set_output_limit(Some(0.5));
 	pid
 };
+// pub const LATERAL_PID: Pid = {
+// 	let mut pid = Pid::new(0.023, 0.015, 0.00090, Some(1.0));
+// 	// pid.set_output_limit(Some(0.60));
+// 	pid
+// };
 pub const LATERAL_PID: Pid = {
-	let mut pid = Pid::new(0.0212, 0.00, 0.00090, None);
-	pid.set_output_limit(Some(0.60));
+	let mut pid = Pid::new(0.00927, 0.00, 0.0001, Some(1.0));
+	// pid.set_output_limit(Some(0.60));
 	pid
 };
 

@@ -23,12 +23,18 @@ impl Clone for RobotUi {
 }
 
 impl RobotUi {
-	pub fn new(display: Display, otos_data: Rc<RefCell<CoproData>>) -> Self {
+	pub fn new(
+		display: Display,
+		otos_data: Rc<RefCell<CoproData>>,
+		on_calibrate_fn: impl FnMut() + 'static,
+	) -> Self {
 		// Initialize slint using the V5 display
 		vexide_slint::initialize_slint_platform(display);
 
-		// Initialize the slint application, render images
+		// Initialize the slint application
 		let app = App::new().expect("Failed to create application");
+		app.global::<OdometryPageState>()
+			.on_calibrate(on_calibrate_fn);
 
 		_ = plotters::style::register_font("sans-serif", FontStyle::Normal, FONT);
 

@@ -1,7 +1,10 @@
+use std::{cell::RefCell, rc::Rc};
+
 use autons::{prelude::SelectCompeteExt as _, route};
-use coprocessor::requests::{OtosPosition, PingRequest};
+use coprocessor::requests::{CalibrateRequest, OtosPosition, PingRequest};
 use evian::drivetrain::model::Differential;
 use shrewnit::{Degrees, Inches};
+#[cfg(feature = "ui")]
 use slintui::{
 	OdometryPageState, UpdatedStatus, autons::SlintSelector, slint::ComponentHandle as _,
 	ui::RobotUi,
@@ -17,7 +20,11 @@ use subsystems::{
 use vexide::prelude::*;
 use vexide_motorgroup::MotorGroup;
 
+#[cfg(not(feature = "ui"))]
+use crate::autons::StubSelector;
+
 pub struct Robot {
+	#[cfg(feature = "ui")]
 	pub ui: RobotUi,
 	pub coprocessor: CoproSubsystem,
 	pub controller: Controller,
@@ -26,6 +33,7 @@ pub struct Robot {
 	pub intake: IntakeSubsystem,
 	pub pneumatics: PneumaticsSubsystem,
 	pub replay: ReplaySubsystem,
+	pub imu: Rc<RefCell<InertialSensor>>,
 }
 
 impl Robot {
@@ -39,21 +47,37 @@ impl Robot {
 			},
 		)
 		.await;
+		let imu = Rc::new(RefCell::new(InertialSensor::new(peripherals.port_5)));
 
-		let ui = RobotUi::new(peripherals.display, coprocessor.data().clone());
-		ui.app().global::<OdometryPageState>().set_bot_size(15.0);
+		let imu_clone = imu.clone();
+		vexide::task::spawn(async move {
+			imu_clone.borrow_mut().calibrate().await;
+			println!("IMU Calibrated")
+		})
+		.detach();
 
-		if let Ok(hash) = coprocessor.send_request(PingRequest).await {
-			if PingRequest::verify_hash(hash) {
-				ui.app()
-					.global::<OdometryPageState>()
-					.set_updated_status(UpdatedStatus::Updated);
-			} else {
-				ui.app()
-					.global::<OdometryPageState>()
-					.set_updated_status(UpdatedStatus::Outdated);
+		#[cfg(feature = "ui")]
+		let ui = {
+			let coprocessor_clone = coprocessor.clone();
+			let ui = RobotUi::new(peripherals.display, coprocessor.data().clone(), move || {
+				vexide::task::spawn(coprocessor_clone.send_request(CalibrateRequest)).detach()
+			});
+			ui.app().global::<OdometryPageState>().set_bot_size(15.0);
+
+			if let Ok(hash) = coprocessor.send_request(PingRequest).await {
+				if PingRequest::verify_hash(hash) {
+					ui.app()
+						.global::<OdometryPageState>()
+						.set_updated_status(UpdatedStatus::Updated);
+				} else {
+					ui.app()
+						.global::<OdometryPageState>()
+						.set_updated_status(UpdatedStatus::Outdated);
+				}
 			}
-		}
+
+			ui
+		};
 
 		let controller = peripherals.primary_controller;
 		let configuration = ControllerConfiguration::Connor;
@@ -72,7 +96,7 @@ impl Robot {
 					Motor::new(peripherals.port_4, Gearset::Blue, Direction::Forward),
 				],
 			),
-			CoproTracking(coprocessor.data().clone()),
+			CoproTracking::new(coprocessor.data().clone(), imu.clone()),
 		);
 		let intake = IntakeSubsystem::new(IntakeMotors {
 			bottom: MotorGroup::new(vec![
@@ -115,7 +139,9 @@ impl Robot {
 		let replay = ReplaySubsystem::new();
 
 		Self {
+			#[cfg(feature = "ui")]
 			ui,
+			imu,
 			controller,
 			configuration,
 			drivetrain,
@@ -127,19 +153,26 @@ impl Robot {
 	}
 
 	pub async fn start(self) -> ! {
-		let ui = self.ui.clone();
+		let default_auton = "Match auton";
+		let autons = [
+			route!("Do nothing", crate::autons::do_nothing),
+			route!("PID testing", crate::autons::pid_testing),
+			route!("Match auton", crate::autons::match_auton),
+			route!("Testing", crate::autons::testing),
+		];
 
-		vexide::task::spawn(self.compete(SlintSelector::new(
-			ui.app(),
-			[
-				route!("Do nothing", crate::autons::do_nothing),
-				route!("PID testing", crate::autons::pid_testing),
-				route!("testAuton", crate::autons::match_auton),
-			],
-		)))
-		.detach();
+		#[cfg(feature = "ui")]
+		{
+			let ui = self.ui.clone();
 
-		ui.run_blocking();
+			let selector = SlintSelector::new(ui.app(), default_auton, autons);
+			vexide::task::spawn(self.compete(selector)).detach();
+			ui.run_blocking();
+		}
+		#[cfg(not(feature = "ui"))]
+		{
+			self.compete(StubSelector::new(default_auton, autons)).await;
+		};
 
 		std::process::exit(0);
 	}

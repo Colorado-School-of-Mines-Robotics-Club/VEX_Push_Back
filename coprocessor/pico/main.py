@@ -14,7 +14,7 @@ TEST_MODE = True
 RS485_EN_PIN = 'GP11'
 RS485_TX_PIN = 'GP12'
 RS485_RX_PIN = 'GP13'
-ADDR_LED_PIN = 'GP25'
+ADDR_LED_PIN = 'GP10'
 OTOS_SDA_PIN = 'GP8'
 OTOS_SCL_PIN = 'GP9'
 PICO_LED_PIN = 'GP25'
@@ -100,8 +100,8 @@ class VexBrain():
 
 def main():
     PICO_LED_OUT.off()
-    LED = RGB(ADDR_LED_OUT, 32, 1)
-    LED.set_mode(LED_BLACK)
+    LED = RGB(ADDR_LED_OUT, 33, 1)
+    LED.set_mode(LED_RAINBOW)
     time.sleep(.5)
 
     brain = VexBrain(RS485_UART, RS485_EN_OUT)

@@ -14,6 +14,126 @@ pub async fn do_nothing(_robot: &mut Robot) {
 	println!("Doing absolutely nothing!!!");
 }
 
+pub async fn black_auton(robot: &mut Robot) {
+	// Basic setup.
+	_ = robot
+		.pneumatics
+		.extender
+		.set_state(PneumaticState::Extended);
+
+	let mut seeking = crate::control::SEEKING_CONTROLLER;
+
+	let mut basic = crate::control::BASIC_CONTROLLER;
+	
+	basic.drive_distance(&mut robot.drivetrain, -46.5).await;
+
+	basic
+		.angular_controller
+		.set_kp(basic.angular_controller.kp() * 1.5);
+	basic
+		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(45.0))
+		.await;
+	basic
+		.angular_controller
+		.set_kp(basic.angular_controller.kp() / 1.5);
+
+	_ = robot.drivetrain.model.drive_arcade(-0.25, 0.0);
+	sleep(Duration::from_millis(1500)).await;
+	_ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
+
+	// Robot intake runs and ejects the balls into the middle beam.
+
+	robot.intake.run(IntakeState {
+		top: 0.35,
+		middle: 1.0,
+		bottom: 1.0,
+	});
+	sleep(Duration::from_secs(2)).await;
+	robot.intake.run(IntakeState::full_brake());
+
+	basic
+		.drive_distance_at_heading(
+			&mut robot.drivetrain,
+			25.0,
+			Angle::from_degrees(45.0),
+		)
+		.await;
+
+	// Calculate distance from line
+	let dist_x = (robot.drivetrain.tracking.position().x + 31.25).abs();
+	let dist = (dist_x / (robot.drivetrain.tracking.heading()).cos()).abs();
+
+	basic
+		.drive_distance(&mut robot.drivetrain, -dbg!(dist))
+		.await;
+
+	basic
+		.angular_controller
+		.set_kp(basic.angular_controller.kp() * 1.05);
+	basic
+		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(-90.0))
+		.await;
+	basic
+		.angular_controller
+		.set_kp(basic.angular_controller.kp() / 1.05);
+
+	dbg!(robot.drivetrain.tracking.heading().as_degrees());
+
+	_ = robot
+		.pneumatics
+		.front_bar
+		.set_state(PneumaticState::Extended);
+	sleep(Duration::from_millis(500)).await;
+	_ = robot.drivetrain.model.drive_arcade(0.5, 0.0);
+	robot.intake.run(IntakeState::full_forward());
+	sleep(Duration::from_secs(2)).await;
+	_ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
+
+	sleep(Duration::from_secs(3)).await;
+
+	_ = robot.drivetrain.model.drive_arcade(-0.25, 0.0);
+	sleep(Duration::from_millis(1500)).await;
+	_ = robot.drivetrain.model.drive_arcade(0.25, 0.0);
+	sleep(Duration::from_secs(1)).await;
+
+	robot.intake.run(IntakeState::full_brake());
+
+	basic
+		.angular_controller
+		.set_kp(basic.angular_controller.kp() * 1.2);
+	basic
+		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(180.0))
+		.await;
+	basic
+		.angular_controller
+		.set_kp(basic.angular_controller.kp() / 1.2);
+
+	_ = robot.pneumatics.flap.set_state(PneumaticState::Extended);
+	_ = robot
+		.pneumatics
+		.outtake_adjuster
+		.set_state(PneumaticState::Contracted);
+	robot.intake.run(IntakeState::full_forward());
+	sleep(Duration::from_secs(2)).await;
+	_ = robot.pneumatics.flap.set_state(PneumaticState::Contracted);
+	_ = robot
+		.pneumatics
+		.outtake_adjuster
+		.set_state(PneumaticState::Extended);
+
+	basic
+		.angular_controller
+		.set_kp(basic.angular_controller.kp() * 1.1);
+	basic
+		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(270.0))
+		.await;
+	basic
+		.angular_controller
+		.set_kp(basic.angular_controller.kp() / 1.1);
+
+	println!("WOWOWOWOOWOWOW");
+}
+
 pub async fn match_auton(robot: &mut Robot) {
 	// Basic setup.
 	_ = robot

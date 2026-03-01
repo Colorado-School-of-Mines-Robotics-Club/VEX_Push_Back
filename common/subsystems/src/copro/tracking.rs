@@ -39,7 +39,13 @@ impl TracksHeading for CoproTracking {
 		// let heading = self.copro_data.borrow().position.heading + 90.0 * Degrees; // The sensor uses 0.0 as forward, so adjust it to cartesian-style
 
 		// Angle::from_radians(heading.to::<Radians>()).wrapped_full()
-		-self.imu.borrow().heading().unwrap_or_default() + Angle::from_degrees(90.0)
+		-self
+			.imu
+			.try_borrow()
+			.ok()
+			.and_then(|i| i.heading().ok())
+			.unwrap_or_default()
+			+ Angle::from_degrees(90.0)
 	}
 }
 
@@ -71,6 +77,10 @@ impl TracksVelocity for CoproTracking {
 		// 	.velocity
 		// 	.heading
 		// 	.to::<RadiansPerSecond>()
-		self.imu.borrow().angular_velocity().unwrap_or_default()
+		self.imu
+			.try_borrow()
+			.ok()
+			.and_then(|i| i.angular_velocity().ok())
+			.unwrap_or_default()
 	}
 }

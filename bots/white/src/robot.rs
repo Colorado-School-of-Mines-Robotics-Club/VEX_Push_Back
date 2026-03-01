@@ -59,8 +59,15 @@ impl Robot {
 		#[cfg(feature = "ui")]
 		let ui = {
 			let coprocessor_clone = coprocessor.clone();
+			let imu_clone = imu.clone();
 			let ui = RobotUi::new(peripherals.display, coprocessor.data().clone(), move || {
-				vexide::task::spawn(coprocessor_clone.send_request(CalibrateRequest)).detach()
+				let coprocessor_clone = coprocessor_clone.clone();
+				let imu_clone = imu_clone.clone();
+				vexide::task::spawn(async move {
+					_ = coprocessor_clone.send_request(CalibrateRequest).await;
+					_ = imu_clone.borrow_mut().calibrate().await;
+				})
+				.detach()
 			});
 			ui.app().global::<OdometryPageState>().set_bot_size(15.0);
 

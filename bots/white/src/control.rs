@@ -37,7 +37,7 @@ pub const ANGULAR_PID: AngularPid = {
 // 	pid
 // };
 pub const LATERAL_PID: Pid = {
-	let mut pid = Pid::new(0.00927, 0.00, 0.0001, Some(1.0));
+	let mut pid = Pid::new(0.00929, 0.00, 0.0005, Some(25.0));
 	// pid.set_output_limit(Some(0.60));
 	pid
 };
@@ -48,4 +48,5 @@ pub const LINEAR_TOLERANCES: Tolerances = Tolerances::new()
 	.duration(Duration::from_millis(15));
 pub const ANGULAR_TOLERANCES: Tolerances = Tolerances::new()
 	.error(Angle::from_degrees(1.5).as_radians())
+	.velocity(Angle::from_degrees(10.0).as_radians())
 	.duration(Duration::from_millis(15));

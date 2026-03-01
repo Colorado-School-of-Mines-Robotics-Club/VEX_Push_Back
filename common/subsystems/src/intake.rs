@@ -37,7 +37,6 @@ impl IntakeState {
 		}
 	}
 
-	/// Reverses all currently enabled motor groups. Any reversed motors will be un-reversed
 	pub const fn reverse(self) -> Self {
 		Self {
 			top: -self.top,

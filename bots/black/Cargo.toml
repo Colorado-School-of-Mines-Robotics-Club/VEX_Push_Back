@@ -1,0 +1,24 @@
+[package]
+name = "bot-black"
+version = "0.1.0"
+edition = "2024"
+
+[package.metadata.v5]
+upload-strategy = "differential"
+slot = 1
+icon = "pizza"
+compress = true
+
+[dependencies]
+vexide = { workspace = true }
+evian = { workspace = true }
+shrewnit = { workspace = true }
+vexide-motorgroup = { workspace = true }
+autons = { workspace = true }
+subsystems = { path = "../../common/subsystems" }
+coprocessor = { path = "../../coprocessor/brain" }
+slintui = { path = "../../common/slintui", optional = true }
+
+[features]
+default = ["ui"]
+ui = ["dep:slintui"]

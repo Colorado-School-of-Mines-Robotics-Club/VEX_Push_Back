@@ -435,6 +435,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "bot-black"
+version = "0.1.0"
+dependencies = [
+ "autons",
+ "coprocessor",
+ "evian",
+ "shrewnit",
+ "slintui",
+ "subsystems",
+ "vexide",
+ "vexide-motorgroup",
+]
+
+[[package]]
 name = "bot-white"
 version = "0.1.0"
 dependencies = [

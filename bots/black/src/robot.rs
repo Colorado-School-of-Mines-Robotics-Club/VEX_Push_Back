@@ -39,7 +39,7 @@ pub struct Robot {
 impl Robot {
 	pub async fn new(peripherals: Peripherals) -> Self {
 		let coprocessor = CoproSubsystem::new(
-			peripherals.port_6,
+			peripherals.port_21,
 			OtosPosition {
 				x: 0.0 * Inches,
 				y: -1.25 * Inches,
@@ -47,7 +47,7 @@ impl Robot {
 			},
 		)
 		.await;
-		let imu = Rc::new(RefCell::new(InertialSensor::new(peripherals.port_5)));
+		let imu = Rc::new(RefCell::new(InertialSensor::new(peripherals.port_6)));
 
 		let imu_clone = imu.clone();
 		vexide::task::spawn(async move {
@@ -87,7 +87,7 @@ impl Robot {
 		};
 
 		let controller = peripherals.primary_controller;
-		let configuration = ControllerConfiguration::Connor;
+		let configuration = ControllerConfiguration::Noah;
 		let drivetrain = DrivetrainSubsystem::new(
 			Differential::new(
 				[
@@ -98,8 +98,8 @@ impl Robot {
 				],
 				[
 					Motor::new(peripherals.port_1, Gearset::Blue, Direction::Forward),
-					Motor::new(peripherals.port_2, Gearset::Blue, Direction::Reverse),
-					Motor::new(peripherals.port_3, Gearset::Blue, Direction::Reverse),
+					Motor::new(peripherals.port_5, Gearset::Blue, Direction::Reverse),
+					Motor::new(peripherals.port_3, Gearset::Blue, Direction::Reverse), // yes
 					Motor::new(peripherals.port_4, Gearset::Blue, Direction::Forward),
 				],
 			),
@@ -107,39 +107,39 @@ impl Robot {
 		);
 		let intake = IntakeSubsystem::new(IntakeMotors {
 			bottom: MotorGroup::new(vec![Motor::new(
-				peripherals.port_20,
+				peripherals.port_19,
 				Gearset::Blue,
 				Direction::Reverse,
 			)]),
 			middle: MotorGroup::new(vec![Motor::new(
-				peripherals.port_19,
+				peripherals.port_20,
 				Gearset::Blue,
 				Direction::Forward,
 			)]),
 			top: MotorGroup::new(vec![
 				Motor::new(peripherals.port_18, Gearset::Blue, Direction::Forward),
-				Motor::new(peripherals.port_12, Gearset::Blue, Direction::Reverse),
+				Motor::new(peripherals.port_17, Gearset::Blue, Direction::Reverse),
 			]),
 		});
 		let trunk = PneumaticsSubsystem::new(
 			// Front bar
 			AdiPneumatic {
-				port: AdiDigitalOut::new(peripherals.adi_b),
+				port: AdiDigitalOut::new(peripherals.adi_e),
 				high_mode: PneumaticState::Extended,
 			},
 			// Extender
 			AdiPneumatic {
-				port: AdiDigitalOut::new(peripherals.adi_c),
+				port: AdiDigitalOut::new(peripherals.adi_f),
 				high_mode: PneumaticState::Extended,
 			},
 			// Flap
 			AdiPneumatic {
-				port: AdiDigitalOut::new(peripherals.adi_a),
+				port: AdiDigitalOut::new(peripherals.adi_h),
 				high_mode: PneumaticState::Contracted,
 			},
 			// Outtake adjuster
 			AdiPneumatic {
-				port: AdiDigitalOut::new(peripherals.adi_d),
+				port: AdiDigitalOut::new(peripherals.adi_g),
 				high_mode: PneumaticState::Extended,
 			},
 		);
@@ -164,7 +164,7 @@ impl Robot {
 		let autons = [
 			route!("Do nothing", crate::autons::do_nothing),
 			route!("PID testing", crate::autons::pid_testing),
-			route!("Match auton", crate::autons::match_auton),
+			route!("Match auton", crate::autons::black_auton),
 			route!("Testing", crate::autons::testing),
 		];
 

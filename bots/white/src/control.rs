@@ -12,13 +12,13 @@ pub const BASIC_CONTROLLER: Basic<Pid, AngularPid> = Basic {
 	angular_controller: ANGULAR_PID,
 	linear_tolerances: LINEAR_TOLERANCES,
 	angular_tolerances: ANGULAR_TOLERANCES,
-	timeout: Some(Duration::from_secs(5)),
+	timeout: Some(Duration::from_secs(3)),
 };
 pub const SEEKING_CONTROLLER: Seeking<Pid, Pid> = Seeking {
 	linear_controller: LINEAR_PID,
 	lateral_controller: LATERAL_PID,
 	tolerances: LINEAR_TOLERANCES,
-	timeout: Some(Duration::from_secs(5)),
+	timeout: Some(Duration::from_secs(3)),
 };
 
 pub const LINEAR_PID: Pid = {
@@ -44,7 +44,7 @@ pub const LATERAL_PID: Pid = {
 
 pub const LINEAR_TOLERANCES: Tolerances = Tolerances::new()
 	.error(0.50)
-	// .velocity(0.50)
+	// .velocity(1.0)
 	.duration(Duration::from_millis(15));
 pub const ANGULAR_TOLERANCES: Tolerances = Tolerances::new()
 	.error(Angle::from_degrees(1.5).as_radians())

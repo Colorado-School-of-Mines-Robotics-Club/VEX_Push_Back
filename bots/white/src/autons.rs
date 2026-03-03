@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use autons::{Selector, simple::Route};
 use evian::{
@@ -6,7 +6,7 @@ use evian::{
 	prelude::{Arcade, TracksHeading, TracksPosition},
 };
 use subsystems::{intake::IntakeState, pnemuatics::PneumaticState};
-use vexide::time::sleep;
+use vexide::{smart::motor::BrakeMode, time::sleep};
 
 use crate::robot::Robot;
 
@@ -15,6 +15,7 @@ pub async fn do_nothing(_robot: &mut Robot) {
 }
 
 pub async fn match_auton(robot: &mut Robot) {
+	let start_time = Instant::now();
 	// Basic setup.
 	_ = robot
 		.pneumatics
@@ -25,7 +26,7 @@ pub async fn match_auton(robot: &mut Robot) {
 	let mut seeking = crate::control::SEEKING_CONTROLLER;
 
 	// Line up with the center goal
-	basic.drive_distance(&mut robot.drivetrain, 46.5).await;
+	basic.drive_distance(&mut robot.drivetrain, 47.5).await;
 
 	// Turn towards center goal
 	basic
@@ -40,16 +41,18 @@ pub async fn match_auton(robot: &mut Robot) {
 
 	// Align with center
 	_ = robot.drivetrain.model.drive_arcade(0.25, 0.0);
-	sleep(Duration::from_millis(1500)).await;
+	sleep(Duration::from_millis(1000)).await;
+	// sleep(Duration::from_millis(1500)).await;
 	_ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
 
 	// Outtake preload ball into center goal
 	robot.intake.run(IntakeState {
 		top: -1.0,
 		middle: -1.0,
-		bottom: -0.35,
+		bottom: -0.45,
 	});
-	sleep(Duration::from_secs(2)).await;
+	sleep(Duration::from_millis(500)).await;
+	// sleep(Duration::from_secs(1)).await;
 	robot.intake.run(IntakeState::full_brake());
 
 	// Go generally towards aligned with the matchload
@@ -62,7 +65,7 @@ pub async fn match_auton(robot: &mut Robot) {
 		.await;
 
 	// Move to matchload aligned
-	let dist_x = (robot.drivetrain.tracking.position().x - 31.25).abs();
+	let dist_x = (robot.drivetrain.tracking.position().x - 30.5).abs();
 	let dist = (dist_x / (robot.drivetrain.tracking.heading()).cos()).abs();
 
 	basic.drive_distance(&mut robot.drivetrain, -dist).await;
@@ -70,17 +73,17 @@ pub async fn match_auton(robot: &mut Robot) {
 	// Turn towards matchload
 	basic
 		.angular_controller
-		.set_kp(basic.angular_controller.kp() * 1.05);
+		.set_kp(basic.angular_controller.kp() * 1.1);
 	basic
 		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(-90.0))
 		.await;
 	basic
 		.angular_controller
-		.set_kp(basic.angular_controller.kp() / 1.05);
+		.set_kp(basic.angular_controller.kp() / 1.1);
 
 	// Back up as a precaution for the front bar
 	_ = robot.drivetrain.model.drive_arcade(-0.17, 0.0);
-	sleep(Duration::from_secs(1)).await;
+	sleep(Duration::from_millis(350)).await;
 
 	// Intake from matchload
 	_ = robot
@@ -97,22 +100,12 @@ pub async fn match_auton(robot: &mut Robot) {
 	robot.intake.run(IntakeState::full_forward());
 	sleep(Duration::from_millis(2500)).await;
 	_ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
+	sleep(Duration::from_secs(2)).await;
 
-	sleep(Duration::from_secs(3)).await;
-
-	// Move back and forth to grab all the balls in the bar thingy
-	_ = robot.drivetrain.model.drive_arcade(-0.17, 0.0);
-	sleep(Duration::from_millis(1100)).await;
-	_ = robot.drivetrain.model.drive_arcade(0.17, 0.0);
-	sleep(Duration::from_millis(750)).await;
-
+	// Move to long goal position
 	robot.intake.run(IntakeState::full_brake());
-	_ = robot
-		.pneumatics
-		.front_bar
-		.set_state(PneumaticState::Contracted);
 
-	_ = robot.drivetrain.model.drive_arcade(-0.35, -0.01);
+	_ = robot.drivetrain.model.drive_arcade(-0.35, 0.0);
 	sleep(Duration::from_secs(2)).await;
 	_ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
 
@@ -128,36 +121,120 @@ pub async fn match_auton(robot: &mut Robot) {
 		bottom: 0.0,
 	});
 	sleep(Duration::from_secs(1)).await;
-	robot.intake.run(IntakeState {
-		top: 1.0,
-		middle: 1.0,
-		bottom: 0.0,
-	});
-	sleep(Duration::from_millis(250)).await;
-	robot.intake.run(IntakeState {
-		top: 1.0,
-		middle: 0.0,
-		bottom: 0.0,
-	});
-	sleep(Duration::from_secs(1)).await;
 	robot.intake.run(IntakeState::full_brake());
 
-	_ = robot.drivetrain.model.drive_arcade(-0.25, 0.0);
-
-	sleep(Duration::from_secs(2)).await;
-
+	// Move back a bit and eject all balls (wrong color)
+	_ = robot.drivetrain.model.drive_arcade(0.5, 0.0);
+	sleep(Duration::from_millis(250)).await;
 	_ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
 
-	robot.intake.run(IntakeState {
-		top: -1.0,
-		middle: -1.0,
-		bottom: -0.35,
-	});
+	_ = robot
+		.pneumatics
+		.front_bar
+		.set_state(PneumaticState::Contracted);
+	basic
+		.angular_controller
+		.set_kp(basic.angular_controller.kp() * 3.0);
+	basic
+		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(75.0 + 180.0))
+		.await;
+	robot.intake.run(IntakeState::full_forward());
+	sleep(Duration::from_millis(1500)).await;
+
+	let dist_x = (robot.drivetrain.tracking.position().x - 30.5).abs();
+	let dist = (dist_x / (robot.drivetrain.tracking.heading()).cos()).abs();
+
+	basic.drive_distance(&mut robot.drivetrain, dist).await;
+
+	basic
+		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(90.0 + 180.0))
+		.await;
+	basic
+		.angular_controller
+		.set_kp(basic.angular_controller.kp() / 3.0);
+	_ = robot
+		.pneumatics
+		.front_bar
+		.set_state(PneumaticState::Extended);
+
+	// Move the rest of the distance and intake balls
+	_ = robot.pneumatics.flap.set_state(PneumaticState::Contracted);
+	_ = robot.drivetrain.model.drive_arcade(0.35, 0.0);
+	sleep(Duration::from_secs(3)).await;
+
+	// Drive to long goal
+	basic.timeout = Some(Duration::from_secs(1));
+	basic
+		.drive_distance_at_heading(
+			&mut robot.drivetrain,
+			-40.0,
+			Angle::from_degrees(180.0 + 90.0),
+		)
+		.await;
+	basic.timeout = crate::control::BASIC_CONTROLLER.timeout;
+
+	_ = robot
+		.pneumatics
+		.front_bar
+		.set_state(PneumaticState::Contracted);
+
+	// Outtake the balls!!!!!!!!!
+	_ = robot.pneumatics.flap.set_state(PneumaticState::Extended);
 	sleep(Duration::from_secs(2)).await;
 	robot.intake.run(IntakeState::full_brake());
-}
 
-// End of test code from Leo.
+	// Move back from goal
+	_ = robot.drivetrain.model.drive_arcade(0.30, 0.0);
+	sleep(Duration::from_millis(250)).await;
+	_ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
+	sleep(Duration::from_millis(250)).await;
+
+	// Go to park zone
+	basic
+		.angular_controller
+		.set_kp(basic.angular_controller.kp() * 2.3);
+	basic
+		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(180.0 + 45.0))
+		.await;
+	basic
+		.angular_controller
+		.set_kp(basic.angular_controller.kp() / 2.3);
+
+	basic
+		.drive_distance_at_heading(
+			&mut robot.drivetrain,
+			25.0,
+			Angle::from_degrees(180.0 + 30.0),
+		)
+		.await;
+
+	let park_start = Instant::now();
+	_ = robot.drivetrain.model.drive_arcade(0.75, 0.01);
+	while park_start.elapsed() < Duration::from_millis(1500)
+		&& robot
+			.drivetrain
+			.tracking
+			.position()
+			.distance(Vec2::new(-19.3, 25.1))
+			> 14.0
+	{
+		sleep(Duration::from_millis(10)).await;
+	}
+	_ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
+	{
+		let mut left_iter = robot.drivetrain.model.left.borrow_mut();
+		let mut right_iter = robot.drivetrain.model.right.borrow_mut();
+		for motor in left_iter
+			.as_mut()
+			.iter_mut()
+			.chain(right_iter.as_mut().iter_mut())
+		{
+			_ = motor.brake(BrakeMode::Hold);
+		}
+	}
+
+	println!("Done: {}s", start_time.elapsed().as_secs_f32());
+}
 
 pub async fn pid_testing(robot: &mut Robot) {
 	println!("Pid testing!!!");

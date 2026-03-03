@@ -2,9 +2,9 @@ use std::time::Duration;
 
 use autons::{Selector, simple::Route};
 use evian::{
-	math::{Angle, Vec2},
-	prelude::{Arcade, TracksHeading, TracksPosition},
+	math::{Angle, Vec2}, motion::basic, prelude::{Arcade, TracksHeading, TracksPosition}
 };
+use slintui::slint::platform::duration_until_next_timer_update;
 use subsystems::{intake::IntakeState, pnemuatics::PneumaticState};
 use vexide::time::sleep;
 
@@ -14,7 +14,50 @@ pub async fn do_nothing(_robot: &mut Robot) {
 	println!("Doing absolutely nothing!!!");
 }
 
-pub async fn black_auton(robot: &mut Robot) {
+// Time based backup code, only use if the sensor breaks.
+
+/*
+
+pub async fn match_auton(robot: &mut Robot) {
+	// Robot goes to post and ejects its balls into the top beam.
+
+	robot.drivetrain.model.drive_arcade(-0.5, 0.0);
+	sleep(Duration::from_secs(2)).await;
+	robot.drivetrain.model.drive_arcade(0.0, 0.25);
+	sleep(Duration::from_millis(700)).await;
+	robot.intake.run(IntakeState {
+		top: 0.35,
+		middle: 1.0,
+		bottom: 1.0,
+	});
+	sleep(Duration::from_secs(2));
+	robot.intake.run(IntakeState::full_brake());
+
+	// Robot drives to the tower and takes the tower balls.
+
+	robot.drivetrain.model.drive_arcade(-0.50, 0.0);
+	sleep(Duration::from_secs(2)).await;
+	robot.drivetrain.model.drive_arcade(0.0, -0.25);
+	sleep(Duration::from_millis(700)).await;
+
+	// Robot drives back to the higher beam and ejects its balls.
+
+	robot.drivetrain.model.drive_arcade(-0.25, 0.0);
+	sleep(Duration::from_secs(2));
+	robot.intake.run(IntakeState {
+		top: 0.35,
+		middle: 1.0,
+		bottom: 1.0,
+	});
+	sleep(Duration::from_secs(2));
+	robot.intake.run(IntakeState::full_brake());
+
+}
+*/
+
+// Standard code from Leo.
+
+pub async fn match_auton(robot: &mut Robot) {
 	// Basic setup.
 	_ = robot
 		.pneumatics
@@ -25,7 +68,7 @@ pub async fn black_auton(robot: &mut Robot) {
 
 	let mut basic = crate::control::BASIC_CONTROLLER;
 
-	basic.drive_distance(&mut robot.drivetrain, -46.5).await;
+	basic.drive_distance(&mut robot.drivetrain, -40.5).await;
 
 	basic
 		.angular_controller
@@ -38,7 +81,7 @@ pub async fn black_auton(robot: &mut Robot) {
 		.set_kp(basic.angular_controller.kp() / 1.5);
 
 	_ = robot.drivetrain.model.drive_arcade(-0.25, 0.0);
-	sleep(Duration::from_millis(1500)).await;
+	sleep(Duration::from_millis(900)).await;
 	_ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
 
 	// Robot intake runs and ejects the balls into the middle beam.

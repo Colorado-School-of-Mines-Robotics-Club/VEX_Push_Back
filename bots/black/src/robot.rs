@@ -164,7 +164,7 @@ impl Robot {
 		let autons = [
 			route!("Do nothing", crate::autons::do_nothing),
 			route!("PID testing", crate::autons::pid_testing),
-			route!("Match auton", crate::autons::black_auton),
+			route!("Match auton",crate::autons::match_auton),
 			route!("Testing", crate::autons::testing),
 		];
 

@@ -16,7 +16,8 @@ fn arcade(throttle: f64, steer: f64) -> (f64, f64) {
 
 pub struct DrivetrainSubsystem<M: Tank, T: Tracking> {
 	pub drivetrain: Drivetrain<M, T>,
-	/// The state of the drivetrain as (left, right), both should be desaturate before use
+	pub reverse: bool,
+	/// The state of the drivetrain as (left, right), both should be desaturated before use
 	pub state: (f64, f64),
 }
 
@@ -24,6 +25,7 @@ impl<M: Tank, T: Tracking> DrivetrainSubsystem<M, T> {
 	pub fn new(drivetrain: M, tracking: T) -> Self {
 		Self {
 			drivetrain: Drivetrain::new(drivetrain, tracking),
+			reverse: false,
 			state: Default::default(),
 		}
 	}
@@ -52,22 +54,28 @@ impl<M: Tank, T: Tracking> ControllableSubsystem for DrivetrainSubsystem<M, T> {
 	}
 
 	fn control(&mut self, controller: &ControllerState, configuration: ControllerConfiguration) {
-		let coefficient = if controller.button_down.is_pressed() {
-			0.5
-		} else {
-			1.0
-		};
+		if controller.button_left.is_now_pressed() {
+			self.reverse = !self.reverse;
+		}
+
 		self.state = match configuration {
 			ControllerConfiguration::Noah => arcade(
 				// Split arcade
-				coefficient * controller.left_stick.y(),
-				coefficient * controller.right_stick.x(),
+				controller.left_stick.y() * if self.reverse { -1.0 } else { 1.0 },
+				controller.right_stick.x(),
 			),
-			ControllerConfiguration::Connor => (
-				// Tank
-				coefficient * controller.left_stick.y(),
-				coefficient * controller.right_stick.y(),
-			),
+			ControllerConfiguration::Connor => match self.reverse {
+				false => (
+					// Tank
+					controller.left_stick.y(),
+					controller.right_stick.y(),
+				),
+				true => (
+					// Tank
+					-controller.right_stick.y(),
+					-controller.left_stick.y(),
+				),
+			},
 		};
 
 		_ = self.run();

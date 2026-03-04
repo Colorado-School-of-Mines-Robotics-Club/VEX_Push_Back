@@ -14,6 +14,7 @@ pub struct PneumaticsSubsystemState {
 	extender: PneumaticState,
 	flap: PneumaticState,
 	outtake_adjuster: PneumaticState,
+	park: PneumaticState,
 }
 
 pub struct PneumaticsSubsystem {
@@ -21,6 +22,7 @@ pub struct PneumaticsSubsystem {
 	pub extender: AdiPneumatic,
 	pub flap: AdiPneumatic,
 	pub outtake_adjuster: AdiPneumatic,
+	pub park: Option<AdiPneumatic>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Ord, Eq, Serialize, Deserialize, Default)]
@@ -93,16 +95,21 @@ impl PneumaticsSubsystem {
 		extender: AdiPneumatic,
 		flap: AdiPneumatic,
 		outtake_adjuster: AdiPneumatic,
+		park: Option<AdiPneumatic>,
 	) -> Self {
 		Self {
 			front_bar,
 			extender,
 			flap,
 			outtake_adjuster,
+			park,
 		}
 	}
 
 	pub fn set_state(&mut self, state: PneumaticsSubsystemState) -> Result<(), PortError> {
+		if let Some(park) = self.park.as_mut() {
+			park.set_state(state.park)?
+		};
 		self.front_bar.set_state(state.front_bar)?;
 		self.extender.set_state(state.extender)?;
 		self.flap.set_state(state.flap)?;
@@ -112,6 +119,9 @@ impl PneumaticsSubsystem {
 	}
 
 	pub async fn initialize(&mut self) {
+		if let Some(park) = self.park.as_mut() {
+			_ = park.set_state(PneumaticState::Contracted);
+		};
 		_ = self.front_bar.set_state(PneumaticState::Contracted);
 		_ = self.extender.set_state(PneumaticState::Extended);
 		_ = self.outtake_adjuster.set_state(PneumaticState::Extended);
@@ -138,6 +148,11 @@ impl ControllableSubsystem for PneumaticsSubsystem {
 	fn state(&self) -> Option<ciborium::Value> {
 		Some(
 			ciborium::Value::serialized(&PneumaticsSubsystemState {
+				park: self
+					.park
+					.as_ref()
+					.and_then(|p| p.state().ok())
+					.unwrap_or(PneumaticState::Contracted),
 				front_bar: self.front_bar.state().unwrap_or(PneumaticState::Contracted),
 				extender: self.extender.state().unwrap_or(PneumaticState::Contracted),
 				flap: self.flap.state().unwrap_or(PneumaticState::Contracted),
@@ -172,6 +187,13 @@ impl ControllableSubsystem for PneumaticsSubsystem {
 			&& let Ok(state) = self.front_bar.state()
 		{
 			_ = self.front_bar.set_state(!state);
+		}
+
+		if controller.button_down.is_now_pressed()
+			&& let Some(park) = self.park.as_mut()
+			&& let Ok(state) = park.state()
+		{
+			_ = park.set_state(!state);
 		}
 	}
 }

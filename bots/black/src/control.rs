@@ -12,7 +12,7 @@ pub const BASIC_CONTROLLER: Basic<Pid, AngularPid> = Basic {
 	angular_controller: ANGULAR_PID,
 	linear_tolerances: LINEAR_TOLERANCES,
 	angular_tolerances: ANGULAR_TOLERANCES,
-	timeout: Some(Duration::from_secs(5)),
+	timeout: Some(Duration::from_secs(3)),
 };
 pub const SEEKING_CONTROLLER: Seeking<Pid, Pid> = Seeking {
 	linear_controller: LINEAR_PID,
@@ -27,8 +27,8 @@ pub const LINEAR_PID: Pid = {
 	pid
 };
 pub const ANGULAR_PID: AngularPid = {
-	let mut pid = AngularPid::new(0.41, 0.005, 0.02, Some(Angle::from_degrees(2.0)));
-	// pid.set_output_limit(Some(0.5));
+	let mut pid = AngularPid::new(0.65, 0.65, 0.028, Some(Angle::from_degrees(4.0)));
+	pid.set_output_limit(Some(0.50));
 	pid
 };
 // pub const LATERAL_PID: Pid = {

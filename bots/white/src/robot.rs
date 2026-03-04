@@ -142,6 +142,11 @@ impl Robot {
 				port: AdiDigitalOut::new(peripherals.adi_d),
 				high_mode: PneumaticState::Extended,
 			},
+			// Park mech
+			Some(AdiPneumatic {
+				port: AdiDigitalOut::new(peripherals.adi_e),
+				high_mode: PneumaticState::Extended,
+			}),
 		);
 		let replay = ReplaySubsystem::new();
 

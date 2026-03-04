@@ -142,6 +142,8 @@ impl Robot {
 				port: AdiDigitalOut::new(peripherals.adi_g),
 				high_mode: PneumaticState::Extended,
 			},
+			// No park mech yet
+			None,
 		);
 		let replay = ReplaySubsystem::new();
 
@@ -164,7 +166,7 @@ impl Robot {
 		let autons = [
 			route!("Do nothing", crate::autons::do_nothing),
 			route!("PID testing", crate::autons::pid_testing),
-			route!("Match auton",crate::autons::match_auton),
+			route!("Match auton", crate::autons::match_auton),
 			route!("Testing", crate::autons::testing),
 		];
 

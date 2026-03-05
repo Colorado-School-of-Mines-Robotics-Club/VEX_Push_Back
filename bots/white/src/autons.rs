@@ -15,6 +15,8 @@ pub async fn do_nothing(_robot: &mut Robot) {
 }
 
 pub async fn match_auton(robot: &mut Robot) {
+	let matchload_line = 29.0;
+
 	let start_time = Instant::now();
 	// Basic setup.
 	_ = robot
@@ -49,9 +51,9 @@ pub async fn match_auton(robot: &mut Robot) {
 	robot.intake.run(IntakeState {
 		top: -1.0,
 		middle: -1.0,
-		bottom: -0.45,
+		bottom: -0.50,
 	});
-	sleep(Duration::from_millis(500)).await;
+	sleep(Duration::from_millis(1000)).await;
 	// sleep(Duration::from_secs(1)).await;
 	robot.intake.run(IntakeState::full_brake());
 
@@ -65,7 +67,7 @@ pub async fn match_auton(robot: &mut Robot) {
 		.await;
 
 	// Move to matchload aligned
-	let dist_x = (robot.drivetrain.tracking.position().x - 30.5).abs();
+	let dist_x = (robot.drivetrain.tracking.position().x - matchload_line).abs();
 	let dist = (dist_x / (robot.drivetrain.tracking.heading()).cos()).abs();
 
 	basic.drive_distance(&mut robot.drivetrain, -dist).await;
@@ -134,14 +136,14 @@ pub async fn match_auton(robot: &mut Robot) {
 		.set_state(PneumaticState::Contracted);
 	basic
 		.angular_controller
-		.set_kp(basic.angular_controller.kp() * 3.0);
+		.set_kp(basic.angular_controller.kp() * 3.05);
 	basic
 		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(75.0 + 180.0))
 		.await;
 	robot.intake.run(IntakeState::full_forward());
 	sleep(Duration::from_millis(1500)).await;
 
-	let dist_x = (robot.drivetrain.tracking.position().x - 30.5).abs();
+	let dist_x = (robot.drivetrain.tracking.position().x - matchload_line).abs();
 	let dist = (dist_x / (robot.drivetrain.tracking.heading()).cos()).abs();
 
 	basic.drive_distance(&mut robot.drivetrain, dist).await;
@@ -151,7 +153,11 @@ pub async fn match_auton(robot: &mut Robot) {
 		.await;
 	basic
 		.angular_controller
-		.set_kp(basic.angular_controller.kp() / 3.0);
+		.set_kp(basic.angular_controller.kp() / 3.05);
+
+	_ = robot.drivetrain.model.drive_arcade(-0.35, 0.0);
+	sleep(Duration::from_millis(750)).await;
+
 	_ = robot
 		.pneumatics
 		.front_bar
@@ -190,48 +196,15 @@ pub async fn match_auton(robot: &mut Robot) {
 	sleep(Duration::from_millis(250)).await;
 
 	// Go to park zone
-	basic
-		.angular_controller
-		.set_kp(basic.angular_controller.kp() * 2.3);
-	basic
-		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(180.0 + 45.0))
-		.await;
-	basic
-		.angular_controller
-		.set_kp(basic.angular_controller.kp() / 2.3);
-
-	basic
-		.drive_distance_at_heading(
-			&mut robot.drivetrain,
-			25.0,
-			Angle::from_degrees(180.0 + 30.0),
-		)
-		.await;
-
-	let park_start = Instant::now();
-	_ = robot.drivetrain.model.drive_arcade(0.75, 0.01);
-	while park_start.elapsed() < Duration::from_millis(1500)
-		&& robot
-			.drivetrain
-			.tracking
-			.position()
-			.distance(Vec2::new(-19.3, 25.1))
-			> 14.0
-	{
-		sleep(Duration::from_millis(10)).await;
-	}
-	_ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
-	{
-		let mut left_iter = robot.drivetrain.model.left.borrow_mut();
-		let mut right_iter = robot.drivetrain.model.right.borrow_mut();
-		for motor in left_iter
-			.as_mut()
-			.iter_mut()
-			.chain(right_iter.as_mut().iter_mut())
-		{
-			_ = motor.brake(BrakeMode::Hold);
-		}
-	}
+	// basic
+	// 	.angular_controller
+	// 	.set_kp(basic.angular_controller.kp() * 2.3);
+	// basic
+	// 	.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(180.0 + 45.0))
+	// 	.await;
+	// basic
+	// 	.angular_controller
+	// 	.set_kp(basic.angular_controller.kp() / 2.3);
 
 	println!("Done: {}s", start_time.elapsed().as_secs_f32());
 }

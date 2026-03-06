@@ -1,9 +1,8 @@
 use std::{
-	io::{self, BufRead, Read as _, Write as _, stdin},
+	io::{self, BufRead, stdin},
 	time::Duration,
 };
 
-use bytes::BytesMut;
 use vexide::{prelude::Peripherals, time::sleep};
 
 async fn read_line(buf: &mut String) -> io::Result<()> {

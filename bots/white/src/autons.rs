@@ -6,7 +6,7 @@ use evian::{
 	prelude::{Arcade, TracksHeading, TracksPosition},
 };
 use subsystems::{intake::IntakeState, pnemuatics::PneumaticState};
-use vexide::{smart::motor::BrakeMode, time::sleep};
+use vexide::time::sleep;
 
 use crate::robot::Robot;
 
@@ -25,7 +25,7 @@ pub async fn match_auton(robot: &mut Robot) {
 		.set_state(PneumaticState::Extended);
 
 	let mut basic = crate::control::BASIC_CONTROLLER;
-	let mut seeking = crate::control::SEEKING_CONTROLLER;
+	let mut _seeking = crate::control::SEEKING_CONTROLLER;
 
 	// Line up with the center goal
 	basic.drive_distance(&mut robot.drivetrain, 47.5).await;
@@ -212,7 +212,7 @@ pub async fn match_auton(robot: &mut Robot) {
 pub async fn pid_testing(robot: &mut Robot) {
 	println!("Pid testing!!!");
 
-	let mut basic = crate::control::BASIC_CONTROLLER;
+	let mut _basic = crate::control::BASIC_CONTROLLER;
 	let mut seeking = crate::control::SEEKING_CONTROLLER;
 	// seeking.linear_controller = Pid::new(0.0, 0.0, 0.0, None);
 
@@ -235,28 +235,11 @@ pub async fn pid_testing(robot: &mut Robot) {
 }
 
 #[allow(dead_code)]
-pub async fn testing(robot: &mut Robot) {
-	robot.imu.borrow_mut().calibrate().await.unwrap();
-	robot.coprocessor.calibrate().await.unwrap();
-	sleep(Duration::from_millis(500)).await;
-
-	loop {
-		let copro = robot.drivetrain.tracking.heading();
-		let imu = -robot.imu.borrow().heading().unwrap() + Angle::from_degrees(90.0);
-		println!(
-			"{}, {}, {}",
-			copro.wrapped_full().as_degrees(),
-			imu.wrapped_full().as_degrees(),
-			(copro - imu).as_degrees()
-		);
-		sleep(Duration::from_millis(500)).await;
-	}
-}
-
 pub struct StubSelector<R> {
 	route: Option<Route<R>>,
 }
 
+#[allow(dead_code)]
 impl<R> StubSelector<R> {
 	pub fn new<const N: usize>(selected: &'static str, routes: [Route<R>; N]) -> Self {
 		Self {

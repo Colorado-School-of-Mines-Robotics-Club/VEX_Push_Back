@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::rc::Rc;
 
 use autons::{prelude::SelectCompeteExt as _, route};
 use coprocessor::requests::{CalibrateRequest, OtosPosition, PingRequest};
@@ -17,7 +17,7 @@ use subsystems::{
 	pnemuatics::{AdiPneumatic, PneumaticState, PneumaticsSubsystem},
 	replay::ReplaySubsystem,
 };
-use vexide::prelude::*;
+use vexide::{prelude::*, sync::Mutex};
 use vexide_motorgroup::MotorGroup;
 
 #[cfg(not(feature = "ui"))]
@@ -33,7 +33,7 @@ pub struct Robot {
 	pub intake: IntakeSubsystem,
 	pub pneumatics: PneumaticsSubsystem,
 	pub replay: ReplaySubsystem,
-	pub imu: Rc<RefCell<InertialSensor>>,
+	pub imu: Rc<Mutex<InertialSensor>>,
 }
 
 impl Robot {
@@ -47,14 +47,19 @@ impl Robot {
 			},
 		)
 		.await;
-		let imu = Rc::new(RefCell::new(InertialSensor::new(peripherals.port_5)));
+		let imu = Rc::new(Mutex::new(InertialSensor::new(peripherals.port_5)));
 
-		let imu_clone = imu.clone();
-		vexide::task::spawn(async move {
-			imu_clone.borrow_mut().calibrate().await;
-			println!("IMU Calibrated")
-		})
-		.detach();
+		{
+			let imu = imu.clone();
+			vexide::task::spawn(async move {
+				if imu.lock().await.calibrate().await.is_ok() {
+					println!("IMU calibrated")
+				} else {
+					println!("IMU calibration failed")
+				}
+			})
+			.detach();
+		}
 
 		#[cfg(feature = "ui")]
 		let ui = {
@@ -64,8 +69,12 @@ impl Robot {
 				let coprocessor_clone = coprocessor_clone.clone();
 				let imu_clone = imu_clone.clone();
 				vexide::task::spawn(async move {
-					_ = coprocessor_clone.send_request(CalibrateRequest).await;
-					_ = imu_clone.borrow_mut().calibrate().await;
+					use std::future::join;
+
+					_ = join!(coprocessor_clone.send_request(CalibrateRequest), async {
+						imu_clone.lock().await.calibrate().await
+					})
+					.await;
 				})
 				.detach()
 			});
@@ -170,7 +179,6 @@ impl Robot {
 			route!("Do nothing", crate::autons::do_nothing),
 			route!("PID testing", crate::autons::pid_testing),
 			route!("Match auton", crate::autons::match_auton),
-			route!("Testing", crate::autons::testing),
 		];
 
 		#[cfg(feature = "ui")]

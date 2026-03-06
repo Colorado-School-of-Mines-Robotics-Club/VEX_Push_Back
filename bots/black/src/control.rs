@@ -38,7 +38,7 @@ pub const ANGULAR_PID: AngularPid = {
 // };
 pub const LATERAL_PID: Pid = {
 	let mut pid = Pid::new(0.00929, 0.00, 0.0005, Some(25.0));
-	// pid.set_output_limit(Some(0.60));
+	pid.set_output_limit(None);
 	pid
 };
 

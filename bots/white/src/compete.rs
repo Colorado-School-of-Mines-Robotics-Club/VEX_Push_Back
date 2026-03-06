@@ -29,8 +29,12 @@ impl SelectCompete for Robot {
 				}
 
 				if controller.button_y.is_now_pressed() {
-					_ = self.imu.borrow_mut().calibrate().await;
-					println!("IMU calibrated");
+					let imu = self.imu.clone();
+					vexide::task::spawn(async move {
+						_ = imu.lock().await.calibrate().await;
+						println!("IMU calibrated");
+					})
+					.detach();
 				}
 
 				// Run subsystems

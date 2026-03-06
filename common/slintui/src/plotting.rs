@@ -6,7 +6,6 @@ use std::{
 use evian::control::loops::Feedback;
 use plotters::{backend::RGBPixel, prelude::*};
 use slint::{ComponentHandle, Image, Rgb8Pixel, SharedPixelBuffer};
-use vexide::prelude::Display;
 
 use crate::App;
 

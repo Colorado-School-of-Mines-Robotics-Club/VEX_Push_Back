@@ -13,7 +13,7 @@ use coprocessor::{
 	vexide::CoprocessorSmartPort,
 };
 use shrewnit::{Degrees, Length, Radians};
-use vexide::{controller::ControllerState, prelude::InertialSensor, smart::SmartPort, time::sleep};
+use vexide::{controller::ControllerState, smart::SmartPort, time::sleep};
 
 use crate::{ControllableSubsystem, ControllerConfiguration};
 

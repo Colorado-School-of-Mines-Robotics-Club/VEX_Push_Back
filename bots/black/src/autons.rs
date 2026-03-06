@@ -2,11 +2,9 @@ use std::time::Duration;
 
 use autons::{Selector, simple::Route};
 use evian::{
-	math::{Angle, Vec2},
-	motion::basic,
+	math::Angle,
 	prelude::{Arcade, TracksHeading, TracksPosition},
 };
-use slintui::slint::platform::duration_until_next_timer_update;
 use subsystems::{intake::IntakeState, pnemuatics::PneumaticState};
 use vexide::time::sleep;
 
@@ -16,49 +14,6 @@ pub async fn do_nothing(_robot: &mut Robot) {
 	println!("Doing absolutely nothing!!!");
 }
 
-// Time based backup code, only use if the sensor breaks.
-
-/*
-
-pub async fn match_auton(robot: &mut Robot) {
-	// Robot goes to post and ejects its balls into the top beam.
-
-	robot.drivetrain.model.drive_arcade(-0.5, 0.0);
-	sleep(Duration::from_secs(2)).await;
-	robot.drivetrain.model.drive_arcade(0.0, 0.25);
-	sleep(Duration::from_millis(700)).await;
-	robot.intake.run(IntakeState {
-		top: 0.35,
-		middle: 1.0,
-		bottom: 1.0,
-	});
-	sleep(Duration::from_secs(2));
-	robot.intake.run(IntakeState::full_brake());
-
-	// Robot drives to the tower and takes the tower balls.
-
-	robot.drivetrain.model.drive_arcade(-0.50, 0.0);
-	sleep(Duration::from_secs(2)).await;
-	robot.drivetrain.model.drive_arcade(0.0, -0.25);
-	sleep(Duration::from_millis(700)).await;
-
-	// Robot drives back to the higher beam and ejects its balls.
-
-	robot.drivetrain.model.drive_arcade(-0.25, 0.0);
-	sleep(Duration::from_secs(2));
-	robot.intake.run(IntakeState {
-		top: 0.35,
-		middle: 1.0,
-		bottom: 1.0,
-	});
-	sleep(Duration::from_secs(2));
-	robot.intake.run(IntakeState::full_brake());
-
-}
-*/
-
-// Standard code from Leo.
-
 pub async fn match_auton(robot: &mut Robot) {
 	// Basic setup.
 	_ = robot
@@ -66,7 +21,7 @@ pub async fn match_auton(robot: &mut Robot) {
 		.extender
 		.set_state(PneumaticState::Extended);
 
-	let mut seeking = crate::control::SEEKING_CONTROLLER;
+	let mut _seeking = crate::control::SEEKING_CONTROLLER;
 
 	let mut basic = crate::control::BASIC_CONTROLLER;
 
@@ -145,32 +100,32 @@ pub async fn match_auton(robot: &mut Robot) {
 
 	robot.intake.run(IntakeState::full_brake());
 	println!("Done");
-	return;
 
-	_ = robot.pneumatics.flap.set_state(PneumaticState::Contracted);
+	// untested code below
+	// _ = robot.pneumatics.flap.set_state(PneumaticState::Contracted);
 
-	robot.intake.run(IntakeState::full_brake());
-	println!("Done");
-	return;
+	// robot.intake.run(IntakeState::full_brake());
+	// println!("Done");
+	// return;
 
-	basic
-		.angular_controller
-		.set_kp(basic.angular_controller.kp() * 1.1);
-	basic
-		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(270.0))
-		.await;
-	basic
-		.angular_controller
-		.set_kp(basic.angular_controller.kp() / 1.1);
+	// basic
+	// 	.angular_controller
+	// 	.set_kp(basic.angular_controller.kp() * 1.1);
+	// basic
+	// 	.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(270.0))
+	// 	.await;
+	// basic
+	// 	.angular_controller
+	// 	.set_kp(basic.angular_controller.kp() / 1.1);
 
-	println!("WOWOWOWOOWOWOW");
+	// println!("WOWOWOWOOWOWOW");
 }
 
 pub async fn pid_testing(robot: &mut Robot) {
 	println!("Pid testing!!!");
 
 	let mut basic = crate::control::BASIC_CONTROLLER;
-	let mut seeking = crate::control::SEEKING_CONTROLLER;
+	let mut _seeking = crate::control::SEEKING_CONTROLLER;
 
 	let start = robot.drivetrain.tracking.heading();
 
@@ -189,28 +144,11 @@ pub async fn pid_testing(robot: &mut Robot) {
 }
 
 #[allow(dead_code)]
-pub async fn testing(robot: &mut Robot) {
-	robot.imu.borrow_mut().calibrate().await.unwrap();
-	robot.coprocessor.calibrate().await.unwrap();
-	sleep(Duration::from_millis(500)).await;
-
-	loop {
-		let copro = robot.drivetrain.tracking.heading();
-		let imu = -robot.imu.borrow().heading().unwrap() + Angle::from_degrees(90.0);
-		println!(
-			"{}, {}, {}",
-			copro.wrapped_full().as_degrees(),
-			imu.wrapped_full().as_degrees(),
-			(copro - imu).as_degrees()
-		);
-		sleep(Duration::from_millis(500)).await;
-	}
-}
-
 pub struct StubSelector<R> {
 	route: Option<Route<R>>,
 }
 
+#[allow(dead_code)]
 impl<R> StubSelector<R> {
 	pub fn new<const N: usize>(selected: &'static str, routes: [Route<R>; N]) -> Self {
 		Self {

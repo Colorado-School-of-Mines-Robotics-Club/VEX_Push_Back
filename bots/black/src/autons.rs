@@ -148,7 +148,6 @@ pub async fn match_auton(robot: &mut Robot) {
 
 	sleep(Duration::from_millis(10)).await;
 
-	//basic.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(90.0)).await;
 	_ = robot.drivetrain.model.drive_arcade(-0.35, 0.0);
 	sleep(Duration::from_millis(1500)).await;
 
@@ -174,29 +173,7 @@ pub async fn match_auton(robot: &mut Robot) {
 		bottom: 1.0,
 	});
 	sleep(Duration::from_secs(2)).await;
-
-	// Experimental code from leo for parking.
-
-
-
-	// untested code below
-	// _ = robot.pneumatics.flap.set_state(PneumaticState::Contracted);
-
-	// robot.intake.run(IntakeState::full_brake());
-	// println!("Done");
-	// return;
-
-	// basic
-	// 	.angular_controller
-	// 	.set_kp(basic.angular_controller.kp() * 1.1);
-	// basic
-	// 	.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(270.0))
-	// 	.await;
-	// basic
-	// 	.angular_controller
-	// 	.set_kp(basic.angular_controller.kp() / 1.1);
-
-	// println!("WOWOWOWOOWOWOW");
+	
 }
 
 pub async fn pid_testing(robot: &mut Robot) {

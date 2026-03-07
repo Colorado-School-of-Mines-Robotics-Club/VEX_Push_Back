@@ -278,6 +278,13 @@ pub async fn pid_testing(robot: &mut Robot) {
 	)
 }
 
+pub async fn testing(robot: &mut Robot) {
+	robot.intake.set_unjam(true);
+	robot.intake.run(IntakeState::full_forward());
+	sleep(Duration::from_secs(5)).await;
+	robot.intake.set_unjam(false);
+}
+
 #[allow(dead_code)]
 pub struct StubSelector<R> {
 	route: Option<Route<R>>,

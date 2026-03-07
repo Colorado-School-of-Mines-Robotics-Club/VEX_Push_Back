@@ -81,7 +81,6 @@ impl CoprocessorSmartPort {
 		let buf = buf.freeze();
 
 		R::parse_response(&buf).map(|(_, d)| d).map_err(|_| {
-			// dbg!(e);
 			io::Error::new(
 				io::ErrorKind::InvalidData,
 				"decoded data was unable to be parsed correctly",

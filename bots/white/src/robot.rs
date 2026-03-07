@@ -114,22 +114,26 @@ impl Robot {
 			),
 			CoproTracking::new(coprocessor.data().clone(), imu.clone()),
 		);
-		let intake = IntakeSubsystem::new(IntakeMotors {
-			bottom: MotorGroup::new(vec![Motor::new(
-				peripherals.port_20,
-				Gearset::Blue,
-				Direction::Reverse,
-			)]),
-			middle: MotorGroup::new(vec![Motor::new(
-				peripherals.port_19,
-				Gearset::Blue,
-				Direction::Forward,
-			)]),
-			top: MotorGroup::new(vec![
-				Motor::new(peripherals.port_18, Gearset::Blue, Direction::Forward),
-				Motor::new(peripherals.port_12, Gearset::Blue, Direction::Reverse),
-			]),
-		});
+		let intake = IntakeSubsystem::new(
+			IntakeMotors {
+				bottom: MotorGroup::new(vec![Motor::new(
+					peripherals.port_20,
+					Gearset::Blue,
+					Direction::Reverse,
+				)]),
+				middle: MotorGroup::new(vec![Motor::new(
+					peripherals.port_19,
+					Gearset::Blue,
+					Direction::Forward,
+				)]),
+				top: MotorGroup::new(vec![
+					Motor::new(peripherals.port_18, Gearset::Blue, Direction::Forward),
+					Motor::new(peripherals.port_12, Gearset::Blue, Direction::Reverse),
+				]),
+			},
+			None,
+			None,
+		);
 		let trunk = PneumaticsSubsystem::new(
 			// Front bar
 			AdiPneumatic {
@@ -149,11 +153,6 @@ impl Robot {
 			// Outtake adjuster
 			AdiPneumatic {
 				port: AdiDigitalOut::new(peripherals.adi_d),
-				high_mode: PneumaticState::Extended,
-			},
-			// Park mech
-			AdiPneumatic {
-				port: AdiDigitalOut::new(peripherals.adi_e),
 				high_mode: PneumaticState::Extended,
 			},
 		);
@@ -179,6 +178,7 @@ impl Robot {
 			route!("Do nothing", crate::autons::do_nothing),
 			route!("PID testing", crate::autons::pid_testing),
 			route!("Match auton", crate::autons::match_auton),
+			route!("Testing", crate::autons::testing),
 		];
 
 		#[cfg(feature = "ui")]

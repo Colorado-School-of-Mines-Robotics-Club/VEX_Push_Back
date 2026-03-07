@@ -65,11 +65,15 @@ pub async fn match_auton(robot: &mut Robot) {
 	basic.drive_distance(&mut robot.drivetrain, dist).await;
 
 	// Turn to matchload
-	basic.angular_controller.set_kp(basic.angular_controller.kp() * 1.2);
+	basic
+		.angular_controller
+		.set_kp(basic.angular_controller.kp() * 1.2);
 	basic
 		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(90.0))
 		.await;
-	basic.angular_controller.set_kp(basic.angular_controller.kp() / 1.2);
+	basic
+		.angular_controller
+		.set_kp(basic.angular_controller.kp() / 1.2);
 
 	dbg!(robot.drivetrain.tracking.heading().as_degrees());
 
@@ -106,7 +110,10 @@ pub async fn match_auton(robot: &mut Robot) {
 		bottom: 0.0,
 	});
 	_ = robot.pneumatics.flap.set_state(PneumaticState::Extended);
-	_ = robot.pneumatics.outtake_adjuster.set_state(PneumaticState::Extended);
+	_ = robot
+		.pneumatics
+		.outtake_adjuster
+		.set_state(PneumaticState::Extended);
 	sleep(Duration::from_secs(2)).await;
 
 	// Go back, outtake red balls
@@ -137,7 +144,10 @@ pub async fn match_auton(robot: &mut Robot) {
 	// Leo's and Noah's test code, not perfect but will score a few points.
 	// Once code is finalized the bot will go back to the tower and grab the balls again.
 
-	_ = robot.pneumatics.front_bar.set_state(PneumaticState::Extended);
+	_ = robot
+		.pneumatics
+		.front_bar
+		.set_state(PneumaticState::Extended);
 	_ = robot.pneumatics.flap.set_state(PneumaticState::Contracted);
 	sleep(Duration::from_millis(800)).await;
 	_ = robot.drivetrain.model.drive_arcade(0.30, 0.0);
@@ -153,7 +163,10 @@ pub async fn match_auton(robot: &mut Robot) {
 
 	// Robot drives up to the high beam and ejects its balls.
 
-	_ = robot.pneumatics.outtake_adjuster.set_state(PneumaticState::Extended);
+	_ = robot
+		.pneumatics
+		.outtake_adjuster
+		.set_state(PneumaticState::Extended);
 	_ = robot.pneumatics.flap.set_state(PneumaticState::Extended);
 	robot.intake.run(IntakeState {
 		top: 1.0,
@@ -173,7 +186,6 @@ pub async fn match_auton(robot: &mut Robot) {
 		bottom: 1.0,
 	});
 	sleep(Duration::from_secs(2)).await;
-	
 }
 
 pub async fn pid_testing(robot: &mut Robot) {
@@ -196,6 +208,13 @@ pub async fn pid_testing(robot: &mut Robot) {
 		diff = (end - start).as_degrees(),
 		error = (end - target).wrapped_full().as_degrees()
 	)
+}
+
+pub async fn park_test(robot: &mut Robot) {
+	loop {
+		dbg!(robot.intake.park_sensor().unwrap().proximity().unwrap());
+		sleep(Duration::from_millis(250)).await;
+	}
 }
 
 #[allow(dead_code)]

@@ -26,7 +26,7 @@ pub async fn match_auton(robot: &mut Robot) {
 	let mut basic = crate::control::BASIC_CONTROLLER;
 
 	// Move to center goal position
-	basic.drive_distance(&mut robot.drivetrain, -46.0).await;
+	basic.drive_distance(&mut robot.drivetrain, -45.0).await;
 
 	// Turn towards center goal
 	basic
@@ -50,7 +50,7 @@ pub async fn match_auton(robot: &mut Robot) {
 		middle: 1.0,
 		bottom: 1.0,
 	});
-	sleep(Duration::from_secs(1)).await;
+	sleep(Duration::from_secs(2)).await;
 	robot.intake.run(IntakeState::full_brake());
 	_ = robot.pneumatics.flap.set_state(PneumaticState::Contracted);
 
@@ -59,15 +59,17 @@ pub async fn match_auton(robot: &mut Robot) {
 		.await;
 
 	// Calculate distance from line
-	let dist_x = (robot.drivetrain.tracking.position().x - 31.5).abs();
+	let dist_x = (robot.drivetrain.tracking.position().x - 31.0).abs();
 	let dist = (dist_x / (robot.drivetrain.tracking.heading()).cos()).abs();
 
 	basic.drive_distance(&mut robot.drivetrain, dist).await;
 
 	// Turn to matchload
+	basic.angular_controller.set_kp(basic.angular_controller.kp() * 1.2);
 	basic
-		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(91.0))
+		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(90.0))
 		.await;
+	basic.angular_controller.set_kp(basic.angular_controller.kp() / 1.2);
 
 	dbg!(robot.drivetrain.tracking.heading().as_degrees());
 
@@ -98,10 +100,20 @@ pub async fn match_auton(robot: &mut Robot) {
 	_ = robot.pneumatics.flap.set_state(PneumaticState::Extended);
 	sleep(Duration::from_secs(2)).await;
 
+	// Go back, outtake red balls
+	basic.drive_distance(&mut robot.drivetrain, 12.0).await;
+	robot.intake.run(IntakeState {
+		top: 1.0,
+		middle: 1.0,
+		bottom: 1.0,
+	});
+	sleep(Duration::from_secs(2)).await;
+
+
 	robot.intake.run(IntakeState::full_brake());
 	println!("Done");
 
-	// untested code below
+	// untested code below, started by tyler. Finalized by Leo.
 	// _ = robot.pneumatics.flap.set_state(PneumaticState::Contracted);
 
 	// robot.intake.run(IntakeState::full_brake());

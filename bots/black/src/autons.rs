@@ -217,6 +217,13 @@ pub async fn park_test(robot: &mut Robot) {
 	}
 }
 
+pub async fn unjam_test(robot: &mut Robot) {
+	robot
+		.intake
+		.run_unjamming(IntakeState::full_forward(), Duration::from_secs(5))
+		.await;
+}
+
 #[allow(dead_code)]
 pub struct StubSelector<R> {
 	route: Option<Route<R>>,

@@ -178,6 +178,7 @@ impl Robot {
 			route!("PID testing", crate::autons::pid_testing),
 			route!("Match auton", crate::autons::match_auton),
 			route!("Park testing", crate::autons::park_test),
+			route!("Unjam testing", crate::autons::unjam_test),
 		];
 
 		#[cfg(feature = "ui")]

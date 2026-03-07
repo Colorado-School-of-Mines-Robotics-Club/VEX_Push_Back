@@ -144,10 +144,7 @@ impl ControllableSubsystem for PneumaticsSubsystem {
 	fn state(&self) -> Option<ciborium::Value> {
 		Some(
 			ciborium::Value::serialized(&PneumaticsSubsystemState {
-				park: self
-					.park
-					.state()
-					.unwrap_or(PneumaticState::Contracted),
+				park: self.park.state().unwrap_or(PneumaticState::Contracted),
 				front_bar: self.front_bar.state().unwrap_or(PneumaticState::Contracted),
 				extender: self.extender.state().unwrap_or(PneumaticState::Contracted),
 				flap: self.flap.state().unwrap_or(PneumaticState::Contracted),
@@ -188,6 +185,16 @@ impl ControllableSubsystem for PneumaticsSubsystem {
 			&& let Ok(state) = self.park.state()
 		{
 			_ = self.park.set_state(!state);
+		}
+
+		if controller.button_power.is_now_pressed() {
+			_ = self.set_state(PneumaticsSubsystemState {
+				extender: PneumaticState::Contracted,
+				flap: PneumaticState::Extended,
+				front_bar: PneumaticState::Contracted,
+				outtake_adjuster: PneumaticState::Contracted,
+				park: PneumaticState::Contracted,
+			})
 		}
 	}
 }

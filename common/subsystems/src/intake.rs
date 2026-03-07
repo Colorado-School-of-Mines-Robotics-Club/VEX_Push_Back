@@ -1,4 +1,4 @@
-use std::ops::Mul;
+use std::{ops::Mul, time::Instant};
 
 use serde::{Deserialize, Serialize};
 use vexide::controller::ControllerState;
@@ -61,6 +61,7 @@ impl Mul<f64> for IntakeState {
 pub struct IntakeSubsystem {
 	motors: IntakeMotors,
 	state: IntakeState,
+	unjam_start: Option<Instant>,
 }
 
 impl IntakeSubsystem {
@@ -68,10 +69,21 @@ impl IntakeSubsystem {
 		Self {
 			motors,
 			state: IntakeState::full_brake(),
+			unjam_start: None,
 		}
 	}
 
-	pub fn run(&mut self, state: IntakeState) {
+	pub fn run(&mut self, mut state: IntakeState) {
+		let coefficient = if let Some(unjam_start) = self.unjam_start
+			&& (unjam_start.elapsed().as_millis() / 500 * 500) % 4 == 0
+		// Unjam by going reverse every 1/4 500ms
+		{
+			-1.0
+		} else {
+			1.0
+		};
+		state = state * coefficient;
+
 		_ = self
 			.motors
 			.top
@@ -84,6 +96,10 @@ impl IntakeSubsystem {
 			.motors
 			.bottom
 			.set_voltage(state.bottom * self.motors.bottom.max_voltage());
+	}
+
+	pub fn set_unjam(&mut self, state: bool) {
+		self.unjam_start = if state { Some(Instant::now()) } else { None };
 	}
 }
 

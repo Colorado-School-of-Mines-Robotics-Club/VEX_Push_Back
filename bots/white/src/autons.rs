@@ -278,11 +278,10 @@ pub async fn pid_testing(robot: &mut Robot) {
 	)
 }
 
-pub async fn testing(robot: &mut Robot) {
-	robot.intake.set_unjam(true);
-	robot.intake.run(IntakeState::full_forward());
-	sleep(Duration::from_secs(5)).await;
-	robot.intake.set_unjam(false);
+pub async fn skills_auton(robot: &mut Robot) {
+	_ = robot.drivetrain.model.drive_arcade(0.4, 0.0);
+	sleep(Duration::from_millis(1500)).await;
+	_ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
 }
 
 #[allow(dead_code)]

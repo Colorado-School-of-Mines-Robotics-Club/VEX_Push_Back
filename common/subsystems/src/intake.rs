@@ -172,6 +172,10 @@ impl IntakeSubsystem {
 	pub fn park_sensor(&self) -> Option<&OpticalSensor> {
 		self.park_sensor.as_ref()
 	}
+
+	pub fn park_piston(&mut self) -> Option<&mut AdiPneumatic> {
+		self.park_piston.as_mut()
+	}
 }
 
 impl ControllableSubsystem for IntakeSubsystem {

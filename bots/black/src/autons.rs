@@ -6,7 +6,7 @@ use evian::{
 	prelude::{Arcade, TracksHeading, TracksPosition},
 };
 use subsystems::{intake::IntakeState, pnemuatics::PneumaticState};
-use vexide::time::sleep;
+use vexide::{smart::motor::BrakeMode, time::sleep};
 
 use crate::robot::Robot;
 
@@ -186,6 +186,21 @@ pub async fn match_auton(robot: &mut Robot) {
 		bottom: 1.0,
 	});
 	sleep(Duration::from_secs(2)).await;
+}
+
+pub async fn skills_auton(robot: &mut Robot) {
+	// Drive back to be technically parked
+	_ = robot.drivetrain.model.drive_arcade(-0.20, 0.0);
+	sleep(Duration::from_millis(100)).await;
+	_ = robot.drivetrain.brake(BrakeMode::Hold);
+	sleep(Duration::from_millis(1000)).await;
+
+	// Park
+	_ = robot
+		.intake
+		.park_piston()
+		.unwrap()
+		.set_state(PneumaticState::Extended);
 }
 
 pub async fn pid_testing(robot: &mut Robot) {

@@ -177,6 +177,7 @@ impl Robot {
 			route!("Do nothing", crate::autons::do_nothing),
 			route!("PID testing", crate::autons::pid_testing),
 			route!("Match auton", crate::autons::match_auton),
+			route!("Skills auton", crate::autons::skills_auton),
 			route!("Park testing", crate::autons::park_test),
 			route!("Unjam testing", crate::autons::unjam_test),
 		];

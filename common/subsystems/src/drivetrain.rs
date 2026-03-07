@@ -1,12 +1,12 @@
 use std::ops::{Deref, DerefMut};
 
 use evian::{
-	drivetrain::model::DrivetrainModel,
+	drivetrain::model::{Differential, DrivetrainModel},
 	math::desaturate,
 	prelude::{Drivetrain, Tank},
 	tracking::Tracking,
 };
-use vexide::controller::ControllerState;
+use vexide::{controller::ControllerState, smart::motor::BrakeMode};
 
 use crate::{ControllableSubsystem, ControllerConfiguration};
 
@@ -34,6 +34,16 @@ impl<M: Tank, T: Tracking> DrivetrainSubsystem<M, T> {
 		let [left, right] = desaturate(self.state.into(), 1_f64);
 
 		self.drivetrain.model.drive_tank(left, right)
+	}
+}
+
+impl<T: Tracking> DrivetrainSubsystem<Differential, T> {
+	pub fn brake(&mut self, mode: BrakeMode) {
+		let mut left = self.model.left.borrow_mut();
+		let mut right = self.model.right.borrow_mut();
+		for motor in left.as_mut().iter_mut().chain(right.as_mut().iter_mut()) {
+			_ = motor.brake(mode);
+		}
 	}
 }
 

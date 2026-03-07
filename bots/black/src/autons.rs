@@ -39,7 +39,7 @@ pub async fn match_auton(robot: &mut Robot) {
 	_ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
 
 	_ = robot.drivetrain.model.drive_arcade(0.17, 0.0);
-	sleep(Duration::from_millis(500)).await;
+	sleep(Duration::from_millis(300)).await;
 	_ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
 
 	// Robot intake runs and ejects the balls into the center goal.
@@ -87,8 +87,16 @@ pub async fn match_auton(robot: &mut Robot) {
 	robot.intake.run(IntakeState::full_forward());
 	sleep(Duration::from_secs(3)).await;
 
+	robot.intake.run(IntakeState {
+		top: 1.0,
+		middle: 1.0,
+		bottom: 0.0,
+	});
+	sleep(Duration::from_millis(10)).await;
+	robot.intake.run(IntakeState::full_brake());
+
 	// Drive to long goal
-	_ = robot.drivetrain.model.drive_arcade(-0.35, -0.01);
+	_ = robot.drivetrain.model.drive_arcade(-0.35, 0.00);
 	sleep(Duration::from_millis(1500)).await;
 
 	// Outtake into long goal
@@ -98,6 +106,7 @@ pub async fn match_auton(robot: &mut Robot) {
 		bottom: 0.0,
 	});
 	_ = robot.pneumatics.flap.set_state(PneumaticState::Extended);
+	_ = robot.pneumatics.outtake_adjuster.set_state(PneumaticState::Extended);
 	sleep(Duration::from_secs(2)).await;
 
 	// Go back, outtake red balls
@@ -108,12 +117,69 @@ pub async fn match_auton(robot: &mut Robot) {
 		bottom: 1.0,
 	});
 	sleep(Duration::from_secs(2)).await;
-
+	robot.intake.run(IntakeState {
+		top: -1.0,
+		middle: -1.0,
+		bottom: -1.0,
+	});
+	sleep(Duration::from_millis(100)).await;
+	basic.drive_distance(&mut robot.drivetrain, 12.0).await;
+	robot.intake.run(IntakeState {
+		top: 1.0,
+		middle: 1.0,
+		bottom: 1.0,
+	});
+	sleep(Duration::from_secs(1)).await;
 
 	robot.intake.run(IntakeState::full_brake());
 	println!("Done");
 
-	// untested code below, started by tyler. Finalized by Leo.
+	// Leo's and Noah's test code, not perfect but will score a few points.
+	// Once code is finalized the bot will go back to the tower and grab the balls again.
+
+	_ = robot.pneumatics.front_bar.set_state(PneumaticState::Extended);
+	_ = robot.pneumatics.flap.set_state(PneumaticState::Contracted);
+	sleep(Duration::from_millis(800)).await;
+	_ = robot.drivetrain.model.drive_arcade(0.30, 0.0);
+	robot.intake.run(IntakeState::full_forward());
+	sleep(Duration::from_secs(3)).await;
+
+	_ = robot.drivetrain.model.drive_arcade(0.0, 100.0);
+
+	sleep(Duration::from_millis(10)).await;
+
+	//basic.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(90.0)).await;
+	_ = robot.drivetrain.model.drive_arcade(-0.35, 0.0);
+	sleep(Duration::from_millis(1500)).await;
+
+	// Robot drives up to the high beam and ejects its balls.
+
+	_ = robot.pneumatics.outtake_adjuster.set_state(PneumaticState::Extended);
+	_ = robot.pneumatics.flap.set_state(PneumaticState::Extended);
+	robot.intake.run(IntakeState {
+		top: 1.0,
+		middle: 1.0,
+		bottom: 1.0,
+	});
+	sleep(Duration::from_secs(2)).await;
+	robot.intake.run(IntakeState {
+		top: -1.0,
+		middle: -1.0,
+		bottom: -1.0,
+	});
+	sleep(Duration::from_millis(100)).await;
+	robot.intake.run(IntakeState {
+		top: 1.0,
+		middle: 1.0,
+		bottom: 1.0,
+	});
+	sleep(Duration::from_secs(2)).await;
+
+	// Experimental code from leo for parking.
+
+
+
+	// untested code below
 	// _ = robot.pneumatics.flap.set_state(PneumaticState::Contracted);
 
 	// robot.intake.run(IntakeState::full_brake());

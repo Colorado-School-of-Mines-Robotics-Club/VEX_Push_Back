@@ -22,7 +22,7 @@ pub struct PneumaticsSubsystem {
 	pub extender: AdiPneumatic,
 	pub flap: AdiPneumatic,
 	pub outtake_adjuster: AdiPneumatic,
-	pub park: Option<AdiPneumatic>,
+	pub park: AdiPneumatic,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Ord, Eq, Serialize, Deserialize, Default)]
@@ -95,7 +95,7 @@ impl PneumaticsSubsystem {
 		extender: AdiPneumatic,
 		flap: AdiPneumatic,
 		outtake_adjuster: AdiPneumatic,
-		park: Option<AdiPneumatic>,
+		park: AdiPneumatic,
 	) -> Self {
 		Self {
 			front_bar,
@@ -107,9 +107,7 @@ impl PneumaticsSubsystem {
 	}
 
 	pub fn set_state(&mut self, state: PneumaticsSubsystemState) -> Result<(), PortError> {
-		if let Some(park) = self.park.as_mut() {
-			park.set_state(state.park)?
-		};
+		self.park.set_state(state.park)?;
 		self.front_bar.set_state(state.front_bar)?;
 		self.extender.set_state(state.extender)?;
 		self.flap.set_state(state.flap)?;
@@ -119,9 +117,7 @@ impl PneumaticsSubsystem {
 	}
 
 	pub async fn initialize(&mut self) {
-		if let Some(park) = self.park.as_mut() {
-			_ = park.set_state(PneumaticState::Contracted);
-		};
+		_ = self.park.set_state(PneumaticState::Contracted);
 		_ = self.front_bar.set_state(PneumaticState::Contracted);
 		_ = self.extender.set_state(PneumaticState::Extended);
 		_ = self.outtake_adjuster.set_state(PneumaticState::Extended);
@@ -150,8 +146,7 @@ impl ControllableSubsystem for PneumaticsSubsystem {
 			ciborium::Value::serialized(&PneumaticsSubsystemState {
 				park: self
 					.park
-					.as_ref()
-					.and_then(|p| p.state().ok())
+					.state()
 					.unwrap_or(PneumaticState::Contracted),
 				front_bar: self.front_bar.state().unwrap_or(PneumaticState::Contracted),
 				extender: self.extender.state().unwrap_or(PneumaticState::Contracted),
@@ -190,10 +185,9 @@ impl ControllableSubsystem for PneumaticsSubsystem {
 		}
 
 		if controller.button_down.is_now_pressed()
-			&& let Some(park) = self.park.as_mut()
-			&& let Ok(state) = park.state()
+			&& let Ok(state) = self.park.state()
 		{
-			_ = park.set_state(!state);
+			_ = self.park.set_state(!state);
 		}
 	}
 }

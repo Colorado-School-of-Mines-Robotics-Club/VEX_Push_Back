@@ -26,7 +26,7 @@ pub async fn match_auton(robot: &mut Robot) {
 	let mut basic = crate::control::BASIC_CONTROLLER;
 
 	// Move to center goal position
-	basic.drive_distance(&mut robot.drivetrain, -45.0).await;
+	basic.drive_distance(&mut robot.drivetrain, -43.5).await;
 
 	// Turn towards center goal
 	basic
@@ -69,7 +69,7 @@ pub async fn match_auton(robot: &mut Robot) {
 		.angular_controller
 		.set_kp(basic.angular_controller.kp() * 1.2);
 	basic
-		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(90.0))
+		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(89.5))
 		.await;
 	basic
 		.angular_controller
@@ -100,7 +100,7 @@ pub async fn match_auton(robot: &mut Robot) {
 	robot.intake.run(IntakeState::full_brake());
 
 	// Drive to long goal
-	_ = robot.drivetrain.model.drive_arcade(-0.35, 0.00);
+	_ = robot.drivetrain.model.drive_arcade(-0.35, -0.007);
 	sleep(Duration::from_millis(1500)).await;
 
 	// Outtake into long goal
@@ -130,16 +130,27 @@ pub async fn match_auton(robot: &mut Robot) {
 		bottom: -1.0,
 	});
 	sleep(Duration::from_millis(100)).await;
-	basic.drive_distance(&mut robot.drivetrain, 12.0).await;
 	robot.intake.run(IntakeState {
 		top: 1.0,
 		middle: 1.0,
 		bottom: 1.0,
 	});
+	basic.drive_distance(&mut robot.drivetrain, 12.0).await;
 	sleep(Duration::from_secs(1)).await;
 
 	robot.intake.run(IntakeState::full_brake());
-	println!("Done");
+
+	while let error =
+		(robot.drivetrain.tracking.heading().wrapped_full() - Angle::from_degrees(90.0))
+		&& error.abs() > Angle::from_degrees(1.0)
+	{
+		_ = robot
+			.drivetrain
+			.model
+			.drive_arcade(0.0, 0.12 * error.signum());
+		sleep(Duration::from_millis(5)).await;
+	}
+	robot.drivetrain.brake(BrakeMode::Hold);
 
 	// Leo's and Noah's test code, not perfect but will score a few points.
 	// Once code is finalized the bot will go back to the tower and grab the balls again.

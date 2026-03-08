@@ -279,9 +279,11 @@ pub async fn pid_testing(robot: &mut Robot) {
 }
 
 pub async fn skills_auton(robot: &mut Robot) {
+	robot.intake.run(IntakeState::full_forward());
 	_ = robot.drivetrain.model.drive_arcade(0.4, 0.0);
-	sleep(Duration::from_millis(1500)).await;
+	sleep(Duration::from_millis(1250)).await;
 	_ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
+	sleep(Duration::from_secs(3)).await;
 }
 
 #[allow(dead_code)]

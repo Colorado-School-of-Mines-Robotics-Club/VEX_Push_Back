@@ -155,6 +155,11 @@ impl Robot {
 				port: AdiDigitalOut::new(peripherals.adi_d),
 				high_mode: PneumaticState::Extended,
 			},
+			// Wing
+			Some(AdiPneumatic {
+				port: AdiDigitalOut::new(peripherals.adi_e),
+				high_mode: PneumaticState::Contracted,
+			}),
 		);
 		let replay = ReplaySubsystem::new();
 

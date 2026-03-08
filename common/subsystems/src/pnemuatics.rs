@@ -14,6 +14,7 @@ pub struct PneumaticsSubsystemState {
 	extender: PneumaticState,
 	flap: PneumaticState,
 	outtake_adjuster: PneumaticState,
+	wing: PneumaticState,
 }
 
 pub struct PneumaticsSubsystem {
@@ -21,6 +22,7 @@ pub struct PneumaticsSubsystem {
 	pub extender: AdiPneumatic,
 	pub flap: AdiPneumatic,
 	pub outtake_adjuster: AdiPneumatic,
+	pub wing: Option<AdiPneumatic>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Ord, Eq, Serialize, Deserialize, Default)]
@@ -93,12 +95,14 @@ impl PneumaticsSubsystem {
 		extender: AdiPneumatic,
 		flap: AdiPneumatic,
 		outtake_adjuster: AdiPneumatic,
+		wing: Option<AdiPneumatic>,
 	) -> Self {
 		Self {
 			front_bar,
 			extender,
 			flap,
 			outtake_adjuster,
+			wing,
 		}
 	}
 
@@ -145,6 +149,11 @@ impl ControllableSubsystem for PneumaticsSubsystem {
 					.outtake_adjuster
 					.state()
 					.unwrap_or(PneumaticState::Contracted),
+				wing: self
+					.wing
+					.as_ref()
+					.and_then(|p| p.state().ok())
+					.unwrap_or(PneumaticState::Extended),
 			})
 			.expect("Serializing state enum should succeed"),
 		)
@@ -174,12 +183,20 @@ impl ControllableSubsystem for PneumaticsSubsystem {
 			_ = self.front_bar.set_state(!state);
 		}
 
+		if controller.button_down.is_now_pressed()
+			&& let Some(wing) = &mut self.wing
+			&& let Ok(state) = wing.state()
+		{
+			_ = wing.set_state(!state);
+		}
+
 		if controller.button_power.is_now_pressed() {
 			_ = self.set_state(PneumaticsSubsystemState {
 				extender: PneumaticState::Contracted,
 				flap: PneumaticState::Extended,
 				front_bar: PneumaticState::Contracted,
 				outtake_adjuster: PneumaticState::Contracted,
+				wing: PneumaticState::Extended,
 			})
 		}
 	}

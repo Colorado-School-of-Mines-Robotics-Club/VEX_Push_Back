@@ -1,0 +1,16 @@
+[package]
+name = "vexide-rand"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+vexide = { workspace = true }
+vex-sdk = "0.28.0"
+getrandom = "0.4.2"
+rand_pcg = "0.10.1"
+
+[dev-dependencies]
+vex-sdk-mock = "0.1.0"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(getrandom_backend, values("extern_impl"))'] }

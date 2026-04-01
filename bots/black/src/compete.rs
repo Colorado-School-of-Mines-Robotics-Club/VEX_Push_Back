@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{fs::File, io::Write, time::Duration};
 
 use ::autons::prelude::SelectCompete;
 use subsystems::ControllableSubsystem;
@@ -17,9 +17,18 @@ impl SelectCompete for Robot {
 			.set_text(self.configuration.as_str(), 1, 1)
 			.await;
 
+		// let mut profiling = None;
 		let mut i: usize = 0;
 		loop {
 			if let Ok(controller) = self.controller.state() {
+				// if controller.button_right.is_now_pressed() {
+				// 	profiling = Some(File::create("profile.txt").unwrap());
+				// }
+
+				// if let Some(file) = &mut profiling {
+				// 	file.write(format!("{},{}\n", controller.left_stick, ).as_bytes()).unwrap();
+				// }
+
 				if controller.button_up.is_now_pressed() {
 					self.configuration = self.configuration.next();
 					_ = self

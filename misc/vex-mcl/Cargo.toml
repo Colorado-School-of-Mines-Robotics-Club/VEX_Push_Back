@@ -1,9 +1,11 @@
 [package]
-name = "evian-extra"
+name = "vex-mcl"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 evian = { workspace = true }
-nalgebra = "0.34.1"
 vexide = { workspace = true }
+shrewnit = { workspace = true }
+rand_distr = "0.6.0"
+rand = "0.10.0"

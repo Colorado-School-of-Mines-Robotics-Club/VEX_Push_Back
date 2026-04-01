@@ -1,2 +1,1 @@
-pub mod boomerang;
 pub mod ltv_unicycle;

@@ -1,12 +1,19 @@
-use std::time::Duration;
+use std::{
+	f64::consts::TAU,
+	io::Write,
+	time::{Duration, Instant},
+};
 
 use autons::{Selector, simple::Route};
 use evian::{
-	math::Angle,
-	prelude::{Arcade, TracksHeading, TracksPosition},
+	math::{Angle, Vec2},
+	prelude::{Arcade, Tank, Tolerances, TracksForwardTravel, TracksHeading, TracksPosition},
 };
+// use evian_extra::{
+// 	control::ltv_unicycle::LTVUnicycleController, motion::ltv_unicycle::LTVUnicycleMotion,
+// };
 use subsystems::{intake::IntakeState, pnemuatics::PneumaticState};
-use vexide::{smart::motor::BrakeMode, time::sleep};
+use vexide::{prelude::Motor, smart::motor::BrakeMode, time::sleep};
 
 use crate::robot::Robot;
 
@@ -248,6 +255,43 @@ pub async fn unjam_test(robot: &mut Robot) {
 		.intake
 		.run_unjamming(IntakeState::full_forward(), Duration::from_secs(5))
 		.await;
+}
+
+pub async fn motion_profile(robot: &mut Robot) {
+	let mut file = std::fs::File::create("profiling.txt").unwrap();
+	robot.coprocessor.calibrate().await.unwrap();
+	sleep(Duration::from_secs(1)).await;
+
+	let max_voltage = 0.5;
+	let time = 5.0;
+
+	_ = robot.drivetrain.model.drive_tank(0.0, 0.0);
+	let mut last_voltage = 0.0;
+	let start = Instant::now();
+	loop {
+		file.write_all(
+			format!(
+				"{last_voltage},{}\n",
+				robot.drivetrain.tracking.forward_travel()
+			)
+			.as_bytes(),
+		)
+		.unwrap();
+
+		let voltage = max_voltage * f64::sin(TAU / time * start.elapsed().as_secs_f64());
+		_ = robot.drivetrain.model.drive_tank(voltage, voltage);
+		last_voltage = voltage;
+
+		if start.elapsed() > Duration::from_secs_f64(time) {
+			_ = robot.drivetrain.model.drive_tank(0.0, 0.0);
+			break;
+		}
+
+		sleep(Duration::from_millis(10)).await;
+	}
+	sleep(Duration::from_millis(10)).await;
+
+	file.flush().unwrap();
 }
 
 #[allow(dead_code)]

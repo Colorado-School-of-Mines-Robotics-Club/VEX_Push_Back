@@ -17,6 +17,7 @@ vexide-motorgroup = { workspace = true }
 autons = { workspace = true }
 subsystems = { path = "../../common/subsystems" }
 coprocessor = { path = "../../coprocessor/brain" }
+# evian-extra = { path = "../../misc/evian-extra" }
 slintui = { path = "../../common/slintui", optional = true }
 
 [features]

@@ -1,7 +1,6 @@
 [workspace]
 resolver = "3"
 members = ["bots/*", "common/*", "coprocessor/brain", "misc/*"]
-exclude = ["misc/evian-extra"]
 
 [workspace.dependencies]
 vexide = { version = "0.8.0", features = ["full", "vex-sdk-jumptable", "vex-sdk-mock"] }

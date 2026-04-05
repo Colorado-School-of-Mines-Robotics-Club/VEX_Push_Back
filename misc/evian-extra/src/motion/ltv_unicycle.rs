@@ -49,16 +49,16 @@ impl LTVUnicycleMotion {
 				return;
 			}
 
-			// let signal = controller.update(
-			// 	vector![current_pose.x, current_pose.y, current_heading.as_radians()],
-			// 	vector![point.x, point.y, heading.as_radians()],
-			// 	last_update.elapsed(),
-			// );
-			// let rpms = signal / std::f64::consts::TAU * 60.0;
+			let signal = controller.update(
+				vector![current_pose.x, current_pose.y, current_heading.as_radians()],
+				vector![point.x, point.y, heading.as_radians()],
+				last_update.elapsed(),
+			);
+			let rpms = signal / std::f64::consts::TAU * 60.0;
 
-			// _ = drivetrain
-			// 	.model
-			// 	.drive_tank_velocity(rpms.x as i32, rpms.y as i32);
+			_ = drivetrain
+				.model
+				.drive_tank_velocity(rpms.x as i32, rpms.y as i32);
 
 			last_update = Instant::now();
 			sleep(Duration::from_millis(10)).await;

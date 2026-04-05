@@ -6,13 +6,6 @@
             url = "github:oxalica/rust-overlay";
             inputs.nixpkgs.follows = "nixpkgs";
         };
-        cargo-v5 = {
-            url = "github:vexide/cargo-v5";
-            inputs = {
-                nixpkgs.follows = "nixpkgs";
-                rust-overlay.follows = "rust-overlay";
-            };
-        };
         treefmt-nix = {
             url = "github:numtide/treefmt-nix";
             inputs.nixpkgs.follows = "nixpkgs";
@@ -25,7 +18,6 @@
             nixpkgs,
             flake-utils,
             rust-overlay,
-            cargo-v5,
             treefmt-nix,
             ...
         }:
@@ -55,7 +47,6 @@
                 devShells.default = pkgs.mkShell {
                     packages = [
                         rust'
-                        cargo-v5.packages.${system}.cargo-v5
                         self.formatter.${system}
                     ]
                     ++ (with pkgs; [
@@ -63,6 +54,8 @@
                         SDL2
                         mpremote
                         slint-viewer
+                        pioasm
+                        cargo-v5
                     ]);
 
                     LD_LIBRARY_PATH = libPath;

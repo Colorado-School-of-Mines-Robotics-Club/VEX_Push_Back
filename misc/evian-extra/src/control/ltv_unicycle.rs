@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use evian::control::loops::Feedback;
 use nalgebra::{
-	Matrix2, Matrix3, OMatrix, Rotation2, U2, U3, Vector2, Vector3, matrix, stack, vector,
+	Matrix2, Matrix3, OMatrix, Rotation2, SMatrix, U2, U3, Vector2, Vector3, matrix, vector,
 };
 
 use crate::math::{brysons_rule, discretize_ab, lqr};
@@ -36,8 +36,11 @@ impl LTVUnicycleController {
 	}
 }
 
-impl LTVUnicycleController {
-	fn calculate(
+impl Feedback for LTVUnicycleController {
+	type State = Vector3<f64>;
+	type Signal = Vector2<f64>;
+
+	fn update(
 		&mut self,
 		measurement: Self::State,
 		setpoint: Self::State,
@@ -67,11 +70,15 @@ impl LTVUnicycleController {
 		);
 
 		let rotation = Rotation2::new(measurement.z);
-		#[rustfmt::skip]
-		let m = stack![
-			rotation.matrix(),            0;
-			0,                 matrix![1.0];
-		];
+		let m = SMatrix::<_, 3, 3>::from_fn(|i, j| {
+			if i < 2 && j < 2 {
+				rotation[(i, j)]
+			} else if i == j {
+				1.0
+			} else {
+				0.0
+			}
+		});
 
 		k * m * (setpoint - measurement)
 	}

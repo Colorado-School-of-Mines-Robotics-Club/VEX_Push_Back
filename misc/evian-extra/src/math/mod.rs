@@ -1,5 +1,3 @@
-use std::{ops::Mul, time::Duration};
-
 use nalgebra::{
 	Cholesky, DefaultAllocator, DimMin, DimName, DimNameAdd, DimNameSum, Matrix, OMatrix, OVector,
 	RealField, Storage, U1, Vector, allocator::Allocator,

@@ -18,6 +18,7 @@ autons = { workspace = true }
 subsystems = { path = "../../common/subsystems" }
 coprocessor = { path = "../../coprocessor/brain" }
 slintui = { path = "../../common/slintui", optional = true }
+evian-extra = { path = "../../misc/evian-extra" }
 
 [features]
 default = ["ui"]

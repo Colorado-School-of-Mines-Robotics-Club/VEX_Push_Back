@@ -44,7 +44,7 @@ pub const LATERAL_PID: Pid = {
 
 pub const LINEAR_TOLERANCES: Tolerances = Tolerances::new()
 	.error(0.50)
-	// .velocity(1.0)
+	.velocity(2.5)
 	.duration(Duration::from_millis(15));
 pub const ANGULAR_TOLERANCES: Tolerances = Tolerances::new()
 	.error(Angle::from_degrees(1.5).as_radians())

@@ -13,16 +13,29 @@ pub struct LTVUnicycleController {
 	r: Matrix2<f64>,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct LTVState {
+	pub position: Vector2<f64>,
+	pub heading: f64,
+	pub velocity: f64,
+}
+
+impl From<LTVState> for Vector3<f64> {
+	fn from(value: LTVState) -> Self {
+		vector![value.position.x, value.position.y, value.heading]
+	}
+}
+
 impl LTVUnicycleController {
 	// In inches because thats what we use, todo: units
 	pub const FRC_DEFAULT_Q: Vector3<f64> = vector![
-		2.46, // 0.0625 m
-		4.92, // 0.125  m
-		2.00, // 2 rad
+		2.460629921, // 0.0625 m
+		4.921259843, // 0.125  m
+		2.000000000, // 2 rad
 	];
 	pub const FRC_DEFAULT_R: Vector2<f64> = vector![
-		39.37, // 1 m/s
-		2.00,  // 2 rad/s
+		39.37007874, // 1 m/s
+		2.000000000, // 2 rad/s
 	];
 	pub fn new(q: &Vector3<f64>, r: &Vector2<f64>) -> Self {
 		Self {
@@ -37,7 +50,7 @@ impl LTVUnicycleController {
 }
 
 impl Feedback for LTVUnicycleController {
-	type State = Vector3<f64>;
+	type State = LTVState;
 	type Signal = Vector2<f64>;
 
 	fn update(
@@ -46,11 +59,10 @@ impl Feedback for LTVUnicycleController {
 		setpoint: Self::State,
 		dt: Duration,
 	) -> Self::Signal {
-		let v = setpoint.z;
 		let (a, b) = discretize_ab(
 			&matrix![
 				0.0, 0.0, 0.0;
-				0.0, 0.0, v;
+				0.0, 0.0, setpoint.velocity.max(1e-4);
 				0.0, 0.0, 0.0;
 			],
 			&matrix![
@@ -69,7 +81,7 @@ impl Feedback for LTVUnicycleController {
 			1e-10,
 		);
 
-		let rotation = Rotation2::new(measurement.z);
+		let rotation = Rotation2::new(measurement.heading);
 		let m = SMatrix::<_, 3, 3>::from_fn(|i, j| {
 			if i < 2 && j < 2 {
 				rotation[(i, j)]
@@ -79,6 +91,9 @@ impl Feedback for LTVUnicycleController {
 				0.0
 			}
 		});
+
+		let setpoint: Vector3<f64> = setpoint.into();
+		let measurement: Vector3<f64> = measurement.into();
 
 		k * m * (setpoint - measurement)
 	}

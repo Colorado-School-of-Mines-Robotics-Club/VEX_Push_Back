@@ -1,13 +1,44 @@
-.pio_version 0 // Can be used on RP2040 or RP23xx
+.pio_version 0 ; Can be used on RP2040 or RP23xx
 
 .program blinker
+.fifo tx
 
+.lang_opt python out_shiftdir = rp2.PIO.SHIFT_RIGHT
+.lang_opt python fifo_join    = rp2.PIO.JOIN_TX
+
+.define PUBLIC FREQUENCY 2500 ; 2.5 kHz
+
+; Input data: a 32-bit unsigned integer of "blink count" - 1
+; Passing 0 = 1 blink, 1 = 2 blinks, etc
+
+set PINDIRS 1 side 0 ; Configure LED pin as output
+set PINS 0           ; Configure LED as off
+pull block           ; Wait for data
+mov x, OSR           ; Copy blink count into x
 .wrap_target
-bitloop:
-    out x, 1       side 0 [T3 - 1] ; Side-set still takes place when instruction stalls
-    jmp !x do_zero side 1 [T1 - 1] ; Branch on the bit we shifted out. Positive pulse
-do_one:
-    jmp  bitloop   side 1 [T2 - 1] ; Continue driving high, for a long pulse
-do_zero:
-    nop            side 0 [T2 - 1] ; Or drive low, for a short pulse
+    loop:
+        ; Set pin and delay 100ms (250 cycles)
+        set PINS 1    ; 249 cycles left
+        set y 8  [23] ; 225 cycles left
+        on_loop:      ; Loop 9 times w/ 25 cycle delays = 225 cycles
+            jmp y-- on_loop  [24]
+
+        ; Set pin and delay 100ms (250 cycles - 1 loop jmp cycle = 249 cycles)
+        set PINS 0    ; 248 cycles left
+        set y 8  [22] ; 225 cycles left
+        off_loop:     ; Loop 9 times w/ 25 cycle delays = 225 cycles
+            jmp y-- off_loop [24]
+
+        jmp x-- loop_end ; If x 0, break, otherwise decrement and continue
+    loop_end:
+
+    ; Delay for 1s (2500 cycles - X pull cycles = ? cycles)
+    set y 31  [1] ; 2498 cycles left
+    delay_loop:   ; Loop 32 times w/ 78 cycle delays = 2496 cycles -> 2 cycles left
+        nop  [13]               ; 14 cycles
+        nop  [31]               ; 32 cycles
+        jmp y-- delay_loop [31] ; 32 cycles
+
+    mov x, OSR   ; Copy previous blink count into x for use as pull noblock default (1 cycle left)
+    pull noblock ; Get new blink count, or use last from x (0 cycles left, wrap turns LED on next cycle)
 .wrap

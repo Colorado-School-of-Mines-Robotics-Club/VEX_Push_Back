@@ -363,6 +363,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1e4b40c7323adcfc0a41c4b88143ed58346ff65a288fc144329c5c45e05d70c6"
 
 [[package]]
+name = "bitcode"
+version = "0.6.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0a6ed1b54d8dc333e7be604d00fa9262f4635485ffea923647b6521a5fff045d"
+dependencies = [
+ "arrayvec",
+ "bitcode_derive",
+ "bytemuck",
+ "glam 0.32.1",
+ "serde",
+]
+
+[[package]]
+name = "bitcode_derive"
+version = "0.6.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "238b90427dfad9da4a9abd60f3ec1cdee6b80454bde49ed37f1781dd8e9dc7f9"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "bitflags"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -454,6 +478,7 @@ dependencies = [
  "autons",
  "coprocessor",
  "evian",
+ "evian-extra",
  "shrewnit",
  "slintui",
  "subsystems",
@@ -5298,6 +5323,17 @@ dependencies = [
  "vex-sdk-jumptable",
  "vex-sdk-mock",
  "vexide-core",
+]
+
+[[package]]
+name = "vexide-telemetry"
+version = "0.1.0"
+dependencies = [
+ "bitcode",
+ "cobs",
+ "evian",
+ "shrewnit",
+ "vexide",
 ]
 
 [[package]]

@@ -1,0 +1,11 @@
+[package]
+name = "vexide-telemetry"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+evian = { workspace = true }
+vexide = { workspace = true }
+shrewnit = { workspace = true }
+cobs = { workspace = true }
+bitcode = "0.6.9"

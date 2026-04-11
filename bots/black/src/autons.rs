@@ -227,19 +227,19 @@ pub async fn pid_testing(robot: &mut Robot) {
 	let mut basic = crate::control::BASIC_CONTROLLER;
 	let mut _seeking = crate::control::SEEKING_CONTROLLER;
 
-	let start = robot.drivetrain.tracking.heading();
+	let start = robot.drivetrain.tracking.forward_travel();
 
-	let target = start + Angle::from_degrees(180.0);
-	basic.turn_to_heading(&mut robot.drivetrain, target).await;
+	let target = start + 24.0;
+	basic.drive_distance(&mut robot.drivetrain, target).await;
 
-	let end = robot.drivetrain.tracking.heading();
+	let end = robot.drivetrain.tracking.forward_travel();
 
 	println!(
 		"---------------------------\nStart: {start:.03}\nEnd:   {end:.03}\nDiff:  {diff}\nError: {error}",
-		start = start.as_degrees(),
-		end = end.as_degrees(),
-		diff = (end - start).as_degrees(),
-		error = (end - target).wrapped_full().as_degrees()
+		start = start,
+		end = end,
+		diff = (end - start),
+		error = (end - target)
 	)
 }
 

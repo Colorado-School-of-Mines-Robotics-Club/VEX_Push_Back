@@ -11,12 +11,10 @@ fn main() {
 
 	let mut hasher = Sha256::new();
 	for file in files {
-		hasher.update(file.file_name().as_encoded_bytes());
-		hasher.update(
-			std::fs::read_to_string(file.path())
-				.expect("Should be able to read file in pico dir")
-				.as_bytes(),
-		);
+		if let Ok(str) = std::fs::read_to_string(file.path()) {
+			hasher.update(file.file_name().as_encoded_bytes());
+			hasher.update(str.as_bytes());
+		}
 	}
 
 	println!(

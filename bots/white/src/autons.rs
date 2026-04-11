@@ -3,7 +3,11 @@ use std::time::{Duration, Instant};
 use autons::{Selector, simple::Route};
 use evian::{
 	math::{Angle, Vec2},
-	prelude::{Arcade, TracksHeading, TracksPosition},
+	prelude::{Arcade, TracksForwardTravel, TracksHeading, TracksPosition},
+};
+use evian_extra::{
+	control::ltv_unicycle::LTVUnicycleController,
+	motion::ltv_unicycle::{LTVUnicycleMotion, trapezoid_profile},
 };
 use subsystems::{intake::IntakeState, pnemuatics::PneumaticState};
 use vexide::{smart::motor::BrakeMode, time::sleep};
@@ -256,25 +260,50 @@ pub async fn match_auton(robot: &mut Robot) {
 pub async fn pid_testing(robot: &mut Robot) {
 	println!("Pid testing!!!");
 
-	let mut _basic = crate::control::BASIC_CONTROLLER;
-	let mut seeking = crate::control::SEEKING_CONTROLLER;
-	// seeking.linear_controller = Pid::new(0.0, 0.0, 0.0, None);
+	// let mut basic = crate::control::BASIC_CONTROLLER;
+	// let mut _seeking = crate::control::SEEKING_CONTROLLER;
 
-	let start = robot.drivetrain.tracking.heading();
+	let mut ltv = LTVUnicycleMotion {
+		controller: LTVUnicycleController::new_with_frc_defaults(),
+		linear_tolerances: crate::control::LINEAR_TOLERANCES,
+		angular_tolerances: crate::control::ANGULAR_TOLERANCES,
+	};
 
-	let target = Angle::from_degrees(-45.0);
-	seeking
-		.move_to_point(&mut robot.drivetrain, Vec2::new(24.0, 24.0))
-		.await;
+	let start = robot.drivetrain.tracking.forward_travel();
 
-	let end = robot.drivetrain.tracking.heading();
+	let target = start + 48.0;
+	// ltv.drive_distance(
+	// 	&mut robot.drivetrain,
+	// 	target,
+	// 	12.0,
+	// 	2.0,
+	// 	3.25,
+	// 	3.0 / 4.0,
+	// 	11.5,
+	// )
+	// .await;
+
+	let mut t = 0.0;
+	while t < (48.0 / 12.0) + 2.0 {
+		dbg!(trapezoid_profile(
+			t,
+			robot.drivetrain.tracking.position(),
+			robot.drivetrain.tracking.heading().as_radians(),
+			48.0,
+			12.0,
+			2.0
+		));
+		t += 0.5;
+	}
+
+	let end = robot.drivetrain.tracking.forward_travel();
 
 	println!(
 		"---------------------------\nStart: {start:.03}\nEnd:   {end:.03}\nDiff:  {diff}\nError: {error}",
-		start = start.as_degrees(),
-		end = end.as_degrees(),
-		diff = (end - start).as_degrees(),
-		error = (target - (end - start)).as_degrees()
+		start = start,
+		end = end,
+		diff = (end - start),
+		error = (end - target)
 	)
 }
 

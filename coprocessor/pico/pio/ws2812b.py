@@ -12,7 +12,7 @@ ws2812_T1 = 3
 ws2812_T2 = 3
 ws2812_T3 = 4
 
-@rp2.asm_pio(out_shiftdir=rp2.PIO.SHIFT_LEFT, pull_thresh=24, autopull=True, fifo_join=rp2.PIO.JOIN_TX)
+@rp2.asm_pio(out_shiftdir=rp2.PIO.SHIFT_LEFT, pull_thresh=24, autopull=True, fifo_join=rp2.PIO.JOIN_TX, sideset_init=rp2.PIO.OUT_LOW)
 def ws2812():
     wrap_target()
     label("0")

@@ -10,13 +10,14 @@ from machine import Pin
 
 blinker_FREQUENCY = 2500
 
-@rp2.asm_pio(out_shiftdir=rp2.PIO.SHIFT_RIGHT, fifo_join=rp2.PIO.JOIN_TX)
+@rp2.asm_pio(out_shiftdir=rp2.PIO.SHIFT_RIGHT, fifo_join=rp2.PIO.JOIN_TX, set_init=rp2.PIO.OUT_LOW)
 def blinker():
-    set(pindirs, 1)                  [16] # 0
+    set(pindirs, 1)                       # 0
     set(pins, 0)                          # 1
     pull(block)                           # 2
     mov(x, osr)                           # 3
     wrap_target()
+    label("4")
     set(pins, 1)                          # 4
     set(y, 8)                        [23] # 5
     label("6")
@@ -25,8 +26,7 @@ def blinker():
     set(y, 8)                        [22] # 8
     label("9")
     jmp(y_dec, "9")                  [24] # 9
-    jmp(x_dec, "11")                      # 10
-    label("11")
+    jmp(x_dec, "4")                       # 10
     set(y, 31)                       [1]  # 11
     label("12")
     nop()                            [13] # 12

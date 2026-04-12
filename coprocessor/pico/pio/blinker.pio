@@ -5,16 +5,17 @@
 
 .lang_opt python out_shiftdir = rp2.PIO.SHIFT_RIGHT
 .lang_opt python fifo_join    = rp2.PIO.JOIN_TX
+.lang_opt python set_init     = rp2.PIO.OUT_LOW
 
 .define PUBLIC FREQUENCY 2500 ; 2.5 kHz
 
 ; Input data: a 32-bit unsigned integer of "blink count" - 1
 ; Passing 0 = 1 blink, 1 = 2 blinks, etc
 
-set PINDIRS 1 side 0 ; Configure LED pin as output
-set PINS 0           ; Configure LED as off
-pull block           ; Wait for data
-mov x, OSR           ; Copy blink count into x
+set PINDIRS 1 ; Configure LED pin as output
+set PINS 0    ; Configure LED as off
+pull block    ; Wait for data
+mov x, OSR    ; Copy blink count into x
 .wrap_target
     loop:
         ; Set pin and delay 100ms (250 cycles)
@@ -29,7 +30,7 @@ mov x, OSR           ; Copy blink count into x
         off_loop:     ; Loop 9 times w/ 25 cycle delays = 225 cycles
             jmp y-- off_loop [24]
 
-        jmp x-- loop_end ; If x 0, break, otherwise decrement and continue
+        jmp x-- loop ; If x 0, break, otherwise decrement and continue
     loop_end:
 
     ; Delay for 1s (2500 cycles - X pull cycles = ? cycles)

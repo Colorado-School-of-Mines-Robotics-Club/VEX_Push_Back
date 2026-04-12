@@ -22,6 +22,7 @@
 .lang_opt python pull_thresh  = 24
 .lang_opt python autopull     = True
 .lang_opt python fifo_join    = rp2.PIO.JOIN_TX
+.lang_opt python sideset_init = rp2.PIO.OUT_LOW
 
 .wrap_target
 bitloop:

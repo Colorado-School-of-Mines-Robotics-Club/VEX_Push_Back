@@ -20,7 +20,8 @@ class PioBlinker:
             pio_idx[0] * 4 + pio_idx[1],
             blinker,
             freq=blinker_FREQUENCY,
-            sideset_base=pin,
+            set_base=pin,
+            in_shiftdir=rp2.PIO.SHIFT_RIGHT,
         )
         self.sm.active(0)
 
@@ -38,5 +39,5 @@ class PioBlinker:
             self.sm.active(0)
             self.pin.on()
         else:
-            self.sm.put(count - 1)
             self.sm.active(1)
+            self.sm.put(count - 1)

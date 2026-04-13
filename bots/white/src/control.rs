@@ -27,7 +27,7 @@ pub const LINEAR_PID: Pid = {
 	pid
 };
 pub const ANGULAR_PID: AngularPid = {
-	let mut pid = AngularPid::new(0.41, 0.005, 0.02, Some(Angle::from_degrees(2.0)));
+	let mut pid = AngularPid::new(0.43, 0.05, 0.025, Some(Angle::from_degrees(2.0)));
 	pid.set_output_limit(None);
 	pid
 };

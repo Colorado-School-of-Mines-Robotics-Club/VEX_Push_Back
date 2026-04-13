@@ -64,9 +64,9 @@ impl<M: Tank, T: Tracking> ControllableSubsystem for DrivetrainSubsystem<M, T> {
 	}
 
 	fn control(&mut self, controller: &ControllerState, configuration: ControllerConfiguration) {
-		if controller.button_left.is_now_pressed() {
-			self.reverse = !self.reverse;
-		}
+		// if controller.button_left.is_now_pressed() {
+		// 	self.reverse = !self.reverse;
+		// }
 
 		self.state = match configuration {
 			ControllerConfiguration::Noah => arcade(

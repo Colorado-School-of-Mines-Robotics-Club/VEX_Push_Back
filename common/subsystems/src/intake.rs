@@ -196,7 +196,11 @@ impl ControllableSubsystem for IntakeSubsystem {
 			IntakeState::full_forward() * 1.0
 		} else if controller.button_r2.is_pressed() {
 			// Run at half speed for bottom center goal outtake
-			IntakeState::full_forward().reverse() * 0.5
+			IntakeState {
+				top: -1.0,
+				middle: -1.0,
+				bottom: -0.5,
+			}
 		} else {
 			IntakeState::full_brake()
 		};

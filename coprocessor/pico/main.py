@@ -188,6 +188,8 @@ def main():
             elif data[0:1] == b"s":
                 otos.set_scalar(data[1:])
                 brain.send(b"d")
+            elif data[0:1] == b"S":
+                brain.send(otos.get_stddev())
             elif data[0:1] == b"a":  # ping/hash
                 # start_ms = time.ticks_ms()
                 hash = hashlib.sha256()

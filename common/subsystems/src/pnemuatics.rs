@@ -167,12 +167,15 @@ impl ControllableSubsystem for PneumaticsSubsystem {
 
 	fn control(&mut self, controller: &ControllerState, _configuration: ControllerConfiguration) {
 		if controller.button_l1.is_pressed() {
+			// Long goal
 			_ = self.outtake_adjuster.set_state(PneumaticState::Extended);
 			_ = self.flap.set_state(PneumaticState::Extended);
 		} else if controller.button_l2.is_pressed() {
+			// Center goal
 			_ = self.outtake_adjuster.set_state(PneumaticState::Contracted);
-			_ = self.flap.set_state(PneumaticState::Extended);
+			_ = self.flap.set_state(PneumaticState::Contracted);
 		} else {
+			// Block outtake
 			_ = self.outtake_adjuster.set_state(PneumaticState::Extended);
 			_ = self.flap.set_state(PneumaticState::Contracted);
 		}

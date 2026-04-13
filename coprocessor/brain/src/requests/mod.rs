@@ -1,5 +1,6 @@
 mod calibrate;
 mod get_position;
+mod get_stddev;
 mod get_velocity;
 mod ping;
 mod set_led;
@@ -11,6 +12,7 @@ use core::time::Duration;
 
 pub use calibrate::*;
 pub use get_position::*;
+pub use get_stddev::*;
 pub use get_velocity::*;
 pub use ping::*;
 pub use set_led::*;

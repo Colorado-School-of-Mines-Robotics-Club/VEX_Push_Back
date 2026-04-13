@@ -1,6 +1,7 @@
 use std::time::{Duration, Instant};
 
 use autons::{Selector, simple::Route};
+use coprocessor::requests::GetStdDevRequest;
 use evian::{
 	math::{Angle, Vec2},
 	prelude::{Arcade, TracksForwardTravel, TracksHeading, TracksPosition},
@@ -9,10 +10,25 @@ use evian_extra::{
 	control::ltv_unicycle::LTVUnicycleController,
 	motion::ltv_unicycle::{LTVUnicycleMotion, trapezoid_profile},
 };
+use shrewnit::{Degrees, Inches};
 use subsystems::{intake::IntakeState, pnemuatics::PneumaticState};
 use vexide::{smart::motor::BrakeMode, time::sleep};
 
 use crate::robot::Robot;
+
+macro_rules! boost_kp {
+	($basic:ident, $factor:literal, $code:expr) => {
+		$basic
+			.angular_controller
+			.set_kp($basic.angular_controller.kp() * $factor);
+		$code;
+		$basic
+			.angular_controller
+			.set_kp($basic.angular_controller.kp() / $factor);
+	};
+}
+
+const FIELD_TILE_LENGTH: f64 = 24.0;
 
 pub async fn do_nothing(_robot: &mut Robot) {
 	println!("Doing absolutely nothing!!!");
@@ -257,62 +273,211 @@ pub async fn match_auton(robot: &mut Robot) {
 	println!("Done: {}s", start_time.elapsed().as_secs_f32());
 }
 
-pub async fn pid_testing(robot: &mut Robot) {
-	println!("Pid testing!!!");
-
-	// let mut basic = crate::control::BASIC_CONTROLLER;
-	// let mut _seeking = crate::control::SEEKING_CONTROLLER;
-
-	let mut ltv = LTVUnicycleMotion {
-		controller: LTVUnicycleController::new_with_frc_defaults(),
-		linear_tolerances: crate::control::LINEAR_TOLERANCES,
-		angular_tolerances: crate::control::ANGULAR_TOLERANCES,
-	};
-
-	let start = robot.drivetrain.tracking.forward_travel();
-
-	let target = start + 48.0;
-	// ltv.drive_distance(
-	// 	&mut robot.drivetrain,
-	// 	target,
-	// 	12.0,
-	// 	2.0,
-	// 	3.25,
-	// 	3.0 / 4.0,
-	// 	11.5,
-	// )
-	// .await;
-
-	let mut t = 0.0;
-	while t < (48.0 / 12.0) + 2.0 {
-		dbg!(trapezoid_profile(
-			t,
-			robot.drivetrain.tracking.position(),
-			robot.drivetrain.tracking.heading().as_radians(),
-			48.0,
-			12.0,
-			2.0
-		));
-		t += 0.5;
-	}
-
-	let end = robot.drivetrain.tracking.forward_travel();
-
-	println!(
-		"---------------------------\nStart: {start:.03}\nEnd:   {end:.03}\nDiff:  {diff}\nError: {error}",
-		start = start,
-		end = end,
-		diff = (end - start),
-		error = (end - target)
-	)
-}
-
-pub async fn skills_auton(robot: &mut Robot) {
+pub async fn skills_doublepark(robot: &mut Robot) {
 	robot.intake.run(IntakeState::full_forward());
 	_ = robot.drivetrain.model.drive_arcade(0.4, 0.0);
 	sleep(Duration::from_millis(1250)).await;
 	_ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
 	sleep(Duration::from_secs(3)).await;
+}
+
+pub async fn skills_main(robot: &mut Robot) {
+	let start_time = Instant::now();
+
+	let mut basic = crate::control::BASIC_CONTROLLER;
+
+	// Drive out of starting position, now top-right of park zone
+	basic.drive_distance(&mut robot.drivetrain, 18.0).await;
+
+	// Drive to right side of right long goal
+	let target = Vec2::new(42.0, FIELD_TILE_LENGTH);
+	basic.turn_to_point(&mut robot.drivetrain, target).await;
+	let pos = robot.drivetrain.tracking.position();
+	basic
+		.drive_distance(&mut robot.drivetrain, target.distance(pos))
+		.await;
+
+	// Drive to other side of field
+	let heading = Angle::from_degrees(90.0);
+	boost_kp!(
+		basic,
+		1.2,
+		basic.turn_to_heading(&mut robot.drivetrain, heading).await
+	);
+	basic
+		.drive_distance_at_heading(&mut robot.drivetrain, FIELD_TILE_LENGTH * 3.0, heading)
+		.await;
+
+	// Angle towards matchload align position
+	boost_kp!(
+		basic,
+		1.5,
+		basic
+			.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(90.0 + 45.0))
+			.await
+	);
+
+	// Drive to matchload alignment
+	let matchload_line = 27.9;
+	let dist_x = (robot.drivetrain.tracking.position().x - matchload_line).abs();
+	let dist = (dist_x / (robot.drivetrain.tracking.heading()).cos()).abs();
+
+	basic.drive_distance(&mut robot.drivetrain, dist).await;
+
+	// Turn to matchload
+	boost_kp!(
+		basic,
+		1.37,
+		basic
+			.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(90.0))
+			.await
+	);
+
+	// Matchload
+	sleep(Duration::from_millis(500)).await;
+	robot.intake.run(IntakeState::full_forward());
+	_ = robot
+		.pneumatics
+		.front_bar
+		.set_state(PneumaticState::Extended);
+	_ = robot
+		.pneumatics
+		.extender
+		.set_state(PneumaticState::Extended);
+	_ = robot.pneumatics.flap.set_state(PneumaticState::Contracted);
+	_ = robot
+		.pneumatics
+		.outtake_adjuster
+		.set_state(PneumaticState::Extended);
+	sleep(Duration::from_secs(1)).await;
+
+	_ = robot.drivetrain.model.drive_arcade(0.35, 0.0);
+	sleep(Duration::from_secs(1)).await;
+	_ = robot.drivetrain.model.drive_arcade(0.5, 0.0);
+	sleep(Duration::from_secs(2)).await;
+
+	robot.intake.run(IntakeState {
+		top: 0.0,
+		middle: 0.0,
+		bottom: 1.0,
+	});
+
+	// Drive to side balls alignment
+	let balls_line = 108.9;
+	let dist_y = (robot.drivetrain.tracking.position().y - balls_line).abs();
+	let dist = (dist_y / (robot.drivetrain.tracking.heading()).sin()).abs();
+
+	basic.drive_distance(&mut robot.drivetrain, -dist).await;
+	// boost_kp!(
+	// 	basic,
+	// 	1.25,
+	// 	basic
+	// 		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(0.0))
+	// 		.await
+	// );
+	//
+	robot.intake.run(IntakeState::full_brake());
+
+	_ = robot
+		.pneumatics
+		.front_bar
+		.set_state(PneumaticState::Contracted);
+	sleep(Duration::from_secs(1)).await;
+
+	// for _ in 0..3 {
+	// 	_ = robot.drivetrain.model.drive_arcade(0.35, 0.0);
+	// 	sleep(Duration::from_secs(1)).await;
+	// 	_ = robot.drivetrain.model.drive_arcade(-0.25, 0.0);
+	// 	sleep(Duration::from_millis(500)).await;
+	// }
+	// _ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
+
+	// Drive to right side of right long goal
+	let gutter_line = 42.0;
+	basic
+		.turn_to_point(
+			&mut robot.drivetrain,
+			Vec2::new(gutter_line, balls_line - FIELD_TILE_LENGTH),
+		)
+		.await;
+
+	let dist_x = (robot.drivetrain.tracking.position().x - gutter_line).abs();
+	let dist = (dist_x / (robot.drivetrain.tracking.heading()).cos()).abs();
+
+	basic.drive_distance(&mut robot.drivetrain, dist).await;
+
+	// Drive to original side of field
+	let heading = Angle::from_degrees(90.0 + 180.0);
+	boost_kp!(
+		basic,
+		1.4,
+		basic.turn_to_heading(&mut robot.drivetrain, heading).await
+	);
+	basic
+		.drive_distance_at_heading(&mut robot.drivetrain, FIELD_TILE_LENGTH * 3.0, heading)
+		.await;
+
+	// Turn towards machload line
+	boost_kp!(
+		basic,
+		1.2,
+		basic
+			.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(180.0))
+			.await
+	);
+
+	// Move to machload line
+	let matchload_line = 27.9;
+	let dist_x = (robot.drivetrain.tracking.position().x - matchload_line).abs();
+	let dist = (dist_x / (robot.drivetrain.tracking.heading()).cos()).abs();
+
+	basic.drive_distance(&mut robot.drivetrain, dist).await;
+
+	// Turn towards matchload
+	boost_kp!(
+		basic,
+		1.2,
+		basic
+			.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(90.0 + 180.0))
+			.await
+	);
+
+	// Move to long goal
+	_ = robot.drivetrain.model.drive_arcade(-0.35, 0.01);
+	sleep(Duration::from_secs(2)).await;
+	_ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
+
+	// Outtake balls
+	_ = robot.pneumatics.flap.set_state(PneumaticState::Extended);
+	_ = robot
+		.pneumatics
+		.front_bar
+		.set_state(PneumaticState::Extended);
+	robot.intake.run(IntakeState::full_forward());
+	sleep(Duration::from_secs(2)).await;
+
+	_ = robot.drivetrain.model.drive_arcade(0.35, 0.01);
+	sleep(Duration::from_secs(1)).await;
+	_ = robot.pneumatics.flap.set_state(PneumaticState::Contracted);
+	sleep(Duration::from_secs(1)).await;
+	_ = robot.drivetrain.model.drive_arcade(0.5, 0.01);
+	sleep(Duration::from_secs(1)).await;
+
+	println!("Time elapsed: {}s", start_time.elapsed().as_secs_f64());
+	_ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
+	robot.intake.run(IntakeState::full_brake());
+
+	let stddev = robot.coprocessor.send_request(GetStdDevRequest).await;
+	if let Ok(stddev) = stddev {
+		println!(
+			"StdDev: X: {}in, Y: {}in, H: {}deg",
+			stddev.x.to::<Inches>(),
+			stddev.y.to::<Inches>(),
+			stddev.heading.to::<Degrees>()
+		)
+	} else {
+		println!("StdDev request failure")
+	}
 }
 
 #[allow(dead_code)]

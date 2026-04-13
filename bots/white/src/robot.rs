@@ -178,12 +178,12 @@ impl Robot {
 	}
 
 	pub async fn start(self) -> ! {
-		let default_auton = "PID testing";
+		let default_auton = "Skills main";
 		let autons = [
 			route!("Do nothing", crate::autons::do_nothing),
-			route!("PID testing", crate::autons::pid_testing),
 			route!("Match auton", crate::autons::match_auton),
-			route!("Skills auton", crate::autons::skills_auton),
+			route!("Skills double park", crate::autons::skills_doublepark),
+			route!("Skills main", crate::autons::skills_main),
 		];
 
 		#[cfg(feature = "ui")]

@@ -44,6 +44,7 @@ LED_BLUE = 2
 LED_RAINBOW = 3
 LED_ROTATE = 4
 LED_GREEN = 5
+LED_WHITE = 6
 
 
 class RGB:
@@ -105,6 +106,10 @@ class RGB:
             for i in range(self.length):
                 self.n[i] = (0, 0, 255)
 
+        elif self.mode == LED_WHITE:
+            for i in range(self.length):
+                self.n[i] = (255, 255, 255)
+
         self.n.write()
 
 
@@ -134,7 +139,13 @@ class VexBrain:
 def main():
     STATUS_LED = PioBlinker(BLINKER_PIO, STATUS_LED_OUT)
     LED = RGB(ADDR_LED_OUT, 16)
-    LED.set_mode(LED_BLUE)
+    LED.set_mode(LED_WHITE)
+    i = 0
+    while True:
+        if i % 25 == 0:
+            LED.update()
+        i += 1
+        time.sleep(.001)
 
     brain = VexBrain(RS485_UART, RS485_EN_OUT)
 

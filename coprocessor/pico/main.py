@@ -45,11 +45,20 @@ LED_RAINBOW = 3
 LED_ROTATE = 4
 LED_GREEN = 5
 
+<<<<<<< HEAD
 
 class RGB:
     def __init__(self, pin, length):
         self.length = length
         self.ws2812b = PioWS2812B(WS2812B_PIO, pin, length)
+=======
+class RGB():
+    def __init__(self, pin, length, brightness,brightness_2,zone_split):
+        self.zone = zone_split
+        self.np = NeoPixel(pin, length)
+        self.brightness = brightness
+        self.brightness_2 = brightness_2
+>>>>>>> 3bfe054 (kjfhohjkfhdskjfds)
         self.set_mode(LED_BLACK)
 
     def set_mode(self, mode: int):
@@ -58,6 +67,7 @@ class RGB:
 
     def update(self):
         if self.mode == LED_BLACK:
+<<<<<<< HEAD
             for i in range(self.length):
                 self.ws2812b[i] = (0, 0, 0)
 
@@ -95,6 +105,42 @@ class RGB:
                 self.ws2812b[i] = c
             self.mode = LED_ROTATE
 
+=======
+            for i in range(len(self.np)):
+                if i < self.zone:
+                    self.np[i] = (0,0,0)
+                else:
+                    self.np[i] = (0,0,0)
+        elif self.mode == LED_RED:
+            for i in range(len(self.np)):
+                if i < self.zone:
+                    self.np[i] = (int(255/self.brightness),0,0)
+                else:
+                    self.np[i] = (int(255/self.brightness_2),0,0)
+        elif self.mode == LED_BLUE:
+            for i in range(len(self.np)):
+                if i < self.zone:
+                    self.np[i] = (0,int(255/self.brightness),0)
+                else:
+                    self.np[i] = (0,int(255/self.brightness_2),0)
+        elif self.mode == LED_RAINBOW:
+            for i in range(len(self.np)):
+                pos = int((i * 256) / len(self.np)) % 256
+                if i < self.zone:
+                    brightness = self.brightness
+                else:
+                    brightness = self.brightness_2
+                if pos < 85:
+                    c= (int((pos * 3)/brightness), int((255 - pos * 3)/brightness), 0)
+                elif pos < 170:
+                    pos -= 85
+                    c= (int((255 - pos * 3)/brightness), 0, int((pos * 3)/brightness))
+                else:
+                    pos -= 170
+                    c= (0, int((pos * 3)/brightness), int((255 - pos * 3)/brightness))
+                self.np[i]=c
+            self.mode=4
+>>>>>>> 3bfe054 (kjfhohjkfhdskjfds)
         elif self.mode == LED_ROTATE:
             last = self.ws2812b[0]
             for i in range(self.length - 1):

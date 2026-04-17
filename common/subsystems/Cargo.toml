@@ -13,3 +13,4 @@ vexide-motorgroup = { workspace = true }
 ciborium = { workspace = true }
 cobs = { workspace = true }
 serde = { workspace = true }
+futures-util = "0.3.32"

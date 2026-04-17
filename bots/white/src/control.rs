@@ -22,12 +22,12 @@ pub const SEEKING_CONTROLLER: Seeking<Pid, Pid> = Seeking {
 };
 
 pub const LINEAR_PID: Pid = {
-	let mut pid = Pid::new(0.031, 0.00, 0.00050, Some(2.0));
+	let mut pid = Pid::new(0.031, 0.00, 0.00051, Some(2.0));
 	pid.set_output_limit(Some(0.60));
 	pid
 };
 pub const ANGULAR_PID: AngularPid = {
-	let mut pid = AngularPid::new(0.43, 0.05, 0.025, Some(Angle::from_degrees(2.0)));
+	let mut pid = AngularPid::new(0.43, 0.05, 0.02, Some(Angle::from_degrees(2.0)));
 	pid.set_output_limit(None);
 	pid
 };

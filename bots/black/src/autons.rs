@@ -250,13 +250,6 @@ pub async fn park_test(robot: &mut Robot) {
 	}
 }
 
-pub async fn unjam_test(robot: &mut Robot) {
-	robot
-		.intake
-		.run_unjamming(IntakeState::full_forward(), Duration::from_secs(5))
-		.await;
-}
-
 pub async fn motion_profile(robot: &mut Robot) {
 	let mut file = std::fs::File::create("profiling.txt").unwrap();
 	robot.coprocessor.calibrate().await.unwrap();

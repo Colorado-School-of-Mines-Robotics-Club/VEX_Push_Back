@@ -10,7 +10,9 @@
 					"command": "clippy",
 					"features": "all",
 					"targets": "armv7a-vex-v5",
+					"workspace": true,
 				},
+				"checkOnSave": true,
 				// "linkedProjects": ["./Cargo.toml", "./display/simulator/Cargo.toml"]
 			},
 		},

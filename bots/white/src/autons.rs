@@ -4,14 +4,10 @@ use autons::{Selector, simple::Route};
 use coprocessor::requests::GetStdDevRequest;
 use evian::{
 	math::{Angle, Vec2},
-	prelude::{Arcade, TracksForwardTravel, TracksHeading, TracksPosition},
-};
-use evian_extra::{
-	control::ltv_unicycle::LTVUnicycleController,
-	motion::ltv_unicycle::{LTVUnicycleMotion, trapezoid_profile},
+	prelude::{Arcade, TracksHeading, TracksPosition},
 };
 use shrewnit::{Degrees, Inches};
-use subsystems::{intake::IntakeState, pnemuatics::PneumaticState};
+use subsystems::{intake::IntakeState, intake_unjamming, pnemuatics::PneumaticState};
 use vexide::{smart::motor::BrakeMode, time::sleep};
 
 use crate::robot::Robot;
@@ -291,21 +287,31 @@ pub async fn skills_main(robot: &mut Robot) {
 
 	// Drive to right side of right long goal
 	let target = Vec2::new(42.0, FIELD_TILE_LENGTH);
-	basic.turn_to_point(&mut robot.drivetrain, target).await;
+	boost_kp!(
+		basic,
+		1.1,
+		basic.turn_to_point(&mut robot.drivetrain, target).await
+	);
+
 	let pos = robot.drivetrain.tracking.position();
 	basic
 		.drive_distance(&mut robot.drivetrain, target.distance(pos))
 		.await;
 
 	// Drive to other side of field
-	let heading = Angle::from_degrees(90.0);
 	boost_kp!(
 		basic,
 		1.2,
-		basic.turn_to_heading(&mut robot.drivetrain, heading).await
+		basic
+			.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(87.0))
+			.await
 	);
 	basic
-		.drive_distance_at_heading(&mut robot.drivetrain, FIELD_TILE_LENGTH * 3.0, heading)
+		.drive_distance_at_heading(
+			&mut robot.drivetrain,
+			FIELD_TILE_LENGTH * 3.0 - 2.0,
+			Angle::from_degrees(90.0),
+		)
 		.await;
 
 	// Angle towards matchload align position
@@ -318,7 +324,7 @@ pub async fn skills_main(robot: &mut Robot) {
 	);
 
 	// Drive to matchload alignment
-	let matchload_line = 27.9;
+	let matchload_line = 27.2;
 	let dist_x = (robot.drivetrain.tracking.position().x - matchload_line).abs();
 	let dist = (dist_x / (robot.drivetrain.tracking.heading()).cos()).abs();
 
@@ -335,26 +341,27 @@ pub async fn skills_main(robot: &mut Robot) {
 
 	// Matchload
 	sleep(Duration::from_millis(500)).await;
-	robot.intake.run(IntakeState::full_forward());
-	_ = robot
-		.pneumatics
-		.front_bar
-		.set_state(PneumaticState::Extended);
-	_ = robot
-		.pneumatics
-		.extender
-		.set_state(PneumaticState::Extended);
-	_ = robot.pneumatics.flap.set_state(PneumaticState::Contracted);
-	_ = robot
-		.pneumatics
-		.outtake_adjuster
-		.set_state(PneumaticState::Extended);
-	sleep(Duration::from_secs(1)).await;
+	intake_unjamming!(robot.intake, IntakeState::full_forward(), async {
+		_ = robot
+			.pneumatics
+			.front_bar
+			.set_state(PneumaticState::Extended);
+		_ = robot
+			.pneumatics
+			.extender
+			.set_state(PneumaticState::Extended);
+		_ = robot.pneumatics.flap.set_state(PneumaticState::Contracted);
+		_ = robot
+			.pneumatics
+			.outtake_adjuster
+			.set_state(PneumaticState::Extended);
+		sleep(Duration::from_secs(1)).await;
 
-	_ = robot.drivetrain.model.drive_arcade(0.35, 0.0);
-	sleep(Duration::from_secs(1)).await;
-	_ = robot.drivetrain.model.drive_arcade(0.5, 0.0);
-	sleep(Duration::from_secs(2)).await;
+		_ = robot.drivetrain.model.drive_arcade(0.35, 0.0);
+		sleep(Duration::from_secs(1)).await;
+		_ = robot.drivetrain.model.drive_arcade(0.5, 0.0);
+		sleep(Duration::from_secs(2)).await;
+	});
 
 	robot.intake.run(IntakeState {
 		top: 0.0,
@@ -363,66 +370,88 @@ pub async fn skills_main(robot: &mut Robot) {
 	});
 
 	// Drive to side balls alignment
-	let balls_line = 108.9;
-	let dist_y = (robot.drivetrain.tracking.position().y - balls_line).abs();
+	let red_balls_y = 108.9;
+	let dist_y = (robot.drivetrain.tracking.position().y - red_balls_y).abs();
 	let dist = (dist_y / (robot.drivetrain.tracking.heading()).sin()).abs();
 
 	basic.drive_distance(&mut robot.drivetrain, -dist).await;
-	// boost_kp!(
-	// 	basic,
-	// 	1.25,
-	// 	basic
-	// 		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(0.0))
-	// 		.await
-	// );
-	//
-	robot.intake.run(IntakeState::full_brake());
 
+	// Pull up bar before turning
 	_ = robot
 		.pneumatics
 		.front_bar
 		.set_state(PneumaticState::Contracted);
-	sleep(Duration::from_secs(1)).await;
 
-	// for _ in 0..3 {
-	// 	_ = robot.drivetrain.model.drive_arcade(0.35, 0.0);
-	// 	sleep(Duration::from_secs(1)).await;
-	// 	_ = robot.drivetrain.model.drive_arcade(-0.25, 0.0);
-	// 	sleep(Duration::from_millis(500)).await;
-	// }
-	// _ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
+	// Turn towards balls
+	boost_kp!(
+		basic,
+		1.25,
+		basic
+			.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(0.0))
+			.await
+	);
 
-	// Drive to right side of right long goal
-	let gutter_line = 42.0;
-	basic
-		.turn_to_point(
-			&mut robot.drivetrain,
-			Vec2::new(gutter_line, balls_line - FIELD_TILE_LENGTH),
-		)
-		.await;
-
-	let dist_x = (robot.drivetrain.tracking.position().x - gutter_line).abs();
+	// Drive up to balls
+	let red_balls_x = 41.5;
+	let dist_x = (robot.drivetrain.tracking.position().x - red_balls_x).abs();
 	let dist = (dist_x / (robot.drivetrain.tracking.heading()).cos()).abs();
 
 	basic.drive_distance(&mut robot.drivetrain, dist).await;
+
+	robot.intake.run(IntakeState::full_brake());
+
+	// Put bar down and bring balls back from wall
+	_ = robot
+		.pneumatics
+		.front_bar
+		.set_state(PneumaticState::Extended);
+	sleep(Duration::from_secs(1)).await;
+	_ = robot.drivetrain.model.drive_arcade(-0.1, 0.0);
+	sleep(Duration::from_secs(1)).await;
+	_ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
+
+	// Back up to get room for intaking balls
+	let back_up_x = FIELD_TILE_LENGTH * 0.75;
+	let dist_x = (robot.drivetrain.tracking.position().x - back_up_x).abs();
+	let dist = (dist_x / (robot.drivetrain.tracking.heading()).cos()).abs();
+
+	basic.drive_distance(&mut robot.drivetrain, -dist).await;
+
+	// Run intake while driving forward to grab balls
+	robot.intake.run(IntakeState {
+		top: 0.0,
+		middle: 0.5,
+		bottom: 1.0,
+	});
+	boost_kp!(
+		basic,
+		1.2,
+		basic
+			.drive_distance_at_heading(&mut robot.drivetrain, 26.0, Angle::from_degrees(-60.0))
+			.await
+	);
+
+	_ = robot.drivetrain.model.drive_arcade(0.15, 0.08);
+	sleep(Duration::from_millis(750)).await;
+	_ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
 
 	// Drive to original side of field
 	let heading = Angle::from_degrees(90.0 + 180.0);
 	boost_kp!(
 		basic,
-		1.4,
+		1.3,
 		basic.turn_to_heading(&mut robot.drivetrain, heading).await
 	);
 	basic
-		.drive_distance_at_heading(&mut robot.drivetrain, FIELD_TILE_LENGTH * 3.0, heading)
+		.drive_distance_at_heading(&mut robot.drivetrain, FIELD_TILE_LENGTH * 2.0, heading)
 		.await;
 
 	// Turn towards machload line
 	boost_kp!(
 		basic,
-		1.2,
+		1.4,
 		basic
-			.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(180.0))
+			.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(225.0))
 			.await
 	);
 
@@ -436,7 +465,7 @@ pub async fn skills_main(robot: &mut Robot) {
 	// Turn towards matchload
 	boost_kp!(
 		basic,
-		1.2,
+		1.4,
 		basic
 			.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(90.0 + 180.0))
 			.await
@@ -453,15 +482,43 @@ pub async fn skills_main(robot: &mut Robot) {
 		.pneumatics
 		.front_bar
 		.set_state(PneumaticState::Extended);
-	robot.intake.run(IntakeState::full_forward());
-	sleep(Duration::from_secs(2)).await;
 
+	intake_unjamming!(robot.intake, IntakeState::full_forward(), async {
+		sleep(Duration::from_secs(3)).await;
+	});
+
+	// Move to matchload and intake balls
 	_ = robot.drivetrain.model.drive_arcade(0.35, 0.01);
 	sleep(Duration::from_secs(1)).await;
 	_ = robot.pneumatics.flap.set_state(PneumaticState::Contracted);
 	sleep(Duration::from_secs(1)).await;
-	_ = robot.drivetrain.model.drive_arcade(0.5, 0.01);
-	sleep(Duration::from_secs(1)).await;
+
+	intake_unjamming!(robot.intake, IntakeState::full_forward(), async {
+		_ = robot.drivetrain.model.drive_arcade(0.5, 0.01);
+		sleep(Duration::from_secs(2)).await;
+	});
+
+	// Move to long goal and outtake balls
+	_ = robot.drivetrain.model.drive_arcade(-0.35, 0.01);
+	sleep(Duration::from_secs(2)).await;
+	_ = robot.pneumatics.flap.set_state(PneumaticState::Extended);
+
+	intake_unjamming!(robot.intake, IntakeState::full_forward(), async {
+		sleep(Duration::from_secs(1)).await;
+	});
+
+	intake_unjamming!(
+		robot.intake,
+		IntakeState {
+			top: 0.5,
+			middle: 1.0,
+			bottom: 1.0,
+		},
+		async {
+			// Slow down front for the rest to get 15 balls
+			sleep(Duration::from_secs(1)).await;
+		}
+	);
 
 	println!("Time elapsed: {}s", start_time.elapsed().as_secs_f64());
 	_ = robot.drivetrain.model.drive_arcade(0.0, 0.0);

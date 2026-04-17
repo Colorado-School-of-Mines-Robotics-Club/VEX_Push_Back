@@ -14,3 +14,13 @@ triple_buffer = { workspace = true }
 [build-dependencies]
 sha2 = "0.10.9"
 base16ct = { version = "1.0.0", features = ["alloc"] }
+
+[package.metadata.v5]
+upload-strategy = "differential"
+slot = 1
+icon = "pizza"
+compress = true
+
+[[bin]]
+name = "coprocessor-testing"
+path = "src/testing.rs"

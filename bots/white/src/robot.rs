@@ -114,7 +114,7 @@ impl Robot {
 			),
 			CoproTracking::new(coprocessor.data().clone(), imu.clone()),
 		);
-		let intake = IntakeSubsystem::new(
+		let mut intake = IntakeSubsystem::new(
 			IntakeMotors {
 				bottom: MotorGroup::new(vec![Motor::new(
 					peripherals.port_20,
@@ -134,6 +134,7 @@ impl Robot {
 			None,
 			None,
 		);
+		intake.disable_unjam();
 		let trunk = PneumaticsSubsystem::new(
 			// Front bar
 			AdiPneumatic {

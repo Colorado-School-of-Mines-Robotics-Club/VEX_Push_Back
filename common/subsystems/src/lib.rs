@@ -1,5 +1,7 @@
 #![feature(never_type, future_join)]
 
+pub use futures_util;
+
 use vexide::controller::ControllerState;
 
 pub mod copro;

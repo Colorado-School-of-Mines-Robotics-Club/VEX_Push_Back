@@ -14,6 +14,19 @@ use crate::{
 	pnemuatics::{AdiPneumatic, PneumaticState},
 };
 
+#[macro_export]
+macro_rules! intake_unjamming {
+	($intake:expr, $state:expr, async $block:expr) => {
+		let fut = async { $block };
+		$intake.enable_unjam();
+		::subsystems::futures_util::join!(fut, async {
+			$intake.run($state);
+			vexide::prelude::sleep(Duration::from_millis(5)).await
+		});
+		$intake.disable_unjam();
+	};
+}
+
 pub struct IntakeMotors {
 	pub bottom: MotorGroup,
 	pub middle: MotorGroup,
@@ -80,6 +93,7 @@ pub struct IntakeSubsystem {
 	park_state: ParkState,
 	park_sensor: Option<OpticalSensor>,
 	park_piston: Option<AdiPneumatic>,
+	last_jiggle: Option<Instant>,
 }
 
 impl IntakeSubsystem {
@@ -94,6 +108,7 @@ impl IntakeSubsystem {
 			park_state: ParkState::Disabled,
 			park_sensor,
 			park_piston,
+			last_jiggle: None,
 		}
 	}
 
@@ -104,18 +119,27 @@ impl IntakeSubsystem {
 					_ = p.set_state(PneumaticState::Contracted);
 				}
 
+				let coeff = match self.last_jiggle.map(|j| j.elapsed()) {
+					Some(last_jiggle) if last_jiggle >= Duration::from_millis(1300) => {
+						self.last_jiggle = Some(Instant::now());
+						1.0
+					}
+					Some(last_jiggle) if last_jiggle >= Duration::from_secs(1) => -0.3,
+					_ => 1.0,
+				};
+
 				_ = self
 					.motors
 					.top
-					.set_voltage(state.top * self.motors.top.max_voltage());
+					.set_voltage(coeff * state.top * self.motors.top.max_voltage());
 				_ = self
 					.motors
 					.middle
-					.set_voltage(state.middle * self.motors.middle.max_voltage());
+					.set_voltage(coeff * state.middle * self.motors.middle.max_voltage());
 				_ = self
 					.motors
 					.bottom
-					.set_voltage(state.bottom * self.motors.bottom.max_voltage());
+					.set_voltage(coeff * state.bottom * self.motors.bottom.max_voltage());
 			}
 			ParkState::Outtaking => {
 				if let Some(proximity) = self.park_sensor().and_then(|p| p.proximity().ok())
@@ -152,21 +176,12 @@ impl IntakeSubsystem {
 		}
 	}
 
-	pub async fn run_unjamming(&mut self, state: IntakeState, duration: Duration) {
-		const TOTAL_PERIOD: u128 = 1500;
-		const UNJAM_PERIOD: u128 = 300;
-		let start = Instant::now();
-		while start.elapsed() < duration {
-			let state =
-				if (start.elapsed().as_millis() % TOTAL_PERIOD) >= (TOTAL_PERIOD - UNJAM_PERIOD) {
-					state * -1.0
-				} else {
-					state
-				};
-			self.run(state);
-			sleep(Duration::from_millis(25)).await;
-		}
-		self.run(IntakeState::full_brake());
+	pub fn enable_unjam(&mut self) {
+		self.last_jiggle = Some(Instant::now());
+	}
+
+	pub fn disable_unjam(&mut self) {
+		self.last_jiggle = None;
 	}
 
 	pub fn park_sensor(&self) -> Option<&OpticalSensor> {

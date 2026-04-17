@@ -3,11 +3,18 @@ use std::time::{Duration, Instant};
 use autons::{Selector, simple::Route};
 use coprocessor::requests::GetStdDevRequest;
 use evian::{
+	drivetrain::model::Differential,
 	math::{Angle, Vec2},
 	prelude::{Arcade, TracksHeading, TracksPosition},
 };
 use shrewnit::{Degrees, Inches};
-use subsystems::{intake::IntakeState, intake_unjamming, pnemuatics::PneumaticState};
+use subsystems::{
+	copro::tracking::CoproTracking,
+	drivetrain::DrivetrainSubsystem,
+	intake::IntakeState,
+	intake_unjamming,
+	pnemuatics::{PneumaticState, PneumaticsSubsystem},
+};
 use vexide::{smart::motor::BrakeMode, time::sleep};
 
 use crate::robot::Robot;
@@ -27,6 +34,20 @@ macro_rules! boost_kp {
 const FIELD_TILE_LENGTH: f64 = 24.0;
 
 pub async fn do_nothing(_robot: &mut Robot) {
+	let mut basic = crate::control::BASIC_CONTROLLER;
+	let start = _robot.drivetrain.tracking.heading();
+	let target = start + Angle::from_degrees(90.0);
+	basic.turn_to_heading(&mut _robot.drivetrain, target).await;
+	let end = _robot.drivetrain.tracking.heading();
+
+	println!(
+		"Start: {}deg\nEnd: {}deg\nDiff: {}deg\nError: {}deg",
+		start.as_degrees(),
+		end.as_degrees(),
+		(end - start).as_degrees(),
+		(end - target).as_degrees()
+	);
+
 	println!("Doing absolutely nothing!!!");
 }
 
@@ -341,25 +362,19 @@ pub async fn skills_main(robot: &mut Robot) {
 
 	// Matchload
 	sleep(Duration::from_millis(500)).await;
-	intake_unjamming!(robot.intake, IntakeState::full_forward(), async {
-		_ = robot
-			.pneumatics
-			.front_bar
-			.set_state(PneumaticState::Extended);
-		_ = robot
-			.pneumatics
-			.extender
-			.set_state(PneumaticState::Extended);
-		_ = robot.pneumatics.flap.set_state(PneumaticState::Contracted);
-		_ = robot
+	intake_unjamming!(robot, IntakeState::full_forward(), r => async {
+		_ = r.pneumatics.front_bar.set_state(PneumaticState::Extended);
+		_ = r.pneumatics.extender.set_state(PneumaticState::Extended);
+		_ = r.pneumatics.flap.set_state(PneumaticState::Contracted);
+		_ = r
 			.pneumatics
 			.outtake_adjuster
 			.set_state(PneumaticState::Extended);
 		sleep(Duration::from_secs(1)).await;
 
-		_ = robot.drivetrain.model.drive_arcade(0.35, 0.0);
+		_ = r.drivetrain.model.drive_arcade(0.35, 0.0);
 		sleep(Duration::from_secs(1)).await;
-		_ = robot.drivetrain.model.drive_arcade(0.5, 0.0);
+		_ = r.drivetrain.model.drive_arcade(0.5, 0.0);
 		sleep(Duration::from_secs(2)).await;
 	});
 
@@ -483,8 +498,8 @@ pub async fn skills_main(robot: &mut Robot) {
 		.front_bar
 		.set_state(PneumaticState::Extended);
 
-	intake_unjamming!(robot.intake, IntakeState::full_forward(), async {
-		sleep(Duration::from_secs(3)).await;
+	intake_unjamming!(robot, IntakeState::full_forward(), r => async {
+		sleep(Duration::from_millis(3500)).await;
 	});
 
 	// Move to matchload and intake balls
@@ -493,8 +508,10 @@ pub async fn skills_main(robot: &mut Robot) {
 	_ = robot.pneumatics.flap.set_state(PneumaticState::Contracted);
 	sleep(Duration::from_secs(1)).await;
 
-	intake_unjamming!(robot.intake, IntakeState::full_forward(), async {
-		_ = robot.drivetrain.model.drive_arcade(0.5, 0.01);
+	intake_unjamming!(robot, IntakeState::full_forward(), r => async {
+		_ = r.drivetrain.model.drive_arcade(0.35, 0.01);
+		sleep(Duration::from_secs(1)).await;
+		_ = r.drivetrain.model.drive_arcade(0.5, 0.01);
 		sleep(Duration::from_secs(2)).await;
 	});
 
@@ -503,18 +520,18 @@ pub async fn skills_main(robot: &mut Robot) {
 	sleep(Duration::from_secs(2)).await;
 	_ = robot.pneumatics.flap.set_state(PneumaticState::Extended);
 
-	intake_unjamming!(robot.intake, IntakeState::full_forward(), async {
+	intake_unjamming!(robot, IntakeState::full_forward(), r => async {
 		sleep(Duration::from_secs(1)).await;
 	});
 
 	intake_unjamming!(
-		robot.intake,
+		robot,
 		IntakeState {
 			top: 0.5,
 			middle: 1.0,
 			bottom: 1.0,
 		},
-		async {
+		r => async {
 			// Slow down front for the rest to get 15 balls
 			sleep(Duration::from_secs(1)).await;
 		}

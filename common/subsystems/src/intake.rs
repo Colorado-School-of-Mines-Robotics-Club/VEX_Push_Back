@@ -16,15 +16,43 @@ use crate::{
 
 #[macro_export]
 macro_rules! intake_unjamming {
-	($intake:expr, $state:expr, async $block:expr) => {
-		let fut = async { $block };
-		$intake.enable_unjam();
-		::subsystems::futures_util::join!(fut, async {
-			$intake.run($state);
-			vexide::prelude::sleep(Duration::from_millis(5)).await
-		});
-		$intake.disable_unjam();
-	};
+	($robot:expr, $state:expr, $r:ident => async $block:block) => {{
+		use ::subsystems::futures_util::{FutureExt, pending, pin_mut, select};
+
+		async fn fut(__robot: &mut Robot) {
+			let mut $r = __robot;
+			$block
+		}
+
+		async fn unjam(__robot: *mut Robot) {
+			loop {
+				{
+					// SAFETY: this isn't. i fucking hate this but i don't know a better way
+					// some time i'll make a Competition-like thing for real
+					unsafe {
+						(*__robot).intake.run($state);
+					}
+				}
+				pending!()
+			}
+		}
+
+		$robot.intake.enable_unjam();
+
+		{
+			let unjam = unjam($robot as *mut Robot).fuse();
+			let fut = fut($robot).fuse();
+
+			::subsystems::futures_util::pin_mut!(fut, unjam);
+
+			::subsystems::futures_util::select_biased! {
+				_ = fut => (),
+				_ = unjam => ()
+			};
+		}
+
+		$robot.intake.disable_unjam();
+	}};
 }
 
 pub struct IntakeMotors {

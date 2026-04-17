@@ -26,8 +26,13 @@ pub const LINEAR_PID: Pid = {
 	pid.set_output_limit(Some(0.60));
 	pid
 };
+// pub const ANGULAR_PID: AngularPid = {
+// 	let mut pid = AngularPid::new(0.46, 0.05, 0.02, Some(Angle::from_degrees(2.0)));
+// 	pid.set_output_limit(None);
+// 	pid
+// };
 pub const ANGULAR_PID: AngularPid = {
-	let mut pid = AngularPid::new(0.43, 0.05, 0.02, Some(Angle::from_degrees(2.0)));
+	let mut pid = AngularPid::new(3.2, 0.0, 0.17, None);
 	pid.set_output_limit(None);
 	pid
 };
@@ -47,6 +52,6 @@ pub const LINEAR_TOLERANCES: Tolerances = Tolerances::new()
 	.velocity(2.5)
 	.duration(Duration::from_millis(15));
 pub const ANGULAR_TOLERANCES: Tolerances = Tolerances::new()
-	.error(Angle::from_degrees(1.5).as_radians())
+	.error(Angle::from_degrees(1.0).as_radians())
 	.velocity(Angle::from_degrees(10.0).as_radians())
 	.duration(Duration::from_millis(15));

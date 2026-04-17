@@ -7,7 +7,7 @@ import time
 import cobs
 import machine
 from blinker import PioBlinker
-from neopixel import NeoPixel
+import neopixel
 
 # import qwiic_otos
 from otos import OtosSensor
@@ -49,7 +49,7 @@ LED_GREEN = 5
 class RGB:
     def __init__(self, pin, length):
         self.length = length
-        self.ws2812b = PioWS2812B(WS2812B_PIO, pin, length)
+        self.n = neopixel.NeoPixel(pin, length)
         self.set_mode(LED_BLACK)
 
     def set_mode(self, mode: int):
@@ -59,15 +59,15 @@ class RGB:
     def update(self):
         if self.mode == LED_BLACK:
             for i in range(self.length):
-                self.ws2812b[i] = (0, 0, 0)
+                self.n[i] = (0, 0, 0)
 
         elif self.mode == LED_RED:
             for i in range(self.length):
-                self.ws2812b[i] = (255, 0, 0)
+                self.n[i] = (255, 0, 0)
 
         elif self.mode == LED_BLUE:
             for i in range(self.length):
-                self.ws2812b[i] = (0, 255, 0)
+                self.n[i] = (0, 255, 0)
 
         elif self.mode == LED_RAINBOW:
             for i in range(self.length):
@@ -92,20 +92,20 @@ class RGB:
                         pos * 3,
                         255 - pos * 3,
                     )
-                self.ws2812b[i] = c
+                self.n[i] = c
             self.mode = LED_ROTATE
 
         elif self.mode == LED_ROTATE:
-            last = self.ws2812b[0]
+            last = self.n[0]
             for i in range(self.length - 1):
-                self.ws2812b[i] = self.ws2812b[i + 1]
-            self.ws2812b[-1] = last
+                self.n[i] = self.n[i + 1]
+            self.n[-1] = last
 
         elif self.mode == LED_GREEN:
             for i in range(self.length):
-                self.ws2812b[i] = (0, 0, 255)
+                self.n[i] = (0, 0, 255)
 
-        self.ws2812b.write()
+        self.n.write()
 
 
 class VexBrain:
@@ -133,8 +133,8 @@ class VexBrain:
 
 def main():
     STATUS_LED = PioBlinker(BLINKER_PIO, STATUS_LED_OUT)
-    LED = RGB(ADDR_LED_OUT, 33)
-    LED.set_mode(LED_RAINBOW)
+    LED = RGB(ADDR_LED_OUT, 16)
+    LED.set_mode(LED_BLUE)
 
     brain = VexBrain(RS485_UART, RS485_EN_OUT)
 

@@ -114,7 +114,7 @@ impl Robot {
 			),
 			CoproTracking::new(coprocessor.data().clone(), imu.clone()),
 		);
-<<<<<<< HEAD
+
 		let mut intake = IntakeSubsystem::new(
 			IntakeMotors {
 				bottom: MotorGroup::new(vec![Motor::new(

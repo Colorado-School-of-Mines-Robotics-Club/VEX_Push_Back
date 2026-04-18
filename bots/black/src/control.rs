@@ -18,19 +18,20 @@ pub const SEEKING_CONTROLLER: Seeking<Pid, Pid> = Seeking {
 	linear_controller: LINEAR_PID,
 	lateral_controller: LATERAL_PID,
 	tolerances: LINEAR_TOLERANCES,
-	timeout: Some(Duration::from_secs(5)),
+	timeout: Some(Duration::from_secs(3)),
 };
 
 pub const LINEAR_PID: Pid = {
-	let mut pid = Pid::new(0.031, 0.00, 0.00050, Some(2.0));
+	let mut pid = Pid::new(0.05, 0.002, 0.001, Some(5.0));
 	pid.set_output_limit(Some(0.60));
 	pid
 };
 pub const ANGULAR_PID: AngularPid = {
-	let mut pid = AngularPid::new(0.65, 0.65, 0.028, Some(Angle::from_degrees(4.0)));
-	pid.set_output_limit(Some(0.50));
+	let mut pid = AngularPid::new(2.3, 0.01, 0.115, Some(Angle::from_degrees(10.0)));
+	//pid.set_output_limit(Some(0.50));
 	pid
 };
+
 // pub const LATERAL_PID: Pid = {
 // 	let mut pid = Pid::new(0.023, 0.015, 0.00090, Some(1.0));
 // 	// pid.set_output_limit(Some(0.60));
@@ -43,8 +44,8 @@ pub const LATERAL_PID: Pid = {
 };
 
 pub const LINEAR_TOLERANCES: Tolerances = Tolerances::new()
-	.error(0.50)
-	// .velocity(0.50)
+	.error(0.80)
+	.velocity(0.50)
 	.duration(Duration::from_millis(15));
 pub const ANGULAR_TOLERANCES: Tolerances = Tolerances::new()
 	.error(Angle::from_degrees(1.5).as_radians())

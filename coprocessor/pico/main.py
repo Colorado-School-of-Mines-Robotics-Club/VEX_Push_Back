@@ -3,11 +3,11 @@ import os
 import struct
 import sys
 import time
+from typing import Tuple
 
 import cobs
 import machine
 from blinker import PioBlinker
-import neopixel
 
 # import qwiic_otos
 from otos import OtosSensor
@@ -45,13 +45,22 @@ LED_RAINBOW = 3
 LED_ROTATE = 4
 LED_GREEN = 5
 LED_WHITE = 6
+LED_ORANGE = 7
 
 
 class RGB:
-    def __init__(self, pin, length):
+    def __init__(self, pin, length, brightness: float):
         self.length = length
-        self.n = neopixel.NeoPixel(pin, length)
+        self.n = PioWS2812B(WS2812B_PIO, pin, length)
+        self.brightness = brightness
         self.set_mode(LED_BLACK)
+
+    def adjust_brightness(self, rgb: Tuple[int, int, int]) -> Tuple[int, int, int]:
+        return (
+            int(rgb[0] * self.brightness),
+            int(rgb[1] * self.brightness),
+            int(rgb[2] * self.brightness),
+        )
 
     def set_mode(self, mode: int):
         self.mode = mode
@@ -60,15 +69,15 @@ class RGB:
     def update(self):
         if self.mode == LED_BLACK:
             for i in range(self.length):
-                self.n[i] = (0, 0, 0)
+                self.n[i] = self.adjust_brightness((0, 0, 0))
 
         elif self.mode == LED_RED:
             for i in range(self.length):
-                self.n[i] = (255, 0, 0)
+                self.n[i] = self.adjust_brightness((255, 0, 0))
 
         elif self.mode == LED_BLUE:
             for i in range(self.length):
-                self.n[i] = (0, 255, 0)
+                self.n[i] = self.adjust_brightness((0, 0, 255))
 
         elif self.mode == LED_RAINBOW:
             for i in range(self.length):
@@ -93,7 +102,7 @@ class RGB:
                         pos * 3,
                         255 - pos * 3,
                     )
-                self.n[i] = c
+                self.n[i] = self.adjust_brightness(c)
             self.mode = LED_ROTATE
 
         elif self.mode == LED_ROTATE:
@@ -104,11 +113,15 @@ class RGB:
 
         elif self.mode == LED_GREEN:
             for i in range(self.length):
-                self.n[i] = (0, 0, 255)
+                self.n[i] = self.adjust_brightness((0, 255, 0))
 
         elif self.mode == LED_WHITE:
             for i in range(self.length):
-                self.n[i] = (255, 255, 255)
+                self.n[i] = self.adjust_brightness((255, 255, 255))
+
+        elif self.mode == LED_ORANGE:
+            for i in range(self.length):
+                self.n[i] = self.adjust_brightness((255, 50, 0))
 
         self.n.write()
 
@@ -138,19 +151,13 @@ class VexBrain:
 
 def main():
     STATUS_LED = PioBlinker(BLINKER_PIO, STATUS_LED_OUT)
-    LED = RGB(ADDR_LED_OUT, 16)
-    LED.set_mode(LED_WHITE)
-    i = 0
-    while True:
-        if i % 25 == 0:
-            LED.update()
-        i += 1
-        time.sleep(.001)
+    LED = RGB(ADDR_LED_OUT, 15, 0.75)
 
     brain = VexBrain(RS485_UART, RS485_EN_OUT)
 
     # Wait till otos connected
     STATUS_LED.blink(2)
+    LED.set_mode(LED_RED)
     otos = OtosSensor(OTOS_I2C)
     otos_attempt = 1
     while True:
@@ -168,8 +175,10 @@ def main():
 
             time.sleep(1)
 
+    LED.set_mode(LED_ORANGE)
     otos.calibrate()
 
+    LED.set_mode(LED_GREEN)
     STATUS_LED.blink(1)  # Only blink once to show success
     led_mode = 0
     i = 0
@@ -181,6 +190,7 @@ def main():
                     f"X: {pos[0] / 32767 * 10}m, Y: {pos[1] / 32767 * 10}m, H: {pos[2] / 32767 * 180}deg"
                 )
 
+        # TODO: UART RX_IDLE interrupt, preferably hardware for ultimate speedy communication
         data = brain.receive()
         if data is not None:
             if data[0:1] == b"p":

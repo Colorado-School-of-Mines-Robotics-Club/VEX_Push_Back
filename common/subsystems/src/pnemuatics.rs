@@ -1,12 +1,21 @@
-use std::{ops::Not, time::Duration};
+use std::{
+	ops::Not,
+	time::{Duration, Instant},
+};
 
 use serde::{Deserialize, Serialize};
 use vexide::{
 	adi::digital::LogicLevel, controller::ControllerState, prelude::AdiDigitalOut,
-	smart::PortError, time::sleep,
+	runtime::block_on, smart::PortError, time::sleep,
 };
 
 use crate::{ControllableSubsystem, ControllerConfiguration};
+
+enum DisabledState {
+	Enabled,
+	PowerHeld(Instant),
+	Disabled,
+}
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct PneumaticsSubsystemState {
@@ -23,6 +32,7 @@ pub struct PneumaticsSubsystem {
 	pub flap: AdiPneumatic,
 	pub outtake_adjuster: AdiPneumatic,
 	pub wing: Option<AdiPneumatic>,
+	pub disabled: DisabledState,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Ord, Eq, Serialize, Deserialize, Default)]
@@ -103,6 +113,7 @@ impl PneumaticsSubsystem {
 			flap,
 			outtake_adjuster,
 			wing,
+			disabled: DisabledState::Enabled,
 		}
 	}
 
@@ -116,6 +127,7 @@ impl PneumaticsSubsystem {
 	}
 
 	pub async fn initialize(&mut self) {
+		self.disabled = DisabledState::Enabled;
 		_ = self.front_bar.set_state(PneumaticState::Contracted);
 		_ = self.extender.set_state(PneumaticState::Extended);
 		_ = self.outtake_adjuster.set_state(PneumaticState::Extended);
@@ -166,41 +178,53 @@ impl ControllableSubsystem for PneumaticsSubsystem {
 	}
 
 	fn control(&mut self, controller: &ControllerState, _configuration: ControllerConfiguration) {
-		if controller.button_l1.is_pressed() {
-			// Long goal
-			_ = self.outtake_adjuster.set_state(PneumaticState::Extended);
-			_ = self.flap.set_state(PneumaticState::Extended);
-		} else if controller.button_l2.is_pressed() {
-			// Center goal
-			_ = self.outtake_adjuster.set_state(PneumaticState::Contracted);
-			_ = self.flap.set_state(PneumaticState::Contracted);
-		} else {
-			// Block outtake
-			_ = self.outtake_adjuster.set_state(PneumaticState::Extended);
-			_ = self.flap.set_state(PneumaticState::Contracted);
-		}
-
-		if controller.button_b.is_now_pressed()
-			&& let Ok(state) = self.front_bar.state()
-		{
-			_ = self.front_bar.set_state(!state);
-		}
-
-		if controller.button_down.is_now_pressed()
-			&& let Some(wing) = &mut self.wing
-			&& let Ok(state) = wing.state()
-		{
-			_ = wing.set_state(!state);
-		}
-
 		if controller.button_power.is_now_pressed() {
-			_ = self.set_state(PneumaticsSubsystemState {
-				extender: PneumaticState::Contracted,
-				flap: PneumaticState::Extended,
-				front_bar: PneumaticState::Contracted,
-				outtake_adjuster: PneumaticState::Contracted,
-				wing: PneumaticState::Extended,
-			})
+			match self.disabled {
+				DisabledState::Enabled => self.disabled = DisabledState::PowerHeld(Instant::now()),
+				DisabledState::Disabled => {
+					self.disabled = DisabledState::Enabled;
+					block_on(self.initialize())
+				}
+				_ => (),
+			}
+		} else if controller.button_power.is_now_released()
+			&& let DisabledState::PowerHeld(t) = self.disabled
+			&& t.elapsed() < Duration::from_millis(500)
+		{
+			self.disabled = DisabledState::Disabled;
+		}
+
+		match self.disabled {
+			DisabledState::Enabled | DisabledState::PowerHeld(_) => {
+				if controller.button_l1.is_pressed() {
+					// Long goal
+					_ = self.outtake_adjuster.set_state(PneumaticState::Extended);
+					_ = self.flap.set_state(PneumaticState::Extended);
+				} else if controller.button_l2.is_pressed() {
+					// Center goal
+					_ = self.outtake_adjuster.set_state(PneumaticState::Contracted);
+					_ = self.flap.set_state(PneumaticState::Contracted);
+				} else {
+					// Block outtake
+					_ = self.outtake_adjuster.set_state(PneumaticState::Extended);
+					_ = self.flap.set_state(PneumaticState::Contracted);
+				}
+
+				if controller.button_b.is_now_pressed()
+					&& let Ok(state) = self.front_bar.state()
+				{
+					_ = self.front_bar.set_state(!state);
+				}
+			}
+			_ => {
+				_ = self.set_state(PneumaticsSubsystemState {
+					extender: PneumaticState::Contracted,
+					flap: PneumaticState::Extended,
+					front_bar: PneumaticState::Contracted,
+					outtake_adjuster: PneumaticState::Contracted,
+					wing: PneumaticState::Extended,
+				})
+			}
 		}
 	}
 }

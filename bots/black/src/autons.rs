@@ -215,7 +215,6 @@ pub async fn double_park(robot: &mut Robot) {	// Drive back to be technically pa
 	_ = robot
 		.intake
 		.park_piston()
-		.unwrap()
 		.set_state(PneumaticState::Extended);
 }
 
@@ -390,13 +389,6 @@ pub async fn pid_testing(robot: &mut Robot) {
 		diff = (end - start),
 		error = (end - target)
 	)
-}
-
-pub async fn park_test(robot: &mut Robot) {
-	loop {
-		dbg!(robot.intake.park_sensor().unwrap().proximity().unwrap());
-		sleep(Duration::from_millis(250)).await;
-	}
 }
 
 pub async fn motion_profile(robot: &mut Robot) {

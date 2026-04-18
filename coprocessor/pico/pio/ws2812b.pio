@@ -12,9 +12,10 @@
 ; WS2812B, and SK6812 LEDs. Other constants may support higher bandwidths for
 ; specific LEDs, such as (7,10,8) for WS2812B LEDs.
 
-.define public T1 3
-.define public T2 3
-.define public T3 4
+; TODO: re-check 334
+.define public T1 2
+.define public T2 5
+.define public T3 3
 
 // .lang_opt python sideset_init = rp2.PIO.OUT_HIGH
 // .lang_opt python out_init     = rp2.PIO.OUT_HIGH

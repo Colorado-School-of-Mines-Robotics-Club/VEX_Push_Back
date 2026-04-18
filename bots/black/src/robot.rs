@@ -127,11 +127,11 @@ impl Robot {
 					Motor::new(peripherals.port_17, Gearset::Blue, Direction::Reverse),
 				]),
 			},
-			Some(OpticalSensor::new(peripherals.port_15)),
-			Some(AdiPneumatic {
+			OpticalSensor::new(peripherals.port_15),
+			AdiPneumatic {
 				port: AdiDigitalOut::new(peripherals.adi_d),
 				high_mode: PneumaticState::Extended,
-			}),
+			},
 		);
 		let trunk = PneumaticsSubsystem::new(
 			// Front bar

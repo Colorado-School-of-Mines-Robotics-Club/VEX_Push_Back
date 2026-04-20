@@ -1,3 +1,8 @@
+# TODO: optimize to decode in-place + viper
+import micropython
+
+
+@micropython.native
 def decode(buffer: bytes) -> bytes:
     next_null = buffer[0]
     next_is_overhead = next_null == 255
@@ -18,6 +23,7 @@ def decode(buffer: bytes) -> bytes:
 
     return bytes(out)
 
+@micropython.native
 def encode(buffer: bytes) -> bytes:
     out = bytearray([0x00])
     last_null_pos = 0

@@ -7,7 +7,7 @@ import time
 from typing import Final, cast
 
 import machine
-from micropython import const
+from micropython import RingIO, const
 micropython.opt_level(3)
 
 import cobs
@@ -125,12 +125,14 @@ class RGB:
 class VexBrain:
     uart: Final[machine.UART]
     enable_pin: Final[machine.Pin]
-    buffer: bytearray
+    buffer: RingIO
+
+    MTU: int = const(1024)
 
     def __init__(self, uart: machine.UART, enable_pin: machine.Pin):
         self.uart = uart
         self.enable_pin = enable_pin
-        self.buffer = bytearray()
+        self.buffer = RingIO(VexBrain.MTU)
 
     def send(self, data: bytes):
         self.enable_pin.value(1)
@@ -138,15 +140,17 @@ class VexBrain:
         self.uart.flush()
         self.enable_pin.value(0)
 
-    def receive(self):
+    def receive(self) -> bytes | None:
         for _ in range(self.uart.any()):
-            byte = cast(bytes, self.uart.read(1))[0]
-            self.buffer.append(byte)
-            if self.buffer[-1] == 0x00:
-                encoded = bytes(self.buffer)
-                self.buffer = bytearray()
+            byte = cast(bytes, self.uart.read(1))
+            _ = self.buffer.write(byte)
+            if byte[0] == 0x00:
+                encoded = self.buffer.read()
                 return cobs.decode(encoded)
+
         return None
+
+
 
 def main():
     STATUS_LED = PioBlinker(BLINKER_PIO, STATUS_LED_OUT)

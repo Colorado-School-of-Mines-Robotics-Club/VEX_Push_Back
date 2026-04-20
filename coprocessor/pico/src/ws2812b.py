@@ -41,15 +41,15 @@ class PioWS2812B:
         # Reserve a DMA channel for data transfers to the PIO
         self.dma = rp2.DMA()
 
-    # Allow ws2812b[i] = (r, g, b)
-    def __setitem__(self, i: int, rgb: tuple[int, int, int]):
-        self.buffer[i * 4 + 3] = rgb[1]  # G
-        self.buffer[i * 4 + 2] = rgb[0]  # R
-        self.buffer[i * 4 + 1] = rgb[2]  # B
+    # Allow ws2812b[i] = 0x112233
+    def __setitem__(self, i: int, rgb: int):
+        self.buffer[i * 4 + 3] = (rgb & 0x00FF00) >> 8  # G
+        self.buffer[i * 4 + 2] = (rgb & 0xFF0000) >> 16 # R
+        self.buffer[i * 4 + 1] = (rgb & 0x00FF00)       # B
 
-    # Allow ws2812b[i] -> (r, g, b)
-    def __getitem__(self, i: int) -> tuple[int, int, int]:
-        return (self.buffer[i * 4 + 2], self.buffer[i * 4 + 3], self.buffer[i * 4 + 1])
+    # Allow ws2812b[i] -> 0x112233
+    def __getitem__(self, i: int) -> int:
+        return (self.buffer[i * 4 + 2] << 16) | (self.buffer[i * 4 + 3] << 8) | self.buffer[i * 4 + 1]
 
     def write(self):
         """Writes stored data to the LED strip. Ensure this is only called with pauses of 50us or more to avoid accidental chaining."""

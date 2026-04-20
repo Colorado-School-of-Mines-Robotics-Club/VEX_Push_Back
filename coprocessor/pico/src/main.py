@@ -2,6 +2,7 @@ import hashlib
 import os
 import struct
 import sys
+import micropython
 import time
 from typing import Final, cast
 
@@ -12,9 +13,6 @@ import cobs
 from blinker import PioBlinker
 from otos import OtosSensor
 from ws2812b import PioWS2812B
-
-def sm_id(t: tuple[int, int]) -> int:
-    return t[0] * 4 + t[1]
 
 TEST_MODE = __debug__
 
@@ -41,95 +39,84 @@ OTOS_I2C = machine.I2C(
     freq=1000000,  # 1MHz, Sparkfun calibration code suggests this speed is supported
 )
 
-LED_BLACK = const(0)
-LED_RED = const(1)
-LED_BLUE = const(2)
-LED_RAINBOW = const(3)
-LED_ROTATE = const(4)
-LED_GREEN = const(5)
-LED_WHITE = const(6)
-LED_ORANGE = const(7)
-
-
 class RGB:
     length: Final[int]
-    brightness: float
+    brightness: int
     mode: int
     n: Final[PioWS2812B]
 
-    def __init__(self, pin: machine.Pin, length: int, brightness: float):
+    MODE_STATIC: int = const(1)
+    MODE_ROTATE: int = const(2)
+
+    BLACK: int = const(0x000000)
+    RED: int = const(0xFF0000)
+    GREEN: int = const(0x00FF00)
+    BLUE: int = const(0x0000FF)
+    WHITE: int = const(0xFFFFFF)
+    ORANGE: int = const(0xFF3200)
+
+    def __init__(self, pin: machine.Pin, length: int, brightness: int):
         self.length = length
         self.n = PioWS2812B(WS2812B_PIO, pin, length)
         self.brightness = brightness
-        self.set_mode(LED_BLACK)
+        self.set_mode(self.MODE_STATIC)
 
-    def adjust_brightness(self, rgb: tuple[int, int, int]) -> tuple[int, int, int]:
+    @micropython.viper
+    def adjust_brightness(self, color: int, brightness: int) -> int:
         return (
-            int(rgb[0] * self.brightness),
-            int(rgb[1] * self.brightness),
-            int(rgb[2] * self.brightness),
+            (((color & 0xFF0000) * brightness // 100) & 0xFF0000)
+            | (((color & 0xFF00) * brightness // 100) & 0xFF00)
+            | (((color & 0xFF) * brightness // 100) & 0xFF)
         )
 
     def set_mode(self, mode: int):
         self.mode = mode
         self.update()
 
+    @micropython.native
     def update(self):
-        if self.mode == LED_BLACK:
-            for i in range(self.length):
-                self.n[i] = self.adjust_brightness((0, 0, 0))
+        if self.mode == RGB.MODE_STATIC:
+            pass
 
-        elif self.mode == LED_RED:
-            for i in range(self.length):
-                self.n[i] = self.adjust_brightness((255, 0, 0))
-
-        elif self.mode == LED_BLUE:
-            for i in range(self.length):
-                self.n[i] = self.adjust_brightness((0, 0, 255))
-
-        elif self.mode == LED_RAINBOW:
-            for i in range(self.length):
-                pos = int((i * 256) / self.length) % 256
-                if pos < 85:
-                    c = (
-                        pos * 3,
-                        255 - pos * 3,
-                        0,
-                    )
-                elif pos < 170:
-                    pos -= 85
-                    c = (
-                        255 - pos * 3,
-                        0,
-                        pos * 3,
-                    )
-                else:
-                    pos -= 170
-                    c = (
-                        0,
-                        pos * 3,
-                        255 - pos * 3,
-                    )
-                self.n[i] = self.adjust_brightness(c)
-            self.mode = LED_ROTATE
-
-        elif self.mode == LED_ROTATE:
+        elif self.mode == RGB.MODE_ROTATE:
             last = self.n[0]
             for i in range(self.length - 1):
                 self.n[i] = self.n[i + 1]
             self.n[-1] = last
 
-        elif self.mode == LED_GREEN:
-            for i in range(self.length):
-                self.n[i] = self.adjust_brightness((0, 255, 0))
+        self.n.write()
 
-        elif self.mode == LED_WHITE:
-            for i in range(self.length):
-                self.n[i] = self.adjust_brightness((255, 255, 255))
+    @micropython.native
+    def set_color(self, color: int):
+        color = self.adjust_brightness(color, self.brightness)
+        for i in range(self.length):
+            self.n[i] = color
 
-        elif self.mode == LED_ORANGE:
-            for i in range(self.length):
-                self.n[i] = self.adjust_brightness((255, 50, 0))
+        self.n.write()
+        self.mode = RGB.MODE_STATIC
+
+    @micropython.native
+    def set_rainbow(self):
+        for i in range(self.length):
+            pos = (i * 256 // self.length) % 256
+            if pos < 85:
+                c = (
+                    ((pos * 3) << 16)
+                    | ((255 - pos * 3) << 8)
+                )
+            elif pos < 170:
+                pos -= 85
+                c = (
+                    ((255 - pos * 3) << 16)
+                    | (pos * 3)
+                )
+            else:
+                pos -= 170
+                c = (
+                    ((pos * 3) << 8)
+                    | (255 - pos * 3)
+                )
+            self.n[i] = self.adjust_brightness(c, self.brightness)
 
         self.n.write()
 
@@ -160,16 +147,16 @@ class VexBrain:
                 return cobs.decode(encoded)
         return None
 
-
 def main():
     STATUS_LED = PioBlinker(BLINKER_PIO, STATUS_LED_OUT)
-    LED = RGB(ADDR_LED_OUT, 15, 0.75)
+    LED = RGB(ADDR_LED_OUT, 15, 75)
+    LED.set_mode(RGB.MODE_STATIC)
 
     brain = VexBrain(RS485_UART, RS485_EN_OUT)
 
     # Wait till otos connected
     STATUS_LED.blink(2)
-    LED.set_mode(LED_RED)
+    LED.set_color(RGB.RED)
     otos = OtosSensor(OTOS_I2C)
     otos_attempt = 1
     while True:
@@ -187,12 +174,11 @@ def main():
 
             time.sleep(1)
 
-    LED.set_mode(LED_ORANGE)
+    LED.set_mode(RGB.ORANGE)
     otos.calibrate()
 
-    LED.set_mode(LED_GREEN)
+    LED.set_mode(RGB.GREEN)
     STATUS_LED.blink(1)  # Only blink once to show success
-    led_mode = 0
     i = 0
     while True:
         if __debug__ and i % 1000 == 0:
@@ -241,10 +227,6 @@ def main():
 
                 # end_ms = time.ticks_ms()
                 # print("Took", end_ms - start_ms, "ms to calculate hash")
-            elif data[0:1] == b"l":
-                led_mode = (led_mode + 1) % 6
-                LED.set_mode(led_mode)
-                brain.send(b"d")
         if i % 25 == 0:
             LED.update()
         i += 1

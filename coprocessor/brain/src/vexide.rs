@@ -1,12 +1,11 @@
 use std::{
 	io::{self, Write as _},
 	rc::Rc,
-	time::Instant,
+	time::{Duration, Instant},
 };
 
 use bytes::{BufMut, BytesMut};
-use futures_util::pending;
-use vexide::{prelude::SerialPort, smart::SmartPort, sync::Mutex};
+use vexide::{prelude::SerialPort, smart::SmartPort, sync::Mutex, time::sleep};
 
 use crate::requests::CoprocessorRequest;
 
@@ -66,7 +65,7 @@ impl CoprocessorSmartPort {
 					}
 				}
 
-				pending!()
+				sleep(Duration::from_micros(10)).await;
 			}
 
 			buf

@@ -1,3 +1,5 @@
+TEST_MODE = const(False)
+
 import hashlib
 import os
 import struct
@@ -8,14 +10,13 @@ from typing import Final, cast
 
 import machine
 from micropython import RingIO, const
-micropython.opt_level(3)
+micropython.opt_level(0 if TEST_MODE else 3)
 
 import cobs
 from blinker import PioBlinker
 from otos import OtosSensor
 from ws2812b import PioWS2812B
 
-TEST_MODE = __debug__
 
 WS2812B_PIO = (0, 0)
 BLINKER_PIO = (1, 0)
@@ -154,7 +155,7 @@ class VexBrain:
 
 def main():
     STATUS_LED = PioBlinker(BLINKER_PIO, STATUS_LED_OUT)
-    LED = RGB(ADDR_LED_OUT, 15, 75)
+    LED = RGB(ADDR_LED_OUT, 15, 50)
     LED.set_mode(RGB.MODE_STATIC)
 
     brain = VexBrain(RS485_UART, RS485_EN_OUT)
@@ -179,14 +180,14 @@ def main():
 
             time.sleep(1)
 
-    LED.set_mode(RGB.ORANGE)
+    LED.set_color(RGB.ORANGE)
     otos.calibrate()
 
-    LED.set_mode(RGB.GREEN)
+    LED.set_color(RGB.GREEN)
     STATUS_LED.blink(1)  # Only blink once to show success
     i = 0
     while True:
-        if __debug__ and i % 1000 == 0:
+        if TEST_MODE and i % 1000 == 0:
             pos = struct.unpack("<3h", otos.get_position())
             print(
                 f"X: {pos[0] / 32767 * 10}m, Y: {pos[1] / 32767 * 10}m, H: {pos[2] / 32767 * 180}deg"

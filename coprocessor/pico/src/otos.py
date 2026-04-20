@@ -38,7 +38,7 @@ class OtosSensor:
         if product_info[0] != 0x5F:  # Invalid product ID response, likely not OTOS
             return None
 
-        [hardware, firmware] = cast(tuple[int, int], struct.unpack("<2b", product_info[1:]))
+        [hardware, firmware] = cast("tuple[int, int]", struct.unpack("<2b", product_info[1:]))
 
         return (
             f"v{hardware >> 4}.{hardware & 0b1111}",

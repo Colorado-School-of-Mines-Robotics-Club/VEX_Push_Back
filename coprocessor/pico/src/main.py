@@ -8,6 +8,7 @@ from typing import Final, cast
 
 import machine
 from micropython import const
+micropython.opt_level(3)
 
 import cobs
 from blinker import PioBlinker

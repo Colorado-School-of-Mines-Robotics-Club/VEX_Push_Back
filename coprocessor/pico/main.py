@@ -8,12 +8,10 @@ from typing import Tuple
 import cobs
 import machine
 from blinker import PioBlinker
-
-# import qwiic_otos
 from otos import OtosSensor
 from ws2812b import PioWS2812B
 
-TEST_MODE = True
+TEST_MODE = __debug__
 
 WS2812B_PIO = (0, 0)
 BLINKER_PIO = (1, 0)
@@ -27,7 +25,7 @@ OTOS_SCL_PIN = "GP9"
 STATUS_LED_PIN = "GP2"
 
 RS485_UART = machine.UART(
-    0, baudrate=115200, tx=machine.Pin(RS485_TX_PIN), rx=machine.Pin(RS485_RX_PIN)
+    0, baudrate=921600, tx=machine.Pin(RS485_TX_PIN), rx=machine.Pin(RS485_RX_PIN)
 )
 RS485_EN_OUT = machine.Pin(RS485_EN_PIN, machine.Pin.OUT)
 ADDR_LED_OUT = machine.Pin(ADDR_LED_PIN, machine.Pin.OUT)
@@ -238,7 +236,7 @@ def main():
             LED.update()
         i += 1
 
-        time.sleep(0.001)
+        time.sleep(0)  # Yield to scheduler
 
 
 if __name__ == "__main__":

@@ -1,12 +1,12 @@
 use std::{
 	io::{self, Write as _},
 	rc::Rc,
-	sync::Arc,
-	time::{Duration, Instant},
+	time::Instant,
 };
 
 use bytes::{BufMut, BytesMut};
-use vexide::{prelude::SerialPort, smart::SmartPort, sync::Mutex, time::sleep};
+use futures_util::pending;
+use vexide::{prelude::SerialPort, smart::SmartPort, sync::Mutex};
 
 use crate::requests::CoprocessorRequest;
 
@@ -18,7 +18,7 @@ pub struct CoprocessorSmartPort {
 impl CoprocessorSmartPort {
 	pub async fn new(port: SmartPort) -> Self {
 		Self {
-			port: Rc::new(Mutex::new(SerialPort::open(port, 115200).await)),
+			port: Rc::new(Mutex::new(SerialPort::open(port, 921600).await)),
 		}
 	}
 
@@ -66,7 +66,7 @@ impl CoprocessorSmartPort {
 					}
 				}
 
-				sleep(Duration::from_millis(5)).await;
+				pending!()
 			}
 
 			buf

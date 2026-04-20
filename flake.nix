@@ -53,9 +53,11 @@
                         evcxr
                         SDL2
                         mpremote
+                        micropython
                         slint-viewer
                         pioasm
                         cargo-v5
+                        python3
                     ]);
 
                     LD_LIBRARY_PATH = libPath;

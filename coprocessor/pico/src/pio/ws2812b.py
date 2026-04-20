@@ -41,6 +41,3 @@ def ws2812_parallel():
     mov(pins, x)                     [2]  # 2
     mov(pins, null)                  [2]  # 3
     wrap()
-
-
-

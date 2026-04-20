@@ -3,13 +3,18 @@ import os
 import struct
 import sys
 import time
-from typing import Tuple
+from typing import Final, cast
+
+import machine
+from micropython import const
 
 import cobs
-import machine
 from blinker import PioBlinker
 from otos import OtosSensor
 from ws2812b import PioWS2812B
+
+def sm_id(t: tuple[int, int]) -> int:
+    return t[0] * 4 + t[1]
 
 TEST_MODE = __debug__
 
@@ -36,24 +41,29 @@ OTOS_I2C = machine.I2C(
     freq=1000000,  # 1MHz, Sparkfun calibration code suggests this speed is supported
 )
 
-LED_BLACK = 0
-LED_RED = 1
-LED_BLUE = 2
-LED_RAINBOW = 3
-LED_ROTATE = 4
-LED_GREEN = 5
-LED_WHITE = 6
-LED_ORANGE = 7
+LED_BLACK = const(0)
+LED_RED = const(1)
+LED_BLUE = const(2)
+LED_RAINBOW = const(3)
+LED_ROTATE = const(4)
+LED_GREEN = const(5)
+LED_WHITE = const(6)
+LED_ORANGE = const(7)
 
 
 class RGB:
-    def __init__(self, pin, length, brightness: float):
+    length: Final[int]
+    brightness: float
+    mode: int
+    n: Final[PioWS2812B]
+
+    def __init__(self, pin: machine.Pin, length: int, brightness: float):
         self.length = length
         self.n = PioWS2812B(WS2812B_PIO, pin, length)
         self.brightness = brightness
         self.set_mode(LED_BLACK)
 
-    def adjust_brightness(self, rgb: Tuple[int, int, int]) -> Tuple[int, int, int]:
+    def adjust_brightness(self, rgb: tuple[int, int, int]) -> tuple[int, int, int]:
         return (
             int(rgb[0] * self.brightness),
             int(rgb[1] * self.brightness),
@@ -125,20 +135,24 @@ class RGB:
 
 
 class VexBrain:
-    def __init__(self, uart, enable_pin):
+    uart: Final[machine.UART]
+    enable_pin: Final[machine.Pin]
+    buffer: bytearray
+
+    def __init__(self, uart: machine.UART, enable_pin: machine.Pin):
         self.uart = uart
         self.enable_pin = enable_pin
         self.buffer = bytearray()
 
     def send(self, data: bytes):
         self.enable_pin.value(1)
-        self.uart.write(cobs.encode(data))
+        _ = self.uart.write(cobs.encode(data))
         self.uart.flush()
         self.enable_pin.value(0)
 
     def receive(self):
-        for i in range(self.uart.any()):
-            byte = self.uart.read(1)[0]
+        for _ in range(self.uart.any()):
+            byte = cast(bytes, self.uart.read(1))[0]
             self.buffer.append(byte)
             if self.buffer[-1] == 0x00:
                 encoded = bytes(self.buffer)
@@ -181,12 +195,11 @@ def main():
     led_mode = 0
     i = 0
     while True:
-        if i % 1000 == 0:
-            if TEST_MODE:
-                pos = struct.unpack("<3h", otos.get_position())
-                print(
-                    f"X: {pos[0] / 32767 * 10}m, Y: {pos[1] / 32767 * 10}m, H: {pos[2] / 32767 * 180}deg"
-                )
+        if __debug__ and i % 1000 == 0:
+            pos = struct.unpack("<3h", otos.get_position())
+            print(
+                f"X: {pos[0] / 32767 * 10}m, Y: {pos[1] / 32767 * 10}m, H: {pos[2] / 32767 * 180}deg"
+            )
 
         # TODO: UART RX_IDLE interrupt, preferably hardware for ultimate speedy communication
         data = brain.receive()
@@ -220,10 +233,10 @@ def main():
 
                     hash.update(filename.encode())
 
-                    with open(filename) as file:
-                        hash.update(file.read().encode())
+                    with open(filename, "rb") as file: # pyright: ignore[reportUnknownVariableType]
+                        hash.update(cast(bytes, file.read()))
 
-                digest = hash.digest()
+                digest = cast(bytes, hash.digest())
                 brain.send(digest)
 
                 # end_ms = time.ticks_ms()

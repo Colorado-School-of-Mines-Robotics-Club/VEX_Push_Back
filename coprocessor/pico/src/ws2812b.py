@@ -1,15 +1,21 @@
-from typing import Tuple
+from typing import Final
+import machine
 
 import rp2
-from pio.ws2812b import ws2812, ws2812_T1, ws2812_T2, ws2812_T3
+from pio.ws2812b import ws2812, ws2812_T1, ws2812_T2, ws2812_T3  # pyright: ignore[reportUnknownVariableType]
 
 DATA_RATE = 800_000  # Kbps
 
 
 class PioWS2812B:
+    pio_idx: Final[tuple[int, int]]
+    sm: Final[rp2.StateMachine]
+    buffer: Final[bytearray]
+    dma: Final[rp2.DMA]
+
     def __init__(
         self,
-        pio_idx: Tuple[int, int],
+        pio_idx: tuple[int, int],
         pin: machine.Pin,
         led_count: int,
     ):
@@ -36,19 +42,19 @@ class PioWS2812B:
         self.dma = rp2.DMA()
 
     # Allow ws2812b[i] = (r, g, b)
-    def __setitem__(self, i: int, rgb: Tuple[int, int, int]):
+    def __setitem__(self, i: int, rgb: tuple[int, int, int]):
         self.buffer[i * 4 + 3] = rgb[1]  # G
         self.buffer[i * 4 + 2] = rgb[0]  # R
         self.buffer[i * 4 + 1] = rgb[2]  # B
 
     # Allow ws2812b[i] -> (r, g, b)
-    def __getitem__(self, i: int) -> Tuple[int, int, int]:
+    def __getitem__(self, i: int) -> tuple[int, int, int]:
         return (self.buffer[i * 4 + 2], self.buffer[i * 4 + 3], self.buffer[i * 4 + 1])
 
     def write(self):
         """Writes stored data to the LED strip. Ensure this is only called with pauses of 50us or more to avoid accidental chaining."""
 
-        if self.dma.count != 0:
+        if self.dma.active() != 0:
             return  # Ignore write if one is currently in progress
 
         # Copy packed GRB data to the PIO state machine's TX FIFO using DMA

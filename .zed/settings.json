@@ -17,4 +17,9 @@
 			},
 		},
 	},
+	"languages": {
+		"Python": {
+			"language_servers": ["!ty", "basedpyright", "!ruff", "!pylsp"],
+		},
+	},
 }

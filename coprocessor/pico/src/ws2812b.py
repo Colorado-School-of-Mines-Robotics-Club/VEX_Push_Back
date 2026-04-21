@@ -45,7 +45,7 @@ class PioWS2812B:
     def __setitem__(self, i: int, rgb: int):
         self.buffer[i * 4 + 3] = (rgb & 0x00FF00) >> 8  # G
         self.buffer[i * 4 + 2] = (rgb & 0xFF0000) >> 16 # R
-        self.buffer[i * 4 + 1] = (rgb & 0x00FF00)       # B
+        self.buffer[i * 4 + 1] = (rgb & 0x0000FF)       # B
 
     # Allow ws2812b[i] -> 0x112233
     def __getitem__(self, i: int) -> int:

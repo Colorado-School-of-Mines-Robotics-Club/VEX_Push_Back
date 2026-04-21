@@ -16,18 +16,9 @@ import cobs
 from blinker import PioBlinker
 from otos import OtosSensor
 from ws2812b import PioWS2812B
+from consts import *
 
 
-WS2812B_PIO = (0, 0)
-BLINKER_PIO = (1, 0)
-
-RS485_EN_PIN = "GP11"
-RS485_TX_PIN = "GP12"
-RS485_RX_PIN = "GP13"
-ADDR_LED_PIN = "GP10"
-OTOS_SDA_PIN = "GP8"
-OTOS_SCL_PIN = "GP9"
-STATUS_LED_PIN = "GP2"
 
 RS485_UART = machine.UART(
     0, baudrate=921600, tx=machine.Pin(RS485_TX_PIN), rx=machine.Pin(RS485_RX_PIN)
@@ -152,10 +143,10 @@ class VexBrain:
         return None
 
 
-
+@micropython.native
 def main():
     STATUS_LED = PioBlinker(BLINKER_PIO, STATUS_LED_OUT)
-    LED = RGB(ADDR_LED_OUT, 15, 50)
+    LED = RGB(ADDR_LED_OUT, 9, 50)
     LED.set_mode(RGB.MODE_STATIC)
 
     brain = VexBrain(RS485_UART, RS485_EN_OUT)
@@ -196,25 +187,26 @@ def main():
         # TODO: UART RX_IDLE interrupt, preferably hardware for ultimate speedy communication
         data = brain.receive()
         if data is not None:
-            if data[0:1] == b"p":
+            request_id = data[0]
+            if request_id == REQ_GET_POSITION:
                 brain.send(otos.get_position())
-            elif data[0:1] == b"P":
+            elif request_id == REQ_SET_POSITION:
                 otos.set_position(data[1:])
                 brain.send(b"d")
-            elif data[0:1] == b"v":
+            elif request_id == REQ_GET_VELOCITY:
                 brain.send(otos.get_velocity())
-            elif data[0:1] == b"c":
+            elif request_id == REQ_CALIBRATE:
                 otos.calibrate()
                 brain.send(b"d")
-            elif data[0:1] == b"o":
+            elif request_id == REQ_SET_OFFSETS:
                 otos.set_offset(data[1:])
                 brain.send(b"d")
-            elif data[0:1] == b"s":
+            elif request_id == REQ_SET_SCALARS:
                 otos.set_scalar(data[1:])
                 brain.send(b"d")
-            elif data[0:1] == b"S":
+            elif request_id == REQ_GET_STDDEV:
                 brain.send(otos.get_stddev())
-            elif data[0:1] == b"a":  # ping/hash
+            elif request_id == REQ_PING:
                 # start_ms = time.ticks_ms()
                 hash = hashlib.sha256()
                 files = os.listdir()
@@ -233,9 +225,20 @@ def main():
 
                 # end_ms = time.ticks_ms()
                 # print("Took", end_ms - start_ms, "ms to calculate hash")
-        if i % 25 == 0:
+            elif request_id == REQ_SET_LEDS:
+                color = cast(int, struct.unpack("<I", data[1:])[0])
+                if color == LEDS_RAINBOW_STATIC:
+                    LED.set_mode(RGB.MODE_STATIC)
+                    LED.set_rainbow()
+                elif color == LEDS_RAINBOW_ROTATE:
+                    LED.set_mode(RGB.MODE_ROTATE)
+                    LED.set_rainbow()
+                else:
+                    LED.set_color(color)
+
+        if i % 2500 == 0:
             LED.update()
-        i += 1
+        i += 1 # TODO stop using this and use an actual clock
 
         time.sleep(0)  # Yield to scheduler
 

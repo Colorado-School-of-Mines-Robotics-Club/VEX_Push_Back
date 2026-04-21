@@ -7,7 +7,7 @@ use std::{
 use coprocessor::{
 	requests::{
 		CalibrateRequest, CoprocessorRequest, GetPositionRequest, GetVelocityRequest, OtosPosition,
-		OtosVelocity, PingRequest, SetLedRequest, SetOffsetsRequest,
+		OtosVelocity, PingRequest, SetOffsetsRequest,
 	},
 	vexide::CoprocessorSmartPort,
 };
@@ -139,9 +139,6 @@ impl ControllableSubsystem for CoproSubsystem {
 				}
 			})
 			.detach();
-		}
-		if controller.button_a.is_now_pressed() {
-			vexide::task::spawn(self.send_request(SetLedRequest)).detach();
 		}
 	}
 }

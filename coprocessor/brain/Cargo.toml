@@ -21,6 +21,6 @@ slot = 1
 icon = "pizza"
 compress = true
 
-# [[bin]]
-# name = "coprocessor-testing"
-# path = "src/testing.rs"
+[[bin]]
+name = "coprocessor-testing"
+path = "src/testing.rs"

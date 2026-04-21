@@ -177,7 +177,7 @@ impl Robot {
 		let default_auton = "Skills auton";
 		let autons = [
 			route!("Do nothing", crate::autons::do_nothing),
-			route!("Motion profile", crate::autons::motion_profile),
+			route!("PID Testing", crate::autons::pid_testing),
 			route!("Match auton", crate::autons::match_auton),
 			route!("Skills auton", crate::autons::skills_or_whatever),
 			route!("Double park", crate::autons::double_park),

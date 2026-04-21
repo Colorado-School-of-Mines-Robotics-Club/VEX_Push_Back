@@ -140,7 +140,7 @@ impl Robot {
 		);
 		intake.disable_unjam();
 
-		let trunk = PneumaticsSubsystem::new(
+		let pneumatics = PneumaticsSubsystem::new(
 			// Front bar
 			AdiPneumatic {
 				port: AdiDigitalOut::new(peripherals.adi_b),
@@ -164,7 +164,7 @@ impl Robot {
 			// Wing
 			Some(AdiPneumatic {
 				port: AdiDigitalOut::new(peripherals.adi_e),
-				high_mode: PneumaticState::Contracted,
+				high_mode: PneumaticState::Extended,
 			}),
 		);
 		let replay = ReplaySubsystem::new();
@@ -177,7 +177,7 @@ impl Robot {
 			configuration,
 			drivetrain,
 			intake,
-			pneumatics: trunk,
+			pneumatics,
 			replay,
 			coprocessor,
 		}

@@ -32,7 +32,7 @@ pub struct PneumaticsSubsystem {
 	pub flap: AdiPneumatic,
 	pub outtake_adjuster: AdiPneumatic,
 	pub wing: Option<AdiPneumatic>,
-	pub disabled: DisabledState,
+	disabled: DisabledState,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Ord, Eq, Serialize, Deserialize, Default)]
@@ -132,6 +132,10 @@ impl PneumaticsSubsystem {
 		_ = self.extender.set_state(PneumaticState::Extended);
 		_ = self.outtake_adjuster.set_state(PneumaticState::Extended);
 
+		if let Some(wing) = &mut self.wing {
+			_ = wing.set_state(PneumaticState::Contracted);
+		}
+
 		if self
 			.flap
 			.state()
@@ -214,6 +218,13 @@ impl ControllableSubsystem for PneumaticsSubsystem {
 					&& let Ok(state) = self.front_bar.state()
 				{
 					_ = self.front_bar.set_state(!state);
+				}
+
+				if controller.button_right.is_now_pressed()
+					&& let Some(wing) = &mut self.wing
+					&& let Ok(state) = wing.state()
+				{
+					_ = wing.set_state(!state);
 				}
 			}
 			_ => {

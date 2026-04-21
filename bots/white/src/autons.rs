@@ -3,33 +3,14 @@ use std::time::{Duration, Instant};
 use autons::{Selector, simple::Route};
 use coprocessor::requests::GetStdDevRequest;
 use evian::{
-	drivetrain::model::Differential,
 	math::{Angle, Vec2},
 	prelude::{Arcade, TracksHeading, TracksPosition},
 };
 use shrewnit::{Degrees, Inches};
-use subsystems::{
-	copro::tracking::CoproTracking,
-	drivetrain::DrivetrainSubsystem,
-	intake::IntakeState,
-	intake_unjamming,
-	pnemuatics::{PneumaticState, PneumaticsSubsystem},
-};
+use subsystems::{intake::IntakeState, intake_unjamming, pnemuatics::PneumaticState};
 use vexide::{smart::motor::BrakeMode, time::sleep};
 
 use crate::robot::Robot;
-
-macro_rules! boost_kp {
-	($basic:ident, $factor:literal, $code:expr) => {
-		$basic
-			.angular_controller
-			.set_kp($basic.angular_controller.kp() * $factor);
-		$code;
-		$basic
-			.angular_controller
-			.set_kp($basic.angular_controller.kp() / $factor);
-	};
-}
 
 const FIELD_TILE_LENGTH: f64 = 24.0;
 
@@ -298,11 +279,7 @@ pub async fn skills_main(robot: &mut Robot) {
 
 	// Drive to right side of right long goal
 	let target = Vec2::new(42.0, FIELD_TILE_LENGTH);
-	boost_kp!(
-		basic,
-		1.1,
-		basic.turn_to_point(&mut robot.drivetrain, target).await
-	);
+	basic.turn_to_point(&mut robot.drivetrain, target).await;
 
 	let pos = robot.drivetrain.tracking.position();
 	basic
@@ -310,13 +287,9 @@ pub async fn skills_main(robot: &mut Robot) {
 		.await;
 
 	// Drive to other side of field
-	boost_kp!(
-		basic,
-		1.2,
-		basic
-			.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(87.0))
-			.await
-	);
+	basic
+		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(87.0))
+		.await;
 	basic
 		.drive_distance_at_heading(
 			&mut robot.drivetrain,
@@ -326,29 +299,21 @@ pub async fn skills_main(robot: &mut Robot) {
 		.await;
 
 	// Angle towards matchload align position
-	boost_kp!(
-		basic,
-		1.5,
-		basic
-			.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(90.0 + 45.0))
-			.await
-	);
+	basic
+		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(90.0 + 45.0))
+		.await;
 
 	// Drive to matchload alignment
-	let matchload_line = 27.2;
+	let matchload_line = 29.0;
 	let dist_x = (robot.drivetrain.tracking.position().x - matchload_line).abs();
 	let dist = (dist_x / (robot.drivetrain.tracking.heading()).cos()).abs();
 
 	basic.drive_distance(&mut robot.drivetrain, dist).await;
 
 	// Turn to matchload
-	boost_kp!(
-		basic,
-		1.37,
-		basic
-			.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(90.0))
-			.await
-	);
+	basic
+		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(90.0))
+		.await;
 
 	// Matchload
 	sleep(Duration::from_millis(500)).await;
@@ -388,13 +353,9 @@ pub async fn skills_main(robot: &mut Robot) {
 		.set_state(PneumaticState::Contracted);
 
 	// Turn towards balls
-	boost_kp!(
-		basic,
-		1.25,
-		basic
-			.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(0.0))
-			.await
-	);
+	basic
+		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(0.0))
+		.await;
 
 	// Drive up to balls
 	let red_balls_x = 41.5;
@@ -428,37 +389,28 @@ pub async fn skills_main(robot: &mut Robot) {
 		middle: 0.5,
 		bottom: 1.0,
 	});
-	boost_kp!(
-		basic,
-		1.2,
-		basic
-			.drive_distance_at_heading(&mut robot.drivetrain, 26.0, Angle::from_degrees(-60.0))
-			.await
-	);
-
-	_ = robot.drivetrain.model.drive_arcade(0.15, 0.08);
-	sleep(Duration::from_millis(750)).await;
+	basic
+		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(-35.0))
+		.await;
+	_ = robot.drivetrain.model.drive_arcade(0.35, 0.025);
+	sleep(Duration::from_secs(2)).await;
 	_ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
 
 	// Drive to original side of field
+	let close_gutter_y = 40.0;
+	let dist_y = (robot.drivetrain.tracking.position().y - close_gutter_y).abs();
+	let dist = (dist_y / (robot.drivetrain.tracking.heading()).sin()).abs();
+
 	let heading = Angle::from_degrees(90.0 + 180.0);
-	boost_kp!(
-		basic,
-		1.3,
-		basic.turn_to_heading(&mut robot.drivetrain, heading).await
-	);
+	basic.turn_to_heading(&mut robot.drivetrain, heading).await;
 	basic
-		.drive_distance_at_heading(&mut robot.drivetrain, FIELD_TILE_LENGTH * 2.0, heading)
+		.drive_distance_at_heading(&mut robot.drivetrain, dist, heading)
 		.await;
 
 	// Turn towards machload line
-	boost_kp!(
-		basic,
-		1.4,
-		basic
-			.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(225.0))
-			.await
-	);
+	basic
+		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(225.0))
+		.await;
 
 	// Move to machload line
 	let matchload_line = 27.9;
@@ -468,13 +420,9 @@ pub async fn skills_main(robot: &mut Robot) {
 	basic.drive_distance(&mut robot.drivetrain, dist).await;
 
 	// Turn towards matchload
-	boost_kp!(
-		basic,
-		1.4,
-		basic
-			.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(90.0 + 180.0))
-			.await
-	);
+	basic
+		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(90.0 + 180.0))
+		.await;
 
 	// Move to long goal
 	_ = robot.drivetrain.model.drive_arcade(-0.35, 0.01);

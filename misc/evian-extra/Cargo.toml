@@ -7,3 +7,4 @@ edition = "2024"
 evian = { workspace = true }
 nalgebra = "0.34.1"
 vexide = { workspace = true }
+shrewnit = { workspace = true }

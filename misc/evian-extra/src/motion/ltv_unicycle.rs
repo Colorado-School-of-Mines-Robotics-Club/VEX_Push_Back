@@ -27,6 +27,7 @@ pub fn trapezoid_profile(
 	peak_velocity: f64,
 	accel_time: f64,
 ) -> LTVState {
+	assert!(accel_time <= (distance / peak_velocity));
 	if current_time < accel_time {
 		let pos = 0.5 * (peak_velocity / accel_time) * current_time.powi(2);
 
@@ -49,7 +50,7 @@ pub fn trapezoid_profile(
 			heading: start_heading,
 			velocity: peak_velocity,
 		}
-	} else {
+	} else if current_time < (distance / peak_velocity + accel_time) {
 		let stage3_time = current_time - distance / peak_velocity;
 		let stage1_pos = 0.5 * (peak_velocity / accel_time) * accel_time.powi(2);
 		let stage2_pos = stage1_pos + peak_velocity * (distance / peak_velocity - accel_time);
@@ -62,7 +63,16 @@ pub fn trapezoid_profile(
 				start_pos.y + stage3_pos * start_heading.sin()
 			],
 			heading: start_heading,
-			velocity: peak_velocity - stage3_time * (peak_velocity / accel_time),
+			velocity: peak_velocity + (peak_velocity / accel_time) * -stage3_time,
+		}
+	} else {
+		LTVState {
+			position: vector![
+				start_pos.x + distance * start_heading.cos(),
+				start_pos.y + distance * start_heading.sin()
+			],
+			heading: start_heading,
+			velocity: 0.0,
 		}
 	}
 }
@@ -107,6 +117,7 @@ impl LTVUnicycleMotion {
 						.as_radians(),
 					current_angular_velocity,
 				) {
+				_ = drivetrain.model.drive_tank_velocity(0, 0);
 				return;
 			}
 
@@ -120,15 +131,13 @@ impl LTVUnicycleMotion {
 				accel_time,
 			);
 
-			let signal = controller.update(
-				LTVState {
-					position: vector![current_pose.x, current_pose.y],
-					heading: current_heading.as_radians(),
-					velocity: current_linear_velocity,
-				},
-				setpoint,
-				last_update.elapsed(),
-			);
+			let measurement = LTVState {
+				position: vector![current_pose.x, current_pose.y],
+				heading: current_heading.as_radians(),
+				velocity: current_linear_velocity,
+			};
+			let dt = last_update.elapsed();
+			let signal = controller.update(measurement, setpoint, dt);
 			let rpms = vector![
 				signal.x - signal.y * (track_width / 2.0),
 				signal.x + signal.y * (track_width / 2.0)
@@ -140,7 +149,7 @@ impl LTVUnicycleMotion {
 				.drive_tank_velocity(rpms.x as i32, rpms.y as i32);
 
 			last_update = Instant::now();
-			sleep(Duration::from_millis(10)).await;
+			sleep(Duration::from_millis(20)).await;
 		}
 	}
 }

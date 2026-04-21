@@ -22,7 +22,7 @@ pub const SEEKING_CONTROLLER: Seeking<Pid, Pid> = Seeking {
 };
 
 pub const LINEAR_PID: Pid = {
-	let mut pid = Pid::new(0.031, 0.00, 0.00051, Some(2.0));
+	let mut pid = Pid::new(0.05, 0.002, 0.002, Some(5.0));
 	pid.set_output_limit(Some(0.60));
 	pid
 };

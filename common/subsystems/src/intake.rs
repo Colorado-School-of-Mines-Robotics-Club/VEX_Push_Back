@@ -258,6 +258,12 @@ impl ControllableSubsystem for IntakeSubsystem {
 			}
 		}
 
+		if controller.button_x.is_pressed() && self.last_jiggle.is_none() {
+			self.enable_unjam();
+		} else if controller.button_x.is_released() && self.last_jiggle.is_some() {
+			self.disable_unjam();
+		}
+
 		self.run(self.state);
 	}
 

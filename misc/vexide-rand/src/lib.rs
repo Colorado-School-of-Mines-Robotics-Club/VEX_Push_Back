@@ -23,7 +23,7 @@ task_local! {
 
 #[cfg(getrandom_backend = "extern_impl")]
 #[getrandom::implementation::fill_uninit]
-unsafe extern "Rust" fn vexide_getrandom_fill_uninit(
+extern "Rust" fn vexide_getrandom_fill_uninit(
 	dest: &mut [MaybeUninit<u8>],
 ) -> Result<(), getrandom::Error> {
 	use core::time::Duration;
@@ -31,6 +31,8 @@ unsafe extern "Rust" fn vexide_getrandom_fill_uninit(
 	// Reseed the PRNG if it hasn't yet or has been 2s since last seed
 	let current_time = unsafe { vexSystemTimeGet() };
 	if LAST_SEED.with(|v| v.get().is_none_or(|i| current_time - i > 2_000)) {
+		use rand_pcg::rand_core::SeedableRng as _;
+
 		let seed = HASHER.with_borrow_mut(|hasher| {
 			seed_hasher(hasher);
 			hasher.finish()
@@ -39,9 +41,11 @@ unsafe extern "Rust" fn vexide_getrandom_fill_uninit(
 		LAST_SEED.with(|last_seed| last_seed.replace(Some(current_time)));
 	}
 	PRNG.with_borrow_mut(|prng| {
-		let mut value;
+		let mut value = 0;
 		for (i, dest_byte) in dest.iter_mut().enumerate() {
 			if i % 4 == 0 {
+				use rand_pcg::rand_core::Rng as _;
+
 				value = prng.next_u32();
 			}
 			dest_byte.write((value & 0xFF) as _);

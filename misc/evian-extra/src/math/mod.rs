@@ -1,6 +1,6 @@
 use nalgebra::{
 	Cholesky, DefaultAllocator, DimMin, DimName, DimNameAdd, DimNameSum, Matrix, OMatrix, OVector,
-	RealField, Storage, U1, Vector, allocator::Allocator,
+	RealField, Storage, U1, Vector, allocator::Allocator, stack,
 };
 
 /// Solves the DARE for a set of matrices A, B, Q, R, and a precision bound eps
@@ -96,14 +96,12 @@ where
 
 pub fn brysons_rule<T, D, S>(max: &Vector<T, D, S>) -> OMatrix<T, D, D>
 where
-	T: RealField,
+	T: RealField + Clone,
 	D: DimName,
 	S: Storage<T, D, U1>,
 	nalgebra::DefaultAllocator: Allocator<D, D> + Allocator<D>,
 {
-	OMatrix::<T, D, D>::from_diagonal(&OVector::<T, D>::from_iterator(
-		max.iter().map(|e| e.clone().powi(-2)),
-	))
+	OMatrix::<T, D, D>::from_fn(|i, j| max[(i, j)].clone().powi(-2))
 }
 
 pub fn discretize_ab<T, S, I, S1, S2>(
@@ -128,7 +126,9 @@ where
 	m.view_range_mut(0..S::DIM, 0..S::DIM).copy_from(a);
 	m.view_range_mut(0..S::DIM, S::DIM..).copy_from(b);
 
-	let phi = m.scale(dt).exp();
+	m.scale_mut(dt);
+
+	let phi = m.exp();
 
 	(
 		phi.generic_view((0, 0), (S::name(), S::name()))
@@ -136,4 +136,110 @@ where
 		phi.generic_view((0, S::DIM), (S::name(), I::name()))
 			.clone_owned(),
 	)
+}
+
+#[cfg(test)]
+mod test {
+	use std::time::Instant;
+
+	use nalgebra::{Matrix2, Matrix2x3, Matrix3, Matrix3x2, Vector2, Vector3, matrix};
+
+	use crate::control::ltv_unicycle::LTVUnicycleController;
+
+	use super::*;
+
+	// Example values
+	// const ACCEPTABLE_STATE_ERROR: Vector3<f64> = LTVUnicycleController::FRC_DEFAULT_Q;
+	// const ACCEPTABLE_CONTROL_EFFORT: Vector2<f64> = LTVUnicycleController::FRC_DEFAULT_R;
+	const A: Matrix3<f64> = matrix![
+		0.0, 0.0, 0.0;
+		0.0, 0.0, 1.0;
+		0.0, 0.0, 0.0;
+	];
+	const B: Matrix3x2<f64> = matrix![
+		1.0, 0.0;
+		0.0, 0.0;
+		0.0, 1.0;
+	];
+	const DT: f64 = 0.005;
+	const EPS: f64 = 1e-10;
+
+	// Expected values calculated with matlab
+	const EXPECTED_A_DISC: Matrix3<f64> = matrix![
+		1.0, 0.0, 0.0;
+		0.0, 1.0, 0.005;
+		0.0, 0.0, 1.0
+	];
+	const EXPECTED_B_DISC: Matrix3x2<f64> = matrix![
+		0.005, 0.0;
+		0.0, 1.25e-5;
+		0.0, 0.005;
+	];
+	const EXPECTED_DARE_SOLUTION: Matrix3<f64> = matrix![
+		2.148743429728368,  0.000000000000002,  0.000000000000000;
+		0.000000000000002, 27.379573197178470, 20.320063497916955;
+		0.000000000000000, 20.320063497916955, 67.445407422175464;
+	];
+	const EXPECTED_K: Matrix2x3<f64> = matrix![
+		15.372794885591341, 0.000000000000007, -0.000000000000006;
+		0.000000000000000,  0.405034355810500,  1.342892145268614;
+	];
+
+	// #[test]
+	// fn test_brysons_rule() {
+	// 	assert_eq!(
+	// 		brysons_rule(&ACCEPTABLE_STATE_ERROR),
+	// 		EXPECTED_Q,
+	// 		"Calculated Q from acceptable state error should be correct"
+	// 	);
+	// 	assert_eq!(
+	// 		brysons_rule(&ACCEPTABLE_CONTROL_EFFORT),
+	// 		EXPECTED_R,
+	// 		"Calculated R from acceptable control effort should be correct"
+	// 	);
+	// }
+
+	#[test]
+	fn test_discretization() {
+		assert_eq!(
+			discretize_ab(&A, &B, DT),
+			(EXPECTED_A_DISC, EXPECTED_B_DISC),
+			"Discretized A and B matrices should be correct"
+		);
+	}
+
+	#[test]
+	fn test_dare() {
+		let s = solve_dare(
+			&EXPECTED_A_DISC,
+			&EXPECTED_B_DISC,
+			&LTVUnicycleController::FRC_DEFAULT_Q,
+			&LTVUnicycleController::FRC_DEFAULT_R,
+			EPS,
+		);
+
+		// Matlab values have different accuracy, accept some error
+		assert!(
+			(s - EXPECTED_DARE_SOLUTION).abs() < Matrix3::from_element(EPS),
+			"Calculated DARE solution should be within reasonable precision of correct value"
+		);
+	}
+
+	#[test]
+	fn test_lqr() {
+		let k = lqr(
+			&EXPECTED_A_DISC,
+			&EXPECTED_B_DISC,
+			&LTVUnicycleController::FRC_DEFAULT_Q,
+			&LTVUnicycleController::FRC_DEFAULT_R,
+			&Matrix3x2::zeros(),
+			EPS,
+		);
+
+		// Matlab values have different accuracy, accept some error
+		assert!(
+			(k - EXPECTED_K).abs() < Matrix2x3::from_element(EPS),
+			"Calculated LQR gain should be within reasonable precision of correct value"
+		);
+	}
 }

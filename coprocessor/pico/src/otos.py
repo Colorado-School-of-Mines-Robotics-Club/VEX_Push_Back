@@ -1,26 +1,31 @@
 import struct
+from typing import Final, cast
 import time
-from typing import Optional, Tuple
 
-OTOS_PRODUCT_ID = 0x5F
+import machine
+from micropython import const
 
-I2C_SENSOR_ADDR = 0x17
-I2C_PRODUCT_ID_ADDR = 0x00
-I2C_RESET_OFFSET = 0x07
-I2C_CALIBRATE_OFFSET = 0x06
-I2C_OFFSET_OFFSET = 0x10
-I2C_SCALAR_OFFSET = 0x04
-I2C_POSITION_OFFSET = 0x20
-I2C_VELOCITY_OFFSET = 0x26
-I2C_ACCELERATION_OFFSET = 0x2C
-I2C_POS_STDDEV_OFFSET = 0x32
+OTOS_PRODUCT_ID = const(0x5F)
+
+I2C_SENSOR_ADDR = const(0x17)
+I2C_PRODUCT_ID_ADDR = const(0x00)
+I2C_RESET_OFFSET = const(0x07)
+I2C_CALIBRATE_OFFSET = const(0x06)
+I2C_OFFSET_OFFSET = const(0x10)
+I2C_SCALAR_OFFSET = const(0x04)
+I2C_POSITION_OFFSET = const(0x20)
+I2C_VELOCITY_OFFSET = const(0x26)
+I2C_ACCELERATION_OFFSET = const(0x2C)
+I2C_POS_STDDEV_OFFSET = const(0x32)
 
 
 class OtosSensor:
-    def __init__(self, i2c):
+    i2c: Final[machine.I2C]
+
+    def __init__(self, i2c: machine.I2C):
         self.i2c = i2c
 
-    def get_versions(self) -> Optional[Tuple[str, str]]:
+    def get_versions(self) -> tuple[str, str] | None:
         try:
             # First byte is 0x5F product ID
             # Second and third bytes are 2 nibbles each (major, minor) of hardware and firmware versions respectively
@@ -33,7 +38,7 @@ class OtosSensor:
         if product_info[0] != 0x5F:  # Invalid product ID response, likely not OTOS
             return None
 
-        [hardware, firmware] = struct.unpack("<2b", product_info[1:])
+        [hardware, firmware] = cast("tuple[int, int]", struct.unpack("<2b", product_info[1:]))
 
         return (
             f"v{hardware >> 4}.{hardware & 0b1111}",

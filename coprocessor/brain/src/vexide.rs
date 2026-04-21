@@ -1,6 +1,6 @@
 use std::{
 	io::{self, Write as _},
-	sync::Arc,
+	rc::Rc,
 	time::{Duration, Instant},
 };
 
@@ -11,13 +11,13 @@ use crate::requests::CoprocessorRequest;
 
 #[derive(Clone)]
 pub struct CoprocessorSmartPort {
-	port: Arc<Mutex<SerialPort>>,
+	port: Rc<Mutex<SerialPort>>,
 }
 
 impl CoprocessorSmartPort {
 	pub async fn new(port: SmartPort) -> Self {
 		Self {
-			port: Arc::new(Mutex::new(SerialPort::open(port, 115200).await)),
+			port: Rc::new(Mutex::new(SerialPort::open(port, 921600).await)),
 		}
 	}
 
@@ -29,7 +29,7 @@ impl CoprocessorSmartPort {
 	}
 
 	async fn send_request_with_port<R: CoprocessorRequest + 'static>(
-		port_lock: Arc<Mutex<SerialPort>>,
+		port_lock: Rc<Mutex<SerialPort>>,
 		request: R,
 	) -> Result<R::Response, io::Error> {
 		// Scope that takes out a lock on the port
@@ -65,7 +65,7 @@ impl CoprocessorSmartPort {
 					}
 				}
 
-				sleep(Duration::from_millis(5)).await;
+				sleep(Duration::from_micros(10)).await;
 			}
 
 			buf

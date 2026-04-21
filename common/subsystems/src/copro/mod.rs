@@ -2,18 +2,17 @@ use std::{
 	cell::RefCell,
 	ops::{Deref, DerefMut},
 	rc::Rc,
-	time::Duration,
 };
 
 use coprocessor::{
 	requests::{
 		CalibrateRequest, CoprocessorRequest, GetPositionRequest, GetVelocityRequest, OtosPosition,
-		OtosVelocity, PingRequest, SetLedRequest, SetOffsetsRequest,
+		OtosVelocity, PingRequest, SetOffsetsRequest,
 	},
 	vexide::CoprocessorSmartPort,
 };
 use shrewnit::{Degrees, Length, Radians};
-use vexide::{controller::ControllerState, smart::SmartPort, time::sleep};
+use vexide::{controller::ControllerState, smart::SmartPort};
 
 use crate::{ControllableSubsystem, ControllerConfiguration};
 
@@ -122,8 +121,6 @@ impl CoproSubsystem {
 				}
 				Err(_e) => (), // TODO: error state indication?
 			};
-
-			sleep(Duration::from_millis(3)).await;
 		}
 	}
 }
@@ -142,9 +139,6 @@ impl ControllableSubsystem for CoproSubsystem {
 				}
 			})
 			.detach();
-		}
-		if controller.button_a.is_now_pressed() {
-			vexide::task::spawn(self.send_request(SetLedRequest)).detach();
 		}
 	}
 }

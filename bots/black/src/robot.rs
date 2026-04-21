@@ -127,11 +127,11 @@ impl Robot {
 					Motor::new(peripherals.port_17, Gearset::Blue, Direction::Reverse),
 				]),
 			},
-			Some(OpticalSensor::new(peripherals.port_15)),
-			Some(AdiPneumatic {
+			OpticalSensor::new(peripherals.port_15),
+			AdiPneumatic {
 				port: AdiDigitalOut::new(peripherals.adi_d),
 				high_mode: PneumaticState::Extended,
-			}),
+			},
 		);
 		let trunk = PneumaticsSubsystem::new(
 			// Front bar
@@ -177,7 +177,7 @@ impl Robot {
 		let default_auton = "Skills auton";
 		let autons = [
 			route!("Do nothing", crate::autons::do_nothing),
-			route!("Motion profile", crate::autons::motion_profile),
+			route!("PID Testing", crate::autons::pid_testing),
 			route!("Match auton", crate::autons::match_auton),
 			route!("Skills auton", crate::autons::skills_or_whatever),
 			route!("Double park", crate::autons::double_park),

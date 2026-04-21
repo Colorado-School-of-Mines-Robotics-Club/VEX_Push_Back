@@ -34,21 +34,11 @@ macro_rules! boost_kp {
 const FIELD_TILE_LENGTH: f64 = 24.0;
 
 pub async fn do_nothing(_robot: &mut Robot) {
-	let mut basic = crate::control::BASIC_CONTROLLER;
-	let start = _robot.drivetrain.tracking.heading();
-	let target = start + Angle::from_degrees(90.0);
-	basic.turn_to_heading(&mut _robot.drivetrain, target).await;
-	let end = _robot.drivetrain.tracking.heading();
-
-	println!(
-		"Start: {}deg\nEnd: {}deg\nDiff: {}deg\nError: {}deg",
-		start.as_degrees(),
-		end.as_degrees(),
-		(end - start).as_degrees(),
-		(end - target).as_degrees()
-	);
-
 	println!("Doing absolutely nothing!!!");
+}
+
+pub async fn autopark_test(robot: &mut Robot) {
+	robot.intake.run_autopark().await;
 }
 
 pub async fn match_auton(robot: &mut Robot) {

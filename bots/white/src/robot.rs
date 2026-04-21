@@ -132,8 +132,11 @@ impl Robot {
 					Motor::new(peripherals.port_12, Gearset::Blue, Direction::Reverse),
 				]),
 			},
-			None,
-			None,
+			OpticalSensor::new(peripherals.port_17),
+			AdiPneumatic {
+				port: AdiDigitalOut::new(peripherals.adi_f),
+				high_mode: PneumaticState::Extended,
+			},
 		);
 		intake.disable_unjam();
 
@@ -187,6 +190,7 @@ impl Robot {
 			route!("Match auton", crate::autons::match_auton),
 			route!("Skills double park", crate::autons::skills_doublepark),
 			route!("Skills main", crate::autons::skills_main),
+			route!("Autopark test", crate::autons::autopark_test),
 		];
 
 		#[cfg(feature = "ui")]

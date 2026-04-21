@@ -3,10 +3,9 @@ use std::{
 	time::{Duration, Instant},
 };
 
+use futures_util::pending;
 use serde::{Deserialize, Serialize};
-use vexide::{
-	controller::ControllerState, prelude::OpticalSensor, smart::motor::BrakeMode, time::sleep,
-};
+use vexide::{controller::ControllerState, prelude::OpticalSensor, smart::motor::BrakeMode};
 use vexide_motorgroup::MotorGroup;
 
 use crate::{
@@ -28,7 +27,6 @@ macro_rules! intake_unjamming {
 			loop {
 				{
 					// SAFETY: this isn't. i fucking hate this but i don't know a better way
-					// some time i'll make a Competition-like thing for real
 					unsafe {
 						(*__robot).intake.run($state);
 					}
@@ -119,16 +117,16 @@ pub struct IntakeSubsystem {
 	motors: IntakeMotors,
 	state: IntakeState,
 	park_state: ParkState,
-	park_sensor: Option<OpticalSensor>,
-	park_piston: Option<AdiPneumatic>,
+	park_sensor: OpticalSensor,
+	park_piston: AdiPneumatic,
 	last_jiggle: Option<Instant>,
 }
 
 impl IntakeSubsystem {
 	pub fn new(
 		motors: IntakeMotors,
-		park_sensor: Option<OpticalSensor>,
-		park_piston: Option<AdiPneumatic>,
+		park_sensor: OpticalSensor,
+		park_piston: AdiPneumatic,
 	) -> Self {
 		Self {
 			motors,
@@ -143,9 +141,7 @@ impl IntakeSubsystem {
 	pub fn run(&mut self, state: IntakeState) {
 		match self.park_state {
 			ParkState::Disabled => {
-				if let Some(p) = &mut self.park_piston {
-					_ = p.set_state(PneumaticState::Contracted);
-				}
+				_ = self.park_piston.set_state(PneumaticState::Contracted);
 
 				let coeff = match self.last_jiggle.map(|j| j.elapsed()) {
 					Some(last_jiggle) if last_jiggle >= Duration::from_millis(1300) => {
@@ -170,24 +166,19 @@ impl IntakeSubsystem {
 					.set_voltage(coeff * state.bottom * self.motors.bottom.max_voltage());
 			}
 			ParkState::Outtaking => {
-				if let Some(proximity) = self.park_sensor().and_then(|p| p.proximity().ok())
+				if let Some(proximity) = self.park_sensor().proximity().ok()
 					&& proximity < 0.75
 				{
-					if let Some(p) = &mut self.park_piston {
-						_ = p.set_state(PneumaticState::Contracted);
-					}
+					_ = self.park_piston.set_state(PneumaticState::Contracted);
 					_ = self.motors.top.set_voltage(-self.motors.top.max_voltage());
 					_ = self
 						.motors
 						.middle
 						.set_voltage(-self.motors.middle.max_voltage());
-					_ = self.motors.bottom.set_voltage(-0.25);
+					_ = self.motors.bottom.set_velocity(-100);
 				} else {
 					self.park_state = ParkState::Parked;
-					_ = self
-						.park_piston
-						.as_mut()
-						.and_then(|p| p.set_state(PneumaticState::Extended).ok());
+					_ = self.park_piston.set_state(PneumaticState::Extended).ok();
 					_ = self.motors.bottom.brake(BrakeMode::Hold);
 				}
 			}
@@ -197,9 +188,7 @@ impl IntakeSubsystem {
 				_ = self.motors.bottom.brake(BrakeMode::Hold);
 			}
 			ParkState::Manual => {
-				if let Some(p) = &mut self.park_piston {
-					_ = p.set_state(PneumaticState::Extended);
-				}
+				_ = self.park_piston.set_state(PneumaticState::Extended);
 			}
 		}
 	}
@@ -212,12 +201,21 @@ impl IntakeSubsystem {
 		self.last_jiggle = None;
 	}
 
-	pub fn park_sensor(&self) -> Option<&OpticalSensor> {
-		self.park_sensor.as_ref()
+	pub fn park_sensor(&self) -> &OpticalSensor {
+		&self.park_sensor
 	}
 
-	pub fn park_piston(&mut self) -> Option<&mut AdiPneumatic> {
-		self.park_piston.as_mut()
+	pub fn park_piston(&mut self) -> &mut AdiPneumatic {
+		&mut self.park_piston
+	}
+
+	pub async fn run_autopark(&mut self) {
+		self.park_state = ParkState::Outtaking;
+		while self.park_state != ParkState::Parked {
+			self.run(IntakeState::full_brake()); // full_break is just a placeholder, it isn't used during park
+			pending!()
+		}
+		self.run(IntakeState::full_brake());
 	}
 }
 
@@ -248,17 +246,15 @@ impl ControllableSubsystem for IntakeSubsystem {
 			IntakeState::full_brake()
 		};
 
-		if self.park_sensor.is_some() {
-			if controller.button_left.is_now_pressed() {
-				self.park_state = match self.park_state {
-					ParkState::Disabled | ParkState::Manual => ParkState::Outtaking,
-					_ => ParkState::Disabled,
-				}
-			} else if controller.button_down.is_now_pressed() {
-				self.park_state = match self.park_state {
-					ParkState::Disabled => ParkState::Manual,
-					_ => ParkState::Disabled,
-				}
+		if controller.button_left.is_now_pressed() {
+			self.park_state = match self.park_state {
+				ParkState::Disabled | ParkState::Manual => ParkState::Outtaking,
+				_ => ParkState::Disabled,
+			}
+		} else if controller.button_down.is_now_pressed() {
+			self.park_state = match self.park_state {
+				ParkState::Disabled => ParkState::Manual,
+				_ => ParkState::Disabled,
 			}
 		}
 

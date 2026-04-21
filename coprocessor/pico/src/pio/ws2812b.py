@@ -8,19 +8,19 @@ from machine import Pin
 # ws2812 #
 # ------ #
 
-ws2812_T1 = 3
-ws2812_T2 = 3
-ws2812_T3 = 4
+ws2812_T1 = 2
+ws2812_T2 = 5
+ws2812_T3 = 3
 
 @rp2.asm_pio(out_shiftdir=rp2.PIO.SHIFT_LEFT, pull_thresh=24, autopull=True, fifo_join=rp2.PIO.JOIN_TX, sideset_init=rp2.PIO.OUT_LOW)
 def ws2812():
     wrap_target()
     label("0")
-    out(x, 1)               .side(0) [3]  # 0
-    jmp(not_x, "3")         .side(1) [2]  # 1
-    jmp("0")                .side(1) [2]  # 2
+    out(x, 1)               .side(0) [2]  # 0
+    jmp(not_x, "3")         .side(1) [1]  # 1
+    jmp("0")                .side(1) [4]  # 2
     label("3")
-    nop()                   .side(0) [2]  # 3
+    nop()                   .side(0) [4]  # 3
     wrap()
 
 
@@ -41,6 +41,3 @@ def ws2812_parallel():
     mov(pins, x)                     [2]  # 2
     mov(pins, null)                  [2]  # 3
     wrap()
-
-
-

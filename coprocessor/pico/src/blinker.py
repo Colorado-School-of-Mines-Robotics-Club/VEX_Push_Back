@@ -1,16 +1,19 @@
-from typing import Tuple
-
+from typing import Final
 import rp2
 from pio.blinker import (
-    blinker,
+    blinker, # pyright: ignore[reportUnknownVariableType]
     blinker_FREQUENCY,
 )
+import machine
 
 MAX_BLINK_COUNT = 2**32 - 1
 
 
 class PioBlinker:
-    def __init__(self, pio_idx: Tuple[int, int], pin: machine.Pin):
+    pin: Final[machine.Pin]
+    sm: Final[rp2.StateMachine]
+
+    def __init__(self, pio_idx: tuple[int, int], pin: machine.Pin):
         """Initializes the blinker
 
         :param pin: The pin an LED is controlled by
@@ -40,4 +43,5 @@ class PioBlinker:
             self.pin.on()
         else:
             self.sm.active(1)
+            self.sm.restart()
             self.sm.put(count - 1)

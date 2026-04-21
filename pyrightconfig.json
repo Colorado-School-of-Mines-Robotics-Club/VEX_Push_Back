@@ -1,0 +1,13 @@
+{
+	"include": ["coprocessor/pico/src"],
+	"ignore": ["coprocessor/pico/src/pio"],
+	"stubPath": "coprocessor/pico/stubs",
+	"typeshedPath": "coprocessor/pico/stubs", // Micropython stubs include typeshed with changes
+	"executionEnvironments": [
+		{
+			"root": "coprocessor/pico/src",
+			"reportMissingModuleSource": false,
+			"reportUnknownMemberType": false,
+		},
+	],
+}

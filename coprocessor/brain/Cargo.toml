@@ -9,7 +9,7 @@ cobs = { workspace = true }
 nom = { workspace = true }
 shrewnit = { workspace = true }
 vexide = { workspace = true }
-triple_buffer = { workspace = true }
+futures-util = { workspace = true }
 
 [build-dependencies]
 sha2 = "0.10.9"

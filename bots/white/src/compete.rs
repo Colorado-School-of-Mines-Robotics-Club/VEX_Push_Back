@@ -1,13 +1,43 @@
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use ::autons::prelude::SelectCompete;
+use anyhow::Context;
 use subsystems::ControllableSubsystem;
 use vexide::prelude::*;
 
 use crate::robot::Robot;
 
+const AUTON_IN_DRIVER: bool = option_env!("DO_NOT_USE_AT_COMP_AUTON_TEST").is_some();
+
 impl SelectCompete for Robot {
 	async fn driver(&mut self) {
+		if AUTON_IN_DRIVER && let Some(auton) = &self.default_auton {
+			let attempted_auton: anyhow::Result<Duration> = try {
+				self.coprocessor
+					.calibrate()
+					.await
+					.context("OTOS calibration failed")?;
+				self.imu
+					.lock()
+					.await
+					.calibrate()
+					.await
+					.context("IMU calibration failed")?;
+
+				sleep(Duration::from_millis(500)).await;
+
+				let start = Instant::now();
+				(auton.callback)(self).await;
+				start.elapsed()
+			};
+
+			match attempted_auton {
+				Ok(duration) => println!("Auton finished in {:.02}s", duration.as_secs_f64()),
+				Err(e) => println!("Auton failed: {:?}", e),
+			}
+			std::process::exit(0);
+		}
+
 		sleep(Duration::from_millis(100)).await;
 		_ = self.pneumatics.initialize().await;
 

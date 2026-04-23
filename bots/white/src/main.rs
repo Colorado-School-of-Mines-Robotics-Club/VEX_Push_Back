@@ -1,4 +1,4 @@
-#![feature(never_type, future_join, duration_millis_float)]
+#![feature(never_type, future_join, duration_millis_float, try_blocks)]
 
 mod autons;
 mod compete;

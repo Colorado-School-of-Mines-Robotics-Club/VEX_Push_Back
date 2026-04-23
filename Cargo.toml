@@ -16,6 +16,7 @@ bitflags = { version = "2.10.0" }
 serde = { version = "1.0.228", features = ["derive"] }
 autons = { version = "0.2.0", default-features = false, features = ["compete", "simple"] }
 futures-util = "0.3.32"
+anyhow = { version = "1.0.102" }
 
 [patch.crates-io]
 vex-sdk-jumptable = { git = "https://github.com/vexide/vex-sdk", rev = "ff94966cf881ee98fbaba432ab5e9061d8d422f9" }

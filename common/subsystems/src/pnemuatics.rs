@@ -220,7 +220,7 @@ impl ControllableSubsystem for PneumaticsSubsystem {
 					_ = self.front_bar.set_state(!state);
 				}
 
-				if controller.button_right.is_now_pressed()
+				if controller.button_down.is_now_pressed()
 					&& let Some(wing) = &mut self.wing
 					&& let Ok(state) = wing.state()
 				{

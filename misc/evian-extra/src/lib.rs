@@ -4,6 +4,7 @@ use evian::drivetrain::model::{Differential, DrivetrainModel};
 pub mod control;
 pub mod math;
 pub mod motion;
+pub mod utils;
 
 pub trait TankVelocity: DrivetrainModel {
 	/// Drives a tank drivetrain at a specified velocity in RPMs

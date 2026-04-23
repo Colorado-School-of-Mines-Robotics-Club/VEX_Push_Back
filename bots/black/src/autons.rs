@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use autons::{Selector, simple::Route};
 use evian::{
-	math::Angle,
+	math::{Angle, Vec2},
 	prelude::{Arcade, TracksForwardTravel, TracksHeading, TracksPosition},
 };
 use evian_extra::{
@@ -24,12 +24,10 @@ pub async fn match_auton(robot: &mut Robot) {
 		.extender
 		.set_state(PneumaticState::Extended);
 
-	let mut _seeking = crate::control::SEEKING_CONTROLLER;
-
 	let mut basic = crate::control::BASIC_CONTROLLER;
 
 	// Move to center goal position
-	basic.drive_distance(&mut robot.drivetrain, -44.5).await;
+	basic.drive_distance(&mut robot.drivetrain, -45.0).await;
 
 	// Turn towards center goal
 	basic
@@ -62,11 +60,13 @@ pub async fn match_auton(robot: &mut Robot) {
 	//	.await;
 
 	// Calculate distance from line
-	basic.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(45.0)).await;
+	basic
+		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(45.0))
+		.await;
 
 	let dist_x = (robot.drivetrain.tracking.position().x - 31.0).abs();
 	let dist = (dist_x / (robot.drivetrain.tracking.heading()).cos()).abs();
-		_ = robot
+	_ = robot
 		.pneumatics
 		.front_bar
 		.set_state(PneumaticState::Extended);
@@ -78,31 +78,27 @@ pub async fn match_auton(robot: &mut Robot) {
 
 	// Turn to matchload
 	basic
-		.angular_controller
-		.set_kp(basic.angular_controller.kp() * 1.2);
-	basic
 		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(89.5))
 		.await;
-	basic
-		.angular_controller
-		.set_kp(basic.angular_controller.kp() / 1.2);
-
-	dbg!(robot.drivetrain.tracking.heading().as_degrees());
 
 	// Load from matchload
 
 	//sleep(Duration::from_millis(750)).await;
-	_ = robot.drivetrain.model.drive_arcade(0.35, -0.01);
+	_ = robot.drivetrain.model.drive_arcade(0.25, 0.0);
 	robot.intake.run(IntakeState::full_forward());
-	sleep(Duration::from_secs(2)).await;
-	_ = robot.drivetrain.model.drive_arcade(-0.35, -0.01);
+	sleep(Duration::from_millis(2500)).await;
+	_ = robot.drivetrain.model.drive_arcade(-0.25, 0.0);
 	sleep(Duration::from_millis(350)).await;
-	_ = robot.drivetrain.model.drive_arcade(0.35, -0.01);
-	sleep(Duration::from_millis(1000)).await;
-	_ = robot.drivetrain.model.drive_arcade(-0.35, -0.01);
-	sleep(Duration::from_millis(350)).await;
+	// _ = robot.drivetrain.model.drive_arcade(0.25, 0.0);
+	// sleep(Duration::from_millis(1000)).await;
+	// _ = robot.drivetrain.model.drive_arcade(-0.25, 0.0);
+	// sleep(Duration::from_millis(350)).await;
 
-	basic.turn_to_point(&mut robot.drivetrain, (31.0,32.0)).await;
+	let long_goal_point = Vec2::new(30.6, -33.5);
+	let pos = robot.drivetrain.tracking.position();
+	let angle =
+		Angle::atan2(long_goal_point.y - pos.y, long_goal_point.x - pos.x) + Angle::from_turns(0.5);
+	basic.turn_to_heading(&mut robot.drivetrain, angle).await;
 
 	robot.intake.run(IntakeState {
 		top: 1.0,
@@ -113,8 +109,15 @@ pub async fn match_auton(robot: &mut Robot) {
 	robot.intake.run(IntakeState::full_brake());
 
 	// Drive to long goal
-	_ = robot.drivetrain.model.drive_arcade(-0.35, -0.007);
-	sleep(Duration::from_millis(1500)).await;
+	let pos = robot.drivetrain.tracking.position();
+	basic
+		.drive_distance(
+			&mut robot.drivetrain,
+			-(pos.distance(long_goal_point) - 1.0),
+		)
+		.await;
+	_ = robot.drivetrain.model.drive_arcade(-0.25, 0.0);
+	sleep(Duration::from_millis(1000)).await;
 
 	// Outtake into long goal
 	robot.intake.run(IntakeState {
@@ -174,7 +177,7 @@ pub async fn match_auton(robot: &mut Robot) {
 		.set_state(PneumaticState::Extended);
 	_ = robot.pneumatics.flap.set_state(PneumaticState::Contracted);
 	sleep(Duration::from_millis(800)).await;
-	_ = robot.drivetrain.model.drive_arcade(0.30, 0.0);
+	_ = robot.drivetrain.model.drive_arcade(0.25, 0.0);
 	robot.intake.run(IntakeState::full_forward());
 	sleep(Duration::from_secs(3)).await;
 
@@ -495,24 +498,14 @@ pub async fn skills_or_whatever(robot: &mut Robot) {
 }
 
 pub async fn pid_testing(robot: &mut Robot) {
-	println!("Pid testing!!!");
-
 	let mut basic = crate::control::BASIC_CONTROLLER;
 
-	let start = robot.drivetrain.tracking.forward_travel();
-
-	let target = start + 24.0;
-	basic.drive_distance(&mut robot.drivetrain, target).await;
-
-	let end = robot.drivetrain.tracking.forward_travel();
-
-	println!(
-		"---------------------------\nStart: {start:.03}\nEnd:   {end:.03}\nDiff:  {diff}\nError: {error}",
-		start = start,
-		end = end,
-		diff = (end - start),
-		error = (end - target)
+	evian_extra::utils::pid_tuning::test_angular(
+		&mut robot.drivetrain,
+		&mut basic,
+		Angle::from_degrees(10.0),
 	)
+	.await;
 }
 
 pub async fn motion_profile(robot: &mut Robot) {

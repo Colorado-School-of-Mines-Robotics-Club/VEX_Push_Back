@@ -167,7 +167,7 @@ impl IntakeSubsystem {
 			}
 			ParkState::Outtaking => {
 				if let Some(proximity) = self.park_sensor().proximity().ok()
-					&& proximity < 0.75
+					&& proximity < 0.85
 				{
 					_ = self.park_piston.set_state(PneumaticState::Contracted);
 					_ = self.motors.top.set_voltage(-self.motors.top.max_voltage());
@@ -251,7 +251,7 @@ impl ControllableSubsystem for IntakeSubsystem {
 				ParkState::Disabled | ParkState::Manual => ParkState::Outtaking,
 				_ => ParkState::Disabled,
 			}
-		} else if controller.button_down.is_now_pressed() {
+		} else if controller.button_right.is_now_pressed() {
 			self.park_state = match self.park_state {
 				ParkState::Disabled => ParkState::Manual,
 				_ => ParkState::Disabled,

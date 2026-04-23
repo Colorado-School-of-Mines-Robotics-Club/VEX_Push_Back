@@ -129,19 +129,19 @@ impl Robot {
 			},
 			OpticalSensor::new(peripherals.port_15),
 			AdiPneumatic {
-				port: AdiDigitalOut::new(peripherals.adi_d),
+				port: AdiDigitalOut::new(peripherals.adi_c),
 				high_mode: PneumaticState::Extended,
 			},
 		);
 		let trunk = PneumaticsSubsystem::new(
 			// Front bar
 			AdiPneumatic {
-				port: AdiDigitalOut::new(peripherals.adi_e),
+				port: AdiDigitalOut::new(peripherals.adi_g),
 				high_mode: PneumaticState::Extended,
 			},
 			// Extender
 			AdiPneumatic {
-				port: AdiDigitalOut::new(peripherals.adi_f),
+				port: AdiDigitalOut::new(peripherals.adi_e),
 				high_mode: PneumaticState::Extended,
 			},
 			// Flap
@@ -151,11 +151,14 @@ impl Robot {
 			},
 			// Outtake adjuster
 			AdiPneumatic {
-				port: AdiDigitalOut::new(peripherals.adi_g),
+				port: AdiDigitalOut::new(peripherals.adi_d),
 				high_mode: PneumaticState::Extended,
 			},
-			// No wing
-			None,
+			// Wing
+			Some(AdiPneumatic {
+				port: AdiDigitalOut::new(peripherals.adi_f),
+				high_mode: PneumaticState::Extended,
+			}),
 		);
 		let replay = ReplaySubsystem::new();
 

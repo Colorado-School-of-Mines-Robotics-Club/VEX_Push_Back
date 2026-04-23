@@ -186,10 +186,14 @@ impl Robot {
 	}
 
 	pub async fn start(mut self) -> ! {
-		let default_auton = "Match auton";
+		let default_auton = "Match auton neutral";
 		let autons = [
 			route!("Do nothing", crate::autons::do_nothing),
-			route!("Match auton", crate::autons::match_auton),
+			route!(
+				"Match auton matchload",
+				crate::autons::match_auton_matchload
+			),
+			route!("Match auton neutral", crate::autons::match_auton_neutral),
 			route!("Skills double park", crate::autons::skills_doublepark),
 			route!("Skills main", crate::autons::skills_main),
 			route!("Autopark test", crate::autons::autopark_test),

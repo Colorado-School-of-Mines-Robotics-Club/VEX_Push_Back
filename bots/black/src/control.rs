@@ -21,14 +21,24 @@ pub const SEEKING_CONTROLLER: Seeking<Pid, Pid> = Seeking {
 	timeout: Some(Duration::from_secs(3)),
 };
 
+// pub const LINEAR_PID: Pid = {
+// 	let mut pid = Pid::new(0.05, 0.002, 0.001, Some(5.0));
+// 	pid.set_output_limit(Some(0.60));
+// 	pid
+// };
 pub const LINEAR_PID: Pid = {
-	let mut pid = Pid::new(0.05, 0.002, 0.001, Some(5.0));
+	let mut pid = Pid::new(0.095, 0.00, 0.007, None);
 	pid.set_output_limit(Some(0.60));
 	pid
 };
+// pub const ANGULAR_PID: AngularPid = {
+// 	let mut pid = AngularPid::new(2.3, 0.01, 0.115, Some(Angle::from_degrees(10.0)));
+// 	//pid.set_output_limit(Some(0.50));
+// 	pid
+// };
 pub const ANGULAR_PID: AngularPid = {
-	let mut pid = AngularPid::new(2.3, 0.01, 0.115, Some(Angle::from_degrees(10.0)));
-	//pid.set_output_limit(Some(0.50));
+	let mut pid = AngularPid::new(3.5, 0.00, 0.175, None);
+	pid.set_output_limit(None);
 	pid
 };
 

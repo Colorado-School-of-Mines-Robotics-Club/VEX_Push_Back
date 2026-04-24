@@ -174,7 +174,7 @@ impl Robot {
 	}
 
 	pub async fn start(self) -> ! {
-		let default_auton = "Skills auton";
+		let default_auton = "Match auton";
 		let autons = [
 			route!("Do nothing", crate::autons::do_nothing),
 			route!("Match auton", crate::autons::match_auton),

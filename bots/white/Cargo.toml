@@ -15,6 +15,7 @@ evian = { workspace = true }
 shrewnit = { workspace = true }
 vexide-motorgroup = { workspace = true }
 autons = { workspace = true }
+anyhow = { workspace = true }
 subsystems = { path = "../../common/subsystems" }
 coprocessor = { path = "../../coprocessor/brain" }
 slintui = { path = "../../common/slintui", optional = true }

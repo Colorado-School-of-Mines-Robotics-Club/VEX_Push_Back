@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use autons::{prelude::SelectCompeteExt as _, route};
+use autons::{prelude::SelectCompeteExt as _, route, simple::Route};
 use coprocessor::requests::{CalibrateRequest, OtosPosition, PingRequest};
 use evian::drivetrain::model::Differential;
 use shrewnit::{Degrees, Inches};
@@ -34,6 +34,7 @@ pub struct Robot {
 	pub pneumatics: PneumaticsSubsystem,
 	pub replay: ReplaySubsystem,
 	pub imu: Rc<Mutex<InertialSensor>>,
+	pub(crate) default_auton: Option<Route<Robot>>,
 }
 
 impl Robot {
@@ -180,11 +181,12 @@ impl Robot {
 			pneumatics,
 			replay,
 			coprocessor,
+			default_auton: None,
 		}
 	}
 
-	pub async fn start(self) -> ! {
-		let default_auton = "Skills main";
+	pub async fn start(mut self) -> ! {
+		let default_auton = "Match auton";
 		let autons = [
 			route!("Do nothing", crate::autons::do_nothing),
 			route!("Match auton", crate::autons::match_auton),
@@ -192,6 +194,7 @@ impl Robot {
 			route!("Skills main", crate::autons::skills_main),
 			route!("Autopark test", crate::autons::autopark_test),
 		];
+		self.default_auton = autons.iter().find(|a| a.name == default_auton).cloned();
 
 		#[cfg(feature = "ui")]
 		{

@@ -229,8 +229,15 @@ impl ControllableSubsystem for IntakeSubsystem {
 	}
 
 	fn control(&mut self, controller: &ControllerState, _configuration: ControllerConfiguration) {
-		self.state = if controller.button_r1.is_pressed() || controller.button_l1.is_pressed() {
-			// Run at full speed for normal intake and long goal outtake
+		self.state = if controller.button_r1.is_pressed() {
+			// Normal intake
+			IntakeState {
+				bottom: 1.0,
+				middle: 1.0,
+				top: 0.0,
+			}
+		} else if controller.button_l1.is_pressed() {
+			// Long goal outtake
 			IntakeState::full_forward()
 		} else if controller.button_l2.is_pressed() {
 			// Run at half speed for top center goal outtake

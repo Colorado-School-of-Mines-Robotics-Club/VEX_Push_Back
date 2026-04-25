@@ -16,6 +16,15 @@ use crate::robot::Robot;
 
 const FIELD_TILE_LENGTH: f64 = 24.0;
 
+macro_rules! change_timeout {
+	($basic:expr, $timeout:expr, $code:block) => {
+		let saved_timeout = $basic.timeout;
+		$basic.timeout = $timeout;
+		$code;
+		$basic.timeout = saved_timeout;
+	};
+}
+
 async fn bang_bang_angle(robot: &mut Robot, angle: Angle) {
 	while let error = (robot.drivetrain.tracking.heading().wrapped_full() - angle.wrapped_full())
 		&& error.abs() > Angle::from_degrees(0.5)
@@ -23,7 +32,7 @@ async fn bang_bang_angle(robot: &mut Robot, angle: Angle) {
 		_ = robot
 			.drivetrain
 			.model
-			.drive_arcade(0.0, 0.12 * error.signum());
+			.drive_arcade(0.0, 0.15 * error.signum());
 		sleep(Duration::from_millis(5)).await;
 	}
 	robot.drivetrain.brake(BrakeMode::Hold);
@@ -50,7 +59,7 @@ pub async fn match_auton_matchload(robot: &mut Robot) {
 	let default_timeout = basic.timeout;
 
 	// Line up with the center goal
-	basic.drive_distance(&mut robot.drivetrain, 44.0).await;
+	basic.drive_distance(&mut robot.drivetrain, 42.0).await;
 
 	// Turn towards center goal
 	basic.timeout = Some(Duration::from_secs(1));
@@ -140,9 +149,11 @@ pub async fn match_auton_matchload(robot: &mut Robot) {
 		.tracking
 		.position()
 		.distance(long_goal_point);
-	basic
-		.drive_distance(&mut robot.drivetrain, -(dist - 1.0))
-		.await;
+	change_timeout!(basic, Some(Duration::from_secs(2)), {
+		basic
+			.drive_distance(&mut robot.drivetrain, -(dist - 1.0))
+			.await;
+	});
 	_ = robot.drivetrain.model.drive_arcade(-0.25, 0.0);
 
 	// Eject 3 balls into long goal
@@ -182,7 +193,7 @@ pub async fn match_auton_matchload(robot: &mut Robot) {
 		.outtake_adjuster
 		.set_state(PneumaticState::Contracted);
 	intake_unjamming!(robot, IntakeState::full_forward(), r => async {
-		sleep(Duration::from_secs(2)).await;
+		sleep(Duration::from_millis(1500)).await;
 		bang_bang_angle(r, Angle::from_degrees(90.0 + 180.0)).await;
 	});
 	robot.intake.run(IntakeState::full_forward());
@@ -210,9 +221,11 @@ pub async fn match_auton_matchload(robot: &mut Robot) {
 		.tracking
 		.position()
 		.distance(long_goal_point);
-	basic
-		.drive_distance(&mut robot.drivetrain, -(dist - 1.0))
-		.await;
+	change_timeout!(basic, Some(Duration::from_secs(2)), {
+		basic
+			.drive_distance(&mut robot.drivetrain, -(dist - 1.0))
+			.await;
+	});
 	_ = robot.drivetrain.model.drive_arcade(-0.25, 0.0);
 	sleep(Duration::from_millis(500)).await;
 	_ = robot.drivetrain.model.drive_arcade(0.0, 0.0);

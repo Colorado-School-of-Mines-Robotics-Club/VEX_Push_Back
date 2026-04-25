@@ -123,6 +123,10 @@ impl PneumaticsSubsystem {
 		self.flap.set_state(state.flap)?;
 		self.outtake_adjuster.set_state(state.outtake_adjuster)?;
 
+		if let Some(wing) = &mut self.wing {
+			wing.set_state(state.wing)?;
+		}
+
 		Ok(())
 	}
 
@@ -133,7 +137,7 @@ impl PneumaticsSubsystem {
 		_ = self.outtake_adjuster.set_state(PneumaticState::Extended);
 
 		if let Some(wing) = &mut self.wing {
-			_ = wing.set_state(PneumaticState::Contracted);
+			_ = wing.set_state(PneumaticState::Extended);
 		}
 
 		if self

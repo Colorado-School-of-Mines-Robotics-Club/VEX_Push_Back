@@ -38,7 +38,7 @@ pub async fn autopark_test(robot: &mut Robot) {
 }
 
 pub async fn match_auton_matchload(robot: &mut Robot) {
-	let matchload_line = 29.0;
+	let matchload_line = 27.0;
 
 	// Basic setup.
 	_ = robot
@@ -50,7 +50,7 @@ pub async fn match_auton_matchload(robot: &mut Robot) {
 	let default_timeout = basic.timeout;
 
 	// Line up with the center goal
-	basic.drive_distance(&mut robot.drivetrain, 45.0).await;
+	basic.drive_distance(&mut robot.drivetrain, 44.0).await;
 
 	// Turn towards center goal
 	basic.timeout = Some(Duration::from_secs(1));
@@ -62,15 +62,15 @@ pub async fn match_auton_matchload(robot: &mut Robot) {
 	// Align with center
 	_ = robot.drivetrain.model.drive_arcade(0.25, 0.0);
 	sleep(Duration::from_millis(1000)).await;
-	_ = robot.drivetrain.model.drive_arcade(-0.15, 0.0);
-	sleep(Duration::from_millis(350)).await;
+	// _ = robot.drivetrain.model.drive_arcade(-0.15, 0.0);
+	// sleep(Duration::from_millis(350)).await;
 	_ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
 
 	// Outtake preload ball into center goal
 	robot.intake.run(IntakeState {
 		top: -1.0,
 		middle: -1.0,
-		bottom: -0.50,
+		bottom: -0.75,
 	});
 	sleep(Duration::from_secs(1)).await;
 	robot.intake.run(IntakeState::full_brake());
@@ -130,7 +130,7 @@ pub async fn match_auton_matchload(robot: &mut Robot) {
 	_ = robot.drivetrain.model.drive_arcade(-0.15, 0.0);
 	sleep(Duration::from_millis(500)).await;
 	_ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
-	let long_goal_point = Vec2::new(29.45, 32.48);
+	let long_goal_point = Vec2::new(28.0, 32.48);
 	let pos = robot.drivetrain.tracking.position();
 	let angle =
 		Angle::atan2(long_goal_point.y - pos.y, long_goal_point.x - pos.x) + Angle::from_turns(0.5);
@@ -200,7 +200,7 @@ pub async fn match_auton_matchload(robot: &mut Robot) {
 	_ = robot.drivetrain.model.drive_arcade(-0.15, 0.0);
 	sleep(Duration::from_millis(500)).await;
 	_ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
-	let long_goal_point = Vec2::new(29.45, 32.48);
+	let long_goal_point = Vec2::new(28.0, 32.48);
 	let pos = robot.drivetrain.tracking.position();
 	let angle =
 		Angle::atan2(long_goal_point.y - pos.y, long_goal_point.x - pos.x) + Angle::from_turns(0.5);

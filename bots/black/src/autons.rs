@@ -32,6 +32,14 @@ pub async fn match_auton(robot: &mut Robot) {
 		.pneumatics
 		.extender
 		.set_state(PneumaticState::Extended);
+		_ = robot.pneumatics.outtake_adjuster.set_state(PneumaticState::Extended);
+		_ = robot.pneumatics.flap.set_state(PneumaticState::Contracted);
+
+		robot.intake.run(IntakeState {
+		top: 1.0,
+		middle: 1.0,
+		bottom: 1.0,
+	});
 
 	let mut basic = crate::control::BASIC_CONTROLLER;
 
@@ -54,15 +62,18 @@ pub async fn match_auton(robot: &mut Robot) {
 
 	// Robot intake runs and ejects the balls into the center goal.
 
-	_ = robot.pneumatics.flap.set_state(PneumaticState::Extended);
-	robot.intake.run(IntakeState {
-		top: 0.55,
-		middle: 1.0,
-		bottom: 1.0,
-	});
+	//_ = robot.pneumatics.flap.set_state(PneumaticState::Extended);
+		_ = robot.pneumatics.outtake_adjuster.set_state(PneumaticState::Contracted);
+
+	//robot.intake.run(IntakeState {
+	//	top: 1.0,
+	//	middle: 1.0,
+	//	bottom: 1.0,
+	//});
 	sleep(Duration::from_secs(2)).await;
 	robot.intake.run(IntakeState::full_brake());
-	_ = robot.pneumatics.flap.set_state(PneumaticState::Contracted);
+	_ = robot.pneumatics.outtake_adjuster.set_state(PneumaticState::Contracted);
+	//_ = robot.pneumatics.flap.set_state(PneumaticState::Contracted);
 
 	//basic
 	//	.drive_distance_at_heading(&mut robot.drivetrain, 25.0, Angle::from_degrees(45.0))
@@ -99,11 +110,11 @@ pub async fn match_auton(robot: &mut Robot) {
 	// Load from matchload
 
 	//sleep(Duration::from_millis(750)).await;
-	_ = robot.drivetrain.model.drive_arcade(0.20, 0.0);
+	_ = robot.drivetrain.model.drive_arcade(0.35, 0.0);
 	robot.intake.run(IntakeState {
-		bottom: 0.0,
+		bottom: 1.0,
 		middle: 1.0,
-		top: 1.0,
+		top: 0.0,
 	});
 	sleep(Duration::from_millis(2500)).await;
 	_ = robot.drivetrain.model.drive_arcade(-0.25, 0.0);
@@ -214,7 +225,7 @@ pub async fn match_auton(robot: &mut Robot) {
 		.set_state(PneumaticState::Extended);
 	_ = robot.pneumatics.flap.set_state(PneumaticState::Contracted);
 	sleep(Duration::from_millis(800)).await;
-	_ = robot.drivetrain.model.drive_arcade(0.20, 0.0);
+	_ = robot.drivetrain.model.drive_arcade(0.35, 0.0);
 	robot.intake.run(IntakeState::full_forward());
 	sleep(Duration::from_secs(3)).await;
 

@@ -1,7 +1,9 @@
 use std::rc::Rc;
 
 use autons::{prelude::SelectCompeteExt as _, route};
-use coprocessor::requests::{CalibrateRequest, OtosPosition, PingRequest};
+use coprocessor::requests::{
+	CalibrateRequest, OtosPosition, PingRequest, RAINBOW_ROTATE, SetLedsRequest,
+};
 use evian::drivetrain::model::Differential;
 use shrewnit::{Degrees, Inches};
 #[cfg(feature = "ui")]
@@ -51,11 +53,16 @@ impl Robot {
 
 		{
 			let imu = imu.clone();
+			let copro = coprocessor.clone();
 			vexide::task::spawn(async move {
 				if imu.lock().await.calibrate().await.is_ok() {
-					println!("IMU calibrated")
+					println!("IMU calibrated");
+					_ = copro
+						.send_request(SetLedsRequest::<{ RAINBOW_ROTATE }>)
+						.await;
 				} else {
-					println!("IMU calibration failed")
+					println!("IMU calibration failed");
+					_ = copro.send_request(SetLedsRequest::<0xFF0000>).await;
 				}
 			})
 			.detach();
@@ -99,7 +106,7 @@ impl Robot {
 					Motor::new(peripherals.port_7, Gearset::Blue, Direction::Reverse),
 					Motor::new(peripherals.port_8, Gearset::Blue, Direction::Forward),
 					Motor::new(peripherals.port_9, Gearset::Blue, Direction::Forward),
-					Motor::new(peripherals.port_10, Gearset::Blue, Direction::Reverse),
+					Motor::new(peripherals.port_11, Gearset::Blue, Direction::Reverse),
 				],
 				[
 					Motor::new(peripherals.port_1, Gearset::Blue, Direction::Forward),

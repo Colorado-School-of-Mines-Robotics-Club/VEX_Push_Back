@@ -35,6 +35,7 @@ async fn bang_bang_angle(robot: &mut Robot, angle: Angle) {
 			.drive_arcade(0.0, 0.15 * error.signum());
 		sleep(Duration::from_millis(5)).await;
 	}
+	_ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
 	robot.drivetrain.brake(BrakeMode::Hold);
 }
 
@@ -438,7 +439,7 @@ pub async fn skills_main(robot: &mut Robot) {
 		.await;
 
 	// Move to machload line
-	let matchload_line = 25.2;
+	let matchload_line = 24.2;
 	let dist_x = (robot.drivetrain.tracking.position().x - matchload_line).abs();
 	let dist = (dist_x / (robot.drivetrain.tracking.heading()).cos()).abs();
 
@@ -485,7 +486,7 @@ pub async fn skills_main(robot: &mut Robot) {
 		Angle::atan2(long_goal_point.y - pos.y, long_goal_point.x - pos.x) + Angle::from_turns(0.5);
 	bang_bang_angle(robot, angle).await;
 
-	_ = robot.drivetrain.model.drive_arcade(-0.35, -0.005);
+	_ = robot.drivetrain.model.drive_arcade(-0.35, -0.008);
 	sleep(Duration::from_secs(2)).await;
 	_ = robot.pneumatics.flap.set_state(PneumaticState::Extended);
 
@@ -514,7 +515,10 @@ pub async fn skills_main(robot: &mut Robot) {
 	basic
 		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(180.0))
 		.await;
-	basic.drive_distance(&mut robot.drivetrain, 42.0).await;
+	let park_line = -16.0;
+	let dist_x = (robot.drivetrain.tracking.position().x - park_line).abs();
+	let dist = (dist_x / (robot.drivetrain.tracking.heading()).cos()).abs();
+	basic.drive_distance(&mut robot.drivetrain, dist).await;
 	basic
 		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(-90.0))
 		.await;

@@ -17,7 +17,7 @@ use subsystems::{
 	pnemuatics::{AdiPneumatic, PneumaticState, PneumaticsSubsystem},
 	replay::ReplaySubsystem,
 };
-use vexide::{prelude::*, sync::Mutex};
+use vexide::{controller::ControllerConnection, prelude::*, sync::Mutex};
 use vexide_motorgroup::MotorGroup;
 
 #[cfg(not(feature = "ui"))]
@@ -186,8 +186,8 @@ impl Robot {
 	}
 
 	pub async fn start(mut self) -> ! {
-		let default_auton = "Match auton matchload";
-		let default_auton = "Skills main";
+		const AUTON_IN_DRIVER: Option<&str> = option_env!("DO_NOT_USE_AT_COMP_AUTON_TEST");
+		let default_auton = AUTON_IN_DRIVER.unwrap_or("Match auton matchload");
 		let autons = [
 			route!("Do nothing", crate::autons::do_nothing),
 			route!(

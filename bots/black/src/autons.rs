@@ -56,7 +56,7 @@ pub async fn match_auton(robot: &mut Robot) {
 
 	_ = robot.pneumatics.flap.set_state(PneumaticState::Extended);
 	robot.intake.run(IntakeState {
-		top: 0.42,
+		top: 0.55,
 		middle: 1.0,
 		bottom: 1.0,
 	});

@@ -56,7 +56,7 @@ pub async fn match_auton(robot: &mut Robot) {
 
 	_ = robot.pneumatics.flap.set_state(PneumaticState::Extended);
 	robot.intake.run(IntakeState {
-		top: 0.35,
+		top: 0.42,
 		middle: 1.0,
 		bottom: 1.0,
 	});
@@ -99,14 +99,14 @@ pub async fn match_auton(robot: &mut Robot) {
 	// Load from matchload
 
 	//sleep(Duration::from_millis(750)).await;
-	_ = robot.drivetrain.model.drive_arcade(0.15, 0.0);
+	_ = robot.drivetrain.model.drive_arcade(0.20, 0.0);
 	robot.intake.run(IntakeState {
 		bottom: 1.0,
 		middle: 1.0,
-		top: 0.0,
+		top: 1.0,
 	});
 	sleep(Duration::from_millis(2500)).await;
-	_ = robot.drivetrain.model.drive_arcade(-0.15, 0.0);
+	_ = robot.drivetrain.model.drive_arcade(-0.25, 0.0);
 	sleep(Duration::from_millis(350)).await;
 	// _ = robot.drivetrain.model.drive_arcade(0.25, 0.0);
 	// sleep(Duration::from_millis(1000)).await;
@@ -212,7 +212,7 @@ pub async fn match_auton(robot: &mut Robot) {
 		.set_state(PneumaticState::Extended);
 	_ = robot.pneumatics.flap.set_state(PneumaticState::Contracted);
 	sleep(Duration::from_millis(800)).await;
-	_ = robot.drivetrain.model.drive_arcade(0.15, 0.0);
+	_ = robot.drivetrain.model.drive_arcade(0.20, 0.0);
 	robot.intake.run(IntakeState::full_forward());
 	sleep(Duration::from_secs(3)).await;
 

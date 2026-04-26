@@ -101,7 +101,7 @@ pub async fn match_auton(robot: &mut Robot) {
 	//sleep(Duration::from_millis(750)).await;
 	_ = robot.drivetrain.model.drive_arcade(0.20, 0.0);
 	robot.intake.run(IntakeState {
-		bottom: 1.0,
+		bottom: 0.0,
 		middle: 1.0,
 		top: 1.0,
 	});
@@ -133,6 +133,7 @@ pub async fn match_auton(robot: &mut Robot) {
 	sleep(Duration::from_millis(1000)).await;
 
 	// Outtake into long goal
+
 	_ = robot.pneumatics.flap.set_state(PneumaticState::Extended);
 	_ = robot
 		.pneumatics
@@ -178,7 +179,7 @@ pub async fn match_auton(robot: &mut Robot) {
 	});
 	sleep(Duration::from_millis(100)).await;
 	robot.intake.run(IntakeState {
-		top: 1.0,
+		top: 0.0,
 		middle: 1.0,
 		bottom: 1.0,
 	});
@@ -269,6 +270,9 @@ pub async fn skills_or_whatever(robot: &mut Robot) {
 	let mut basic = crate::control::BASIC_CONTROLLER;
 
 	basic.drive_distance(&mut robot.drivetrain, 18.0).await;
+	_ = robot
+		.pneumatics
+		.wing.as_mut().map(|w|w.set_state(PneumaticState::Extended));
 	basic
 		.drive_distance_at_heading(&mut robot.drivetrain, 31.0, Angle::from_degrees(180.0))
 		.await;
@@ -286,6 +290,7 @@ pub async fn skills_or_whatever(robot: &mut Robot) {
 		.pneumatics
 		.front_bar
 		.set_state(PneumaticState::Extended);
+		
 	_ = robot
 		.pneumatics
 		.extender
@@ -295,12 +300,12 @@ pub async fn skills_or_whatever(robot: &mut Robot) {
 		.outtake_adjuster
 		.set_state(PneumaticState::Extended);
 	_ = robot.pneumatics.flap.set_state(PneumaticState::Contracted);
-	_ = robot.drivetrain.model.drive_arcade(0.25, 0.0);
+	_ = robot.drivetrain.model.drive_arcade(0.2, 0.0);
 	sleep(Duration::from_secs(3)).await;
 
 	_ = robot.drivetrain.model.drive_arcade(-0.35, 0.0);
 	sleep(Duration::from_millis(300)).await;
-	_ = robot.drivetrain.model.drive_arcade(0.25, 0.0);
+	_ = robot.drivetrain.model.drive_arcade(0.2, 0.0);
 	sleep(Duration::from_millis(1000)).await;
 
 	robot.intake.run(IntakeState {
@@ -359,7 +364,7 @@ pub async fn skills_or_whatever(robot: &mut Robot) {
 		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(0.0))
 		.await;
 
-	let gooo = -31.0;
+	let gooo = -28.5;
 	let dist_y = (robot.drivetrain.tracking.position().x - gooo).abs();
 	let dist = (dist_y / (robot.drivetrain.tracking.heading()).cos()).abs();
 
@@ -393,11 +398,11 @@ pub async fn skills_or_whatever(robot: &mut Robot) {
 		bottom: 1.0,
 	});
 
-	_ = robot.drivetrain.model.drive_arcade(0.25, 0.01);
+	_ = robot.drivetrain.model.drive_arcade(0.2, 0.01);
 	sleep(Duration::from_secs(4)).await;
 	_ = robot.drivetrain.model.drive_arcade(-0.35, 0.0);
 	sleep(Duration::from_millis(300)).await;
-	_ = robot.drivetrain.model.drive_arcade(0.25, 0.0);
+	_ = robot.drivetrain.model.drive_arcade(0.2, 0.0);
 	sleep(Duration::from_millis(1000)).await;
 	_ = robot.drivetrain.model.drive_arcade(-0.15, 0.01);
 	sleep(Duration::from_millis(350)).await;

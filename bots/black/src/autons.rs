@@ -204,8 +204,9 @@ pub async fn match_auton(robot: &mut Robot) {
 		sleep(Duration::from_millis(5)).await;
 	}
 	robot.drivetrain.brake(BrakeMode::Hold);
+
 	// Leo's and Noah's test code, not perfect but will score a few points.
-	// Once code is finalized the bot will go back to the tower and grab the balls again.
+	// Once code is revised the bot will go back to the tower and grab the balls again.
 
 	_ = robot
 		.pneumatics

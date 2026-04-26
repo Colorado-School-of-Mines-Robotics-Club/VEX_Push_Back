@@ -71,8 +71,8 @@ pub async fn match_auton_matchload(robot: &mut Robot) {
 	// Align with center
 	_ = robot.drivetrain.model.drive_arcade(0.25, 0.0);
 	sleep(Duration::from_millis(1000)).await;
-	// _ = robot.drivetrain.model.drive_arcade(-0.15, 0.0);
-	// sleep(Duration::from_millis(350)).await;
+	_ = robot.drivetrain.model.drive_arcade(-0.15, 0.0);
+	sleep(Duration::from_millis(450)).await;
 	_ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
 
 	// Outtake preload ball into center goal

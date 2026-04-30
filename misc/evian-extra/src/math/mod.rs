@@ -1,6 +1,6 @@
 use nalgebra::{
-	Cholesky, DefaultAllocator, DimMin, DimName, DimNameAdd, DimNameSum, Matrix, OMatrix, OVector,
-	RealField, Storage, U1, Vector, allocator::Allocator, stack,
+	Cholesky, DefaultAllocator, DimMin, DimName, DimNameAdd, DimNameSum, Matrix, OMatrix,
+	RealField, Storage, U1, Vector, allocator::Allocator,
 };
 
 /// Solves the DARE for a set of matrices A, B, Q, R, and a precision bound eps

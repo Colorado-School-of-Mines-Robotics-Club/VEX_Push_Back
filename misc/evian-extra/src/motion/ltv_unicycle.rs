@@ -5,7 +5,7 @@ use evian::{
 	math::Vec2,
 	prelude::{Drivetrain, Tolerances, TracksHeading, TracksPosition, TracksVelocity},
 };
-use nalgebra::vector;
+use nalgebra::{Vector2, vector};
 use vexide::time::sleep;
 
 use crate::{
@@ -34,10 +34,10 @@ pub fn trapezoid_profile(
 		LTVState {
 			position: vector![
 				start_pos.x + pos * start_heading.cos(),
-				start_pos.y + pos * start_heading.sin()
+				start_pos.y + pos * start_heading.sin(),
+				start_heading
 			],
-			heading: start_heading,
-			velocity: (peak_velocity / accel_time) * current_time,
+			velocity: vector![(peak_velocity / accel_time) * current_time, 0.0],
 		}
 	} else if current_time < distance / peak_velocity {
 		let stage1_pos = 0.5 * (peak_velocity / accel_time) * accel_time.powi(2);
@@ -45,10 +45,10 @@ pub fn trapezoid_profile(
 		LTVState {
 			position: vector![
 				start_pos.x + pos * start_heading.cos(),
-				start_pos.y + pos * start_heading.sin()
+				start_pos.y + pos * start_heading.sin(),
+				start_heading
 			],
-			heading: start_heading,
-			velocity: peak_velocity,
+			velocity: vector![peak_velocity, 0.0],
 		}
 	} else if current_time < (distance / peak_velocity + accel_time) {
 		let stage3_time = current_time - distance / peak_velocity;
@@ -60,19 +60,22 @@ pub fn trapezoid_profile(
 		LTVState {
 			position: vector![
 				start_pos.x + stage3_pos * start_heading.cos(),
-				start_pos.y + stage3_pos * start_heading.sin()
+				start_pos.y + stage3_pos * start_heading.sin(),
+				start_heading
 			],
-			heading: start_heading,
-			velocity: peak_velocity + (peak_velocity / accel_time) * -stage3_time,
+			velocity: vector![
+				peak_velocity + (peak_velocity / accel_time) * -stage3_time,
+				0.0
+			],
 		}
 	} else {
 		LTVState {
 			position: vector![
 				start_pos.x + distance * start_heading.cos(),
-				start_pos.y + distance * start_heading.sin()
+				start_pos.y + distance * start_heading.sin(),
+				start_heading
 			],
-			heading: start_heading,
-			velocity: 0.0,
+			velocity: vector![0.0, 0.0],
 		}
 	}
 }
@@ -132,9 +135,8 @@ impl LTVUnicycleMotion {
 			);
 
 			let measurement = LTVState {
-				position: vector![current_pose.x, current_pose.y],
-				heading: current_heading.as_radians(),
-				velocity: current_linear_velocity,
+				position: vector![current_pose.x, current_pose.y, current_heading.as_radians()],
+				velocity: vector![current_linear_velocity, current_angular_velocity],
 			};
 			let dt = last_update.elapsed();
 			let signal = controller.update(measurement, setpoint, dt);

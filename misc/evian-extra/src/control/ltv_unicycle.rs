@@ -1,25 +1,9 @@
 use std::time::Duration;
 
 use evian::control::loops::Feedback;
-use nalgebra::{
-	Matrix2, Matrix3, Matrix3x2, OMatrix, Rotation2, SMatrix, U2, U3, Vector2, Vector3, matrix,
-	vector,
-};
-use shrewnit::{Dimension, FeetPerSecond, Inches, Meters, MetersPerSecond, One, Scalar};
+use nalgebra::{Matrix2, Matrix3, Matrix3x2, Rotation2, SMatrix, Vector2, Vector3, matrix};
 
 use crate::math::{brysons_rule, discretize_ab, lqr};
-
-macro_rules! mdbg {
-	($v:expr) => {{
-		for row in $v.row_iter() {
-			for column in row.iter() {
-				print!("{}, ", column);
-			}
-			println!();
-		}
-		$v
-	}};
-}
 
 #[derive(Clone)]
 pub struct LTVUnicycleController {
@@ -29,15 +13,8 @@ pub struct LTVUnicycleController {
 
 #[derive(Debug, Clone, Copy)]
 pub struct LTVState {
-	pub position: Vector2<f64>,
-	pub heading: f64,
-	pub velocity: f64,
-}
-
-impl From<LTVState> for Vector3<f64> {
-	fn from(value: LTVState) -> Self {
-		vector![value.position.x, value.position.y, value.heading]
-	}
+	pub position: Vector3<f64>,
+	pub velocity: Vector2<f64>,
 }
 
 impl LTVUnicycleController {
@@ -81,10 +58,11 @@ impl Feedback for LTVUnicycleController {
 		setpoint: Self::State,
 		dt: Duration,
 	) -> Self::Signal {
+		// Create the differential drivetrain model linearized around the desired velocity, and discretize it
 		let (a, b) = discretize_ab(
 			&matrix![
 				0.0, 0.0, 0.0;
-				0.0, 0.0, setpoint.velocity.max(1e-4);
+				0.0, 0.0, setpoint.velocity.x.max(1e-4);
 				0.0, 0.0, 0.0;
 			],
 			&matrix![
@@ -94,9 +72,12 @@ impl Feedback for LTVUnicycleController {
 			],
 			dt.as_secs_f64(),
 		);
+
+		// Calculate the LQR gain given the model and cost functions
 		let k = lqr(&a, &b, &self.q, &self.r, &Matrix3x2::<f64>::zeros(), 1e-10);
 
-		let rotation = Rotation2::new(-measurement.heading);
+		// Create the rotation matrix to transform the measurements to the correct reference
+		let rotation = Rotation2::new(-measurement.position.z);
 		let m = SMatrix::<_, 3, 3>::from_fn(|i, j| {
 			if i < 2 && j < 2 {
 				rotation[(i, j)]
@@ -107,35 +88,10 @@ impl Feedback for LTVUnicycleController {
 			}
 		});
 
-		let setpoint: Vector3<f64> = setpoint.into();
-		let measurement: Vector3<f64> = measurement.into();
+		// Use LQR gain to calculate the ideal control input (change in velocity) for the error
+		let u = k * m * (setpoint.position - measurement.position);
 
-		k * m * (setpoint - measurement)
-	}
-}
-
-#[cfg(test)]
-mod tests {
-	use super::*;
-
-	#[test]
-	fn test_controller() {
-		let mut controller = LTVUnicycleController::new_with_frc_defaults();
-
-		dbg!(controller.update(
-			LTVState {
-				// State
-				position: vector![0.0, 0.0],
-				heading: f64::to_radians(90.0),
-				velocity: 0.0,
-			},
-			LTVState {
-				// Setpoint
-				position: vector![0.0, 1.0],
-				heading: f64::to_radians(90.0),
-				velocity: 0.0,
-			},
-			Duration::from_millis(5),
-		));
+		// Return the desired velocity + feedback control input
+		setpoint.velocity + u
 	}
 }

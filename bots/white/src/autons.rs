@@ -6,7 +6,7 @@ use evian::{
 	control::loops::BangBang,
 	math::{Angle, Vec2},
 	motion::Basic,
-	prelude::{Arcade, TracksHeading, TracksPosition},
+	prelude::{Arcade, Tank, TracksHeading, TracksPosition},
 };
 use shrewnit::{Degrees, Inches};
 use subsystems::{intake::IntakeState, intake_unjamming, pnemuatics::PneumaticState};
@@ -27,12 +27,12 @@ macro_rules! change_timeout {
 
 async fn bang_bang_angle(robot: &mut Robot, angle: Angle) {
 	while let error = (robot.drivetrain.tracking.heading().wrapped_full() - angle.wrapped_full())
-		&& error.abs() > Angle::from_degrees(0.5)
+		&& error.abs() > Angle::from_degrees(0.25)
 	{
 		_ = robot
 			.drivetrain
 			.model
-			.drive_arcade(0.0, 0.15 * error.signum());
+			.drive_arcade(0.0, 0.13 * error.signum());
 		sleep(Duration::from_millis(5)).await;
 	}
 	_ = robot.drivetrain.model.drive_arcade(0.0, 0.0);
@@ -330,7 +330,7 @@ pub async fn skills_main(robot: &mut Robot) {
 		.await;
 
 	// Drive to matchload alignment
-	let matchload_line = 25.5;
+	let matchload_line = 23.0;
 	let dist_x = (robot.drivetrain.tracking.position().x - matchload_line).abs();
 	let dist = (dist_x / (robot.drivetrain.tracking.heading()).cos()).abs();
 
@@ -439,7 +439,7 @@ pub async fn skills_main(robot: &mut Robot) {
 		.await;
 
 	// Move to machload line
-	let matchload_line = 24.2;
+	let matchload_line = 23.0;
 	let dist_x = (robot.drivetrain.tracking.position().x - matchload_line).abs();
 	let dist = (dist_x / (robot.drivetrain.tracking.heading()).cos()).abs();
 
@@ -449,6 +449,11 @@ pub async fn skills_main(robot: &mut Robot) {
 	basic
 		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(90.0 + 180.0))
 		.await;
+	let long_goal_point = Vec2::new(25.7, 34.5);
+	let pos = robot.drivetrain.tracking.position();
+	let angle =
+		Angle::atan2(long_goal_point.y - pos.y, long_goal_point.x - pos.x) + Angle::from_turns(0.5);
+	bang_bang_angle(robot, angle).await;
 
 	// Move to long goal
 	_ = robot.drivetrain.model.drive_arcade(-0.35, 0.00);
@@ -467,8 +472,15 @@ pub async fn skills_main(robot: &mut Robot) {
 	});
 
 	// Move to matchload and intake balls
-	_ = robot.drivetrain.model.drive_arcade(0.25, 0.0);
-	sleep(Duration::from_secs(1)).await;
+	_ = robot.drivetrain.model.drive_arcade(0.15, 0.0);
+	sleep(Duration::from_millis(500)).await;
+
+	let long_goal_point = Vec2::new(24.7, 8.0);
+	let pos = robot.drivetrain.tracking.position();
+	let angle =
+		Angle::atan2(long_goal_point.y - pos.y, long_goal_point.x - pos.x) + Angle::from_turns(0.0);
+	bang_bang_angle(robot, angle).await;
+
 	_ = robot.pneumatics.flap.set_state(PneumaticState::Contracted);
 	sleep(Duration::from_secs(1)).await;
 
@@ -480,13 +492,16 @@ pub async fn skills_main(robot: &mut Robot) {
 	});
 
 	// Move to long goal and outtake balls
+	_ = robot.drivetrain.model.drive_tank(-0.15, 0.0);
+	sleep(Duration::from_millis(500)).await;
+	_ = robot.drivetrain.model.drive_tank(0.0, 0.0);
 	let long_goal_point = Vec2::new(25.5, 34.5);
 	let pos = robot.drivetrain.tracking.position();
 	let angle =
 		Angle::atan2(long_goal_point.y - pos.y, long_goal_point.x - pos.x) + Angle::from_turns(0.5);
 	bang_bang_angle(robot, angle).await;
 
-	_ = robot.drivetrain.model.drive_arcade(-0.35, -0.008);
+	_ = robot.drivetrain.model.drive_arcade(-0.35, 0.00);
 	sleep(Duration::from_secs(2)).await;
 	_ = robot.pneumatics.flap.set_state(PneumaticState::Extended);
 
@@ -515,7 +530,7 @@ pub async fn skills_main(robot: &mut Robot) {
 	basic
 		.turn_to_heading(&mut robot.drivetrain, Angle::from_degrees(180.0))
 		.await;
-	let park_line = -16.0;
+	let park_line = -19.0;
 	let dist_x = (robot.drivetrain.tracking.position().x - park_line).abs();
 	let dist = (dist_x / (robot.drivetrain.tracking.heading()).cos()).abs();
 	basic.drive_distance(&mut robot.drivetrain, dist).await;
@@ -526,6 +541,7 @@ pub async fn skills_main(robot: &mut Robot) {
 	_ = robot.drivetrain.model.drive_arcade(0.15, 0.0);
 	sleep(Duration::from_millis(350)).await;
 	robot.intake.run(IntakeState::full_brake());
+	sleep(Duration::from_millis(500)).await;
 	_ = robot
 		.pneumatics
 		.front_bar

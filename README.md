@@ -1,4 +1,4 @@
-# Push Back
+# ORDGR Vex Push Back robot code
 
 ## Development environment setup
 
@@ -23,6 +23,6 @@ As of writing, all the code that goes into the robot is as described below:
 | - | - |
 | `bots/*` | Individual rust projects for the bots, containing robot-specific code such as port assignment, autons, and any top-level setup |
 | `common/*` | Rust projects used by any/multiple bots, such as common subsystem logic and display UI |
-| `misc/*` | Miscellaneous rust crates, some random experiments or WIP code that might be used in the future |
-| `coprocessor/pico/` | The micropython code for the RPI Pico |
+| `misc/*` | Primarily a dumping ground for random ideas or WIP code, such as more advanced control theory or vexide utilities. None of this code is finished or tested, hence it not actually being used in our competition code. At some point, if finished, the code in here may get refactored out into proper crates. |
+| `coprocessor/pico/` | The micropython code for the RPI Pico 2. Supports reading OTOS values and controlling WS2812b LEDs |
 | `coprocessor/brain/` | The rust crate that handles communication between the brain and the coprocessor |
